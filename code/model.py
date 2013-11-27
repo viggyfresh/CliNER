@@ -1,3 +1,9 @@
+"""Contains Model class and all feature generation methods.
+"""
+# TODO: feature generation should be separated into a separate file.
+# TODO: implement feature extraction using scikit-learn
+# TODO: make model serializable so that reading/writing is trivial
+
 from __future__ import with_statement
 
 import time

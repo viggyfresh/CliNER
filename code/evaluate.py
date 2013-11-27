@@ -1,3 +1,4 @@
+"""Evaluate predictions against a gold standard."""
 import os
 import os.path
 import sys

@@ -1,3 +1,11 @@
+"""Interface to ML libraries -- libsvm, liblinear, and crfsuite.
+
+Much of this code performs parameter selection a la libsvm's easy.py. However, 
+the remainder provides an interface for the ML libraries so that the can be 
+called using a single function within the remainder of the code.
+"""
+# TODO: this code should leverage bindings rather than fork processes
+# TODO: parallelization at a high level could be obtained with task abstraction
 
 import multiprocessing
 import os

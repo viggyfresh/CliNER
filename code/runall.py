@@ -1,3 +1,4 @@
+"""Run a full grid of experiments."""
 
 import itertools
 import os

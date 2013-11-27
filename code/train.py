@@ -1,3 +1,11 @@
+"""Train a model on supplied data.
+
+It is generally necessary to specify the following parameters:
+	-t: the files containing the training text, and
+	-c: the files containing the training concepts.
+However, the remainder of the options supply information about how to execute 
+(e.g. which ML methods to use, where to put the models, &c.)
+"""
 import os
 import os.path
 import sys
@@ -72,11 +80,12 @@ def main():
 	txt_files_map = helper.map_files(txt_files)
 	con_files_map = helper.map_files(con_files)
 
+	# line up .txt with .con files
 	for k in txt_files_map:
 		if k in con_files_map:
 			training_list.append((txt_files_map[k], con_files_map[k]))
 
-	type = 0
+	type = 0	# type is a flag set
 	if not args.no_svm:
 		type = type | libml.SVM
 
