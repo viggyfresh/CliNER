@@ -10,78 +10,95 @@ from model import Model
 from note import *
 
 def main():
-	parser = argparse.ArgumentParser()
-	parser.add_argument("-i", 
-		dest = "input", 
-		help = "The input files to predict", 
-		default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/test_data/*')
-	)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", 
+	dest = "input", 
+	help = "The input files to predict", 
+	default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/test_data/*')
+    )
 
-	parser.add_argument("-o", 
-		dest = "output", 
-		help = "The directory to write the output", 
-		default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/test_predictions')
-	)
+    parser.add_argument("-o", 
+	dest = "output", 
+	help = "The directory to write the output", 
+	default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/test_predictions')
+    )
 
-	parser.add_argument("-m",
-		dest = "model",
-		help = "The model to use for prediction",
-		default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../models/awesome.model')
-	)
+    parser.add_argument("-m",
+	dest = "model",
+	help = "The model to use for prediction",
+	default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../models/run_models/run.model')
+    )
 	
-	parser.add_argument("--no-svm",
-		dest = "no_svm",
-		action = "store_true",
-		help = "Disable SVM model generation",
-	)
+    parser.add_argument("--no-svm",
+	dest = "no_svm",
+	action = "store_true",
+	help = "Disable SVM model generation",
+    )
 
-	parser.add_argument("--no-lin",
-		dest = "no_lin",
-		action = "store_true",
-		help = "Disable LIN model generation",
-	)
+    parser.add_argument("--no-lin",
+	dest = "no_lin",
+	action = "store_true",
+	help = "Disable LIN model generation",
+    )
 
-	parser.add_argument("--no-crf",
-		dest = "no_crf",
-		action = "store_true",
-		help = "Disable CRF model generation",
-	)
+    parser.add_argument("--no-crf",
+	dest = "no_crf",
+	action = "store_true",
+	help = "Disable CRF model generation",
+    )
 	
-	args = parser.parse_args()
+    args = parser.parse_args()
 
-	# Locate the test files
-	files = glob.glob(args.input)
+    # Locate the test files
+    files = glob.glob(args.input)
 
-	# Load a model and make a prediction for each file
-	path = args.output
-	helper.mkpath(args.output)
+    # Load a model and make a prediction for each file
+    path = args.output
+    helper.mkpath(args.output)
 
-	model = Model.load(args.model)
-	if args.no_svm:
-		model.type &= ~libml.SVM
-	if args.no_lin:
-		model.type &= ~libml.LIN
-	if args.no_crf:
-		model.type &= ~libml.CRF
+    # Determine what type of models to use (ex SVM vs. CRF)
+    model = Model.load(args.model)
+    if args.no_svm:
+	model.type &= ~libml.SVM
+    if args.no_lin:
+	model.type &= ~libml.LIN
+    if args.no_crf:
+	model.type &= ~libml.CRF
 		
-	for txt in files:
-		data = read_txt(txt)
-		labels = model.predict(data)
-		con = os.path.split(txt)[-1]
-		con = con[:-3] + 'con'
+
+    for txt in files:
+
+	# Read the data into a Note object
+        note = Note()
+        note.read_i2b2(txt)
+        #note.read_plain(txt)   # TEMP - in case of plain format
+
+        # Use the model to predict the concept labels
+	labels = model.predict(note)
+
+        # labels (above) is a hash table
+        # the keys are 1,2,4 (SVM, LIN, and CRF)
+        # each value is a list of concept labels, like from the Note class
+
+
+	con = os.path.split(txt)[-1]
+	con = con[:-3] + 'con'
 		
-		for t in libml.bits(model.type):
-			if t == libml.SVM:
-				helper.mkpath(os.path.join(args.output, "svm"))
-				con_path = os.path.join(path, "svm", con)
-			if t == libml.LIN:
-				helper.mkpath(os.path.join(args.output, "lin"))
-				con_path = os.path.join(path, "lin", con)
-			if t == libml.CRF:
-				helper.mkpath(os.path.join(args.output, "crf"))
-				con_path = os.path.join(path, "crf", con)
-				
-			write_con(con_path, data, labels[t])
+	for t in libml.bits(model.type):
+	    if t == libml.SVM:
+		helper.mkpath(os.path.join(args.output, "svm"))
+		con_path = os.path.join(path, "svm", con)
+	    if t == libml.LIN:
+		helper.mkpath(os.path.join(args.output, "lin"))
+		con_path = os.path.join(path, "lin", con)
+	    if t == libml.CRF:
+		helper.mkpath(os.path.join(args.output, "crf"))
+		con_path = os.path.join(path, "crf", con)
+		    
+            # Output the concept predictions
+	    note.write_i2b2(con_path, labels[t])
+	    #note.write_plain(con_path, labels[t])   # in case of plain format
+
 
 if __name__ == '__main__':
-	main()
+    main()
