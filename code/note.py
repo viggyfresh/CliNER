@@ -11,6 +11,9 @@ help manipulate such files as well.
 
 from __future__ import with_statement
 
+
+# This is a test
+
 class Note:
 	"""Note representation.
 
