@@ -1,9 +1,3 @@
-"""Contains Model class and all feature generation methods.
-"""
-# TODO: feature generation should be separated into a separate file.
-# TODO: implement feature extraction using scikit-learn
-# TODO: make model serializable so that reading/writing is trivial
-
 from __future__ import with_statement
 
 import time
@@ -47,6 +41,7 @@ class Model:
 		model.filename = filename
 		return model
 
+        # Constructor
 	def __init__(self, filename='awesome.model', type=libml.ALL):
 		model_directory = os.path.dirname(filename)
 
@@ -59,54 +54,104 @@ class Model:
 		
 		self.enabled_features = Model.sentence_features | Model.word_features
 	
-	def train(self, data, labels):
+        
+        # Model::train()
+        #
+        # @param note. A Note object that has data for training the model
+	def train(self, note):
+
+		# Get the data and annotations from the Note object
+
+		# data   - A list of list of the medical text's words
+		# labels - A list of list of concepts (1:1 with data)
+		data   = note.txtlist()
+		labels = note.conlist()
+
+
+                # rows is a list of a list of hash tables
 		rows = []
 		for sentence in data:
 			rows.append(self.features_for_sentence(sentence))
-
+ 
+                # each list of hash tables
 		for row in rows:
+                        # each hash table
 			for features in row:
+                                # each key in hash table
 				for feature in features:
+                                        # I think new word encountered
 					if feature not in self.vocab:
 						self.vocab[feature] = len(self.vocab) + 1
 
+                # A list of a list encodings of concept labels (ex. 'none' => 0)
+                # [ [0, 0, 0], [0], [0, 0, 0], [0], [0, 0, 0, 0, 0, 2, 2, 0, 1] ]
 		label_lu = lambda l: Model.labels[l]
 		labels = [map(label_lu, x) for x in labels]
-		
+
+	
+                # list of a list of hash tables (all keys & values now numbers)
 		feat_lu = lambda f: {self.vocab[item]:f[item] for item in f}
 		rows = [map(feat_lu, x) for x in rows]
 		
+
 		libml.write_features(self.filename, rows, labels, self.type)
 
 		with open(self.filename, "w") as model:
 			pickle.dump(self, model)
 
+                # Train the model
 		libml.train(self.filename, self.type)
 
+
 		
-	def predict(self, data):
-		rows = []
+        # Model::predict()
+        #
+        # @param note. A Note object that contains the training data
+	def predict(self, note):
+
+	    # data - A list of list of the medical text's words
+	    data = note.txtlist()
+            
+
+	    # Something to do with calibrating the model
+	    rows = []   # rows <- list of a list of hash tables (feature vectors)
+	    for sentence in data:
+		rows.append(self.features_for_sentence(sentence))
+
+
+	    feat_lu = lambda f: {self.vocab[item]:f[item] for item in f if item in self.vocab}
+	    rows = [map(feat_lu, x) for x in rows]
+	    libml.write_features(self.filename, rows, None, self.type);
+
+            # Use the trained model to make predictions
+    	    libml.predict(self.filename, self.type)
+
+		
+            # A hash table
+	    # the keys are 1,2,4 (SVM, LIN, and CRF)
+	    # each value is a list of concept labels encodings
+	    labels_list = libml.read_labels(self.filename, self.type)
+		
+
+            # translate labels_list into a readable format
+            # ex. change all occurences of 0 -> 'none'
+	    for t, labels in labels_list.items():
+		tmp = []
 		for sentence in data:
-			rows.append(self.features_for_sentence(sentence))
+		    tmp.append([labels.pop(0) for i in range(len(sentence))])
+		    tmp[-1] = map(lambda l: l.strip(), tmp[-1])
+		    tmp[-1] = map(lambda l: Model.reverse_labels[int(l)],tmp[-1])
+		    labels_list[t] = tmp
 
-		feat_lu = lambda f: {self.vocab[item]:f[item] for item in f if item in self.vocab}
-		rows = [map(feat_lu, x) for x in rows]
-		libml.write_features(self.filename, rows, None, self.type);
 
-		libml.predict(self.filename, self.type)
-		
-		labels_list = libml.read_labels(self.filename, self.type)
-		
-		for t, labels in labels_list.items():
-			tmp = []
-			for sentence in data:
-				tmp.append([labels.pop(0) for i in range(len(sentence))])
-				tmp[-1] = map(lambda l: l.strip(), tmp[-1])
-				tmp[-1] = map(lambda l: Model.reverse_labels[int(l)], tmp[-1])
-			labels_list[t] = tmp
+            # The new labels_list is a translated version
+	    return labels_list
 
-		return labels_list
 
+
+
+        # input:  A sentence from a medical text file (list of words)
+        # output: A list of hash tables
 	def features_for_sentence(self, sentence):
 		features_list = []
 
@@ -169,10 +214,19 @@ class Model:
 		
 		return features_list
 
+
+
+        # input:  a single word, like 
+        #         Admission
+        # output: A hash table of features
+        #         features include: word, length, mitre, stem_porter
 	def features_for_word(self, word):
 		features = {'dummy':1}	# always have >0 dimensions
 
+                # word_shape, word, length, mitre, stem_porter, stem_lancaster
 		for feature in Model.word_features:
+
+                        # word_shape, test_result, word, pos, next, length, stem_wordnet, mitre, stem_porter, prev, stem_lancaster
 			if feature not in self.enabled_features:
 				continue
 
