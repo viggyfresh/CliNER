@@ -1,6 +1,5 @@
 import os
 import os.path
-import sys
 import glob
 import argparse
 import helper
@@ -10,60 +9,61 @@ from sets import Set
 from model import Model
 from note import *
 
+
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-t", 
-	dest = "txt", 
-	help = "The files that contain the training examples",
-	#default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/txt/*')
-	default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/beth/txt/record-33.txt')
+    parser.add_argument("-t",
+        dest = "txt",
+        help = "The files that contain the training examples",
+        #default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/txt/*')
+        default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/beth/txt/record-33.txt')
     )
-	
-    parser.add_argument("-c", 
-	dest = "con", 
-	help = "The files that contain the labels for the training examples",
-	#default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/concept/*')
-	default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/beth/concept/record-33.txt')
+
+    parser.add_argument("-c",
+        dest = "con",
+        help = "The files that contain the labels for the training examples",
+        #default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/concept/*')
+        default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/beth/concept/record-33.txt')
     )
-	
+
     parser.add_argument("-m",
-	dest = "model",
-	help = "Path to the model that should be generated",
-	#default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../models/awesome.model')
-	default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../models/run_models/run.model')
+        dest = "model",
+        help = "Path to the model that should be generated",
+        #default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../models/awesome.model')
+        default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../models/run_models/run.model')
     )
 
     parser.add_argument("-d",
-	dest = "disabled_features",
-	help = "The features that should not be used",
-	nargs = "+",
-	default = None
+        dest = "disabled_features",
+        help = "The features that should not be used",
+        nargs = "+",
+        default = None
     )
 
     parser.add_argument("-e",
-	dest = "enabled_features",
-	help = "The features that should be used. This option trumps -d",
-	nargs = "+",
-	default = None
+        dest = "enabled_features",
+        help = "The features that should be used. This option trumps -d",
+        nargs = "+",
+        default = None
     )
 
     parser.add_argument("--no-svm",
-	dest = "no_svm",
-	action = "store_true",
-	help = "Disable SVM model generation",
+        dest = "no_svm",
+        action = "store_true",
+        help = "Disable SVM model generation",
     )
 
     parser.add_argument("--no-lin",
-	dest = "no_lin",
-	action = "store_true",
-	help = "Disable LIN model generation",
+        dest = "no_lin",
+        action = "store_true",
+        help = "Disable LIN model generation",
     )
 
     parser.add_argument("--no-crf",
-	dest = "no_crf",
-	action = "store_true",
-	help = "Disable CRF model generation",
+        dest = "no_crf",
+        action = "store_true",
+        help = "Disable CRF model generation",
     )
 
 
@@ -86,23 +86,21 @@ def main():
     # ex. training_list =  [ ('record-13.txt', 'record-13.con') ]
     training_list = []
     for k in txt_files_map:
-	if k in con_files_map:
-	    training_list.append((txt_files_map[k], con_files_map[k]))
+        if k in con_files_map:
+            training_list.append((txt_files_map[k], con_files_map[k]))
 
         # TEMP - useful for when I was reading in XML files
         #training_list.append(txt_files_map[k])
 
 
-
     # What kind of model should be used? (ex. SVM vs. CRF)
     type = 0
     if not args.no_svm:
-	type = type | libml.SVM
+        type = type | libml.SVM
     if not args.no_lin:
-	type = type | libml.LIN
+        type = type | libml.LIN
     if not args.no_crf:
-	type = type | libml.CRF
-	
+        type = type | libml.CRF
 
 
     # Read the data into a Note object
@@ -115,16 +113,16 @@ def main():
 
         note_tmp = Note()                # Create Note
         note_tmp.read_i2b2(txt, con)     # Read data into Note
-	notes.append( note_tmp )         # Add the Note to the list
+        notes.append(note_tmp)         # Add the Note to the list
 
 
     # Create a Machine Learning model
     model = Model(filename = args.model, type = type)
-	
+
     if args.disabled_features != None:
-	model.enabled_features = model.enabled_features - Set(args.disabled_features)
+        model.enabled_features = model.enabled_features - Set(args.disabled_features)
     if args.enabled_features != None:
-	model.enabled_features = Set(args.enabled_features)		
+        model.enabled_features = Set(args.enabled_features)
 
 
     # Train the model using the Note's data
