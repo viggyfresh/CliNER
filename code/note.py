@@ -48,7 +48,7 @@ class Note:
                     start = int(start[1])
                     end = int(end[1])
 
-                    for i in range( len(self.concepts[l]) ):
+                    for i in range( start, end+1 ):
                         self.concepts[l][i] = t
 
 
