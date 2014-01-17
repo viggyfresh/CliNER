@@ -18,6 +18,17 @@ from wordshape import *
 
 import libml
 
+
+#count = 0
+#count2 = 0
+#def my_sort(pair1, pair2):
+#    a = pair1[0][0]
+#    b = pair2[0][0]
+#    if a == b: return 0
+#    if a <  b: return -1
+#    return 1
+
+
 class Model:
     sentence_features = ImmutableSet(["pos", "stem_wordnet", "test_result", "prev", "next"])
     word_features = ImmutableSet(["word", "length", "mitre", "stem_porter", "stem_lancaster", "word_shape"])
@@ -73,15 +84,55 @@ class Model:
         for sentence in data:
             rows.append(self.features_for_sentence(sentence))
  
-        # each list of hash tables
+        #print "\n" + "-" * 80 + "\n"
+        #print "len(rows)"
+        #print len(rows)
+
+        #print "\n" + "-" * 80 + "\n"
+        #print "rows[0]"
+        #for elem in rows[0]:
+        #    for it in sorted(elem.items(),my_sort) : print it
+        #    print "\n"
+        #print "\n" + "-" * 80 + "\n"
+
+        #print "\n" + "-" * 80 + "\n"
+        #print "len(rows[0])"
+        #print len(rows[0])
+        #print "\n" + "-" * 80 + "\n"
+
+        #print "rows[0][0]"
+        #print rows[0][0]
+        #print "\n" + "-" * 80 + "\n"
+
+        #print "self.vocab"
+        #print self.vocab
+        #print "\n" + "-" * 80 + "\n"
+        #print "\n" * 4
+
+
+        # each list of hash tables (one list per line in file)
         for row in rows:
-            # each hash table
+            # each hash table (one hash table per word in the line)
             for features in row:
-                # each key in hash table
+                # each key (tuple) pair in hash table (one key per feature)
                 for feature in features:
-                    # I think new word encountered
+                    # assigning a unique number to each feature
+                    # ex. Here are three key,value pairs that go into self.vocab
+                    # (('word_shape4', 'WT-Xx'), 2)
+                    # (('next_pos', 'NNP'), 3)
+                    # (('next_word', 'Date'), 4)
                     if feature not in self.vocab:
                         self.vocab[feature] = len(self.vocab) + 1
+
+        #def tmp_sort(pair1, pair2):
+        #    return pair1[1] - pair2[1]
+
+        #print "self.vocab"
+        #print self.vocab
+        #print "\n" + "-" * 80 + "\n"
+        #for elem in sorted( self.vocab.items(), tmp_sort ) : print elem
+        #print "\n" + "-" * 80 + "\n"
+
 
         # A list of a list encodings of concept labels (ex. 'none' => 0)
         # [ [0, 0, 0], [0], [0, 0, 0], [0], [0, 0, 0, 0, 0, 2, 2, 0, 1] ]
@@ -93,7 +144,6 @@ class Model:
         feat_lu = lambda f: {self.vocab[item]:f[item] for item in f}
         rows = [map(feat_lu, x) for x in rows]
         
-
         libml.write_features(self.filename, rows, labels, self.type)
 
         with open(self.filename, "w") as model:
@@ -106,15 +156,17 @@ class Model:
         
     # Model::predict()
     #
-    # @param note. A Note object that contains the training data
+    # @param note. A Note object that contains the data
     def predict(self, note):
 
         # data - A list of list of the medical text's words
         data = note.txtlist()
-            
 
-        # Something to do with calibrating the model
-        rows = []   # rows <- list of a list of hash tables (feature vectors)
+        # rows <- list of a list of hash tables
+        # each list of hash tables (one list per line in file)
+        # each hash table (one hash table per word in the line)
+        # each key (tuple) pair in hash table (one key per feature)
+        rows = []   
         for sentence in data:
             rows.append(self.features_for_sentence(sentence))
 
@@ -128,10 +180,15 @@ class Model:
 
         
         # A hash table
-        # the keys are 1,2,4 (SVM, LIN, and CRF)
+        # the keys are 1,2,4 (LIN, CRF, and SVM)
         # each value is a list of concept labels encodings
         labels_list = libml.read_labels(self.filename, self.type)
         
+
+        print "labels_list"
+        print labels_list
+        print "\n" + "-" * 80
+
 
         # translate labels_list into a readable format
         # ex. change all occurences of 0 -> 'none'
@@ -143,20 +200,69 @@ class Model:
                 tmp[-1] = map(lambda l: Model.reverse_labels[int(l)],tmp[-1])
                 labels_list[t] = tmp
 
+        print "labels_list"
+        print labels_list
+        print "\n" + "-" * 80
+
+
+        # Group classified tokens based on adjacency
+        nontrivial_concepts = ImmutableSet( ['treatment', 'problem', 'test'] )
+        tmp_hash = {}
+        for t,labels in labels_list.items():
+
+            tmp = [] # Stores a list of classifications
+                     #    A classification is a 4-tuple:
+                     #    (concept, lineno, starttok, endtok)
+            start_ind = 0
+            end_ind   = 0
+            streak = 0 # To keep count of the streak of classified tokens
+            for i, concept_line in enumerate(labels):
+
+                # C-style array indexing. Probably could be done a better way
+                # used because I needed the ability of lookahead
+                for j in range(len(concept_line)):
+
+                    # Non-trivial classification
+                    if concept_line[j] in nontrivial_concepts:
+                    
+                        # Increase size of current streak
+                        streak  += 1
+             
+                        # lookahead (check if streak will continue)
+                        if (j+1 == len(concept_line))or \
+                           (concept_line[j] != concept_line[j+1]):
+                               # Add streak
+                               tmp.append((concept_line[j], i+1, j-streak+1, j))
+                               # Reset count
+                               streak = 0
+
+            tmp_hash[t] = tmp
+
+
+        print tmp_hash
+        print "\n" + "-" * 80
 
         # The new labels_list is a translated version
-        return labels_list
+        #return labels_list
+        return tmp_hash
 
 
 
-
-    # input:  A sentence from a medical text file (list of words)
-    # output: A list of hash tables
+    # Model::feature_for_sentence
+    #
+    # input:  A sentence/line from a medical text file (list of words)
+    # output: A list of hash tables (one hash table per word)
     def features_for_sentence(self, sentence):
+
+        # Question! -  What do the values of each key,value pair represent?
+
+        #global count
+
         features_list = []
 
         for word in sentence:
             features_list.append(self.features_for_word(word))
+
 
         tags = None
         for feature in Model.sentence_features:
@@ -164,10 +270,22 @@ class Model:
                 continue
 
             if feature == "pos":
+
                 tags = tags or nltk.pos_tag(sentence)
+
                 for i, features in enumerate(features_list):
                     tag = tags[i][1]
                     features[(feature, tag)] = 1
+
+                #if count == 0:
+                #    print "tags"
+                #    print tags
+                #    print "\n" + "-" * 80 + "\n"
+                #    print "feature_list\n"
+                #    for it in features_list:
+                #        for elem in sorted(it.items(),my_sort) : print elem
+                #        print ""
+                #    print "\n" + "-" * 80 + "\n"
                     
             if feature == "stem_wordnet":
                 tags = tags or nltk.pos_tag(sentence)
@@ -211,6 +329,13 @@ class Model:
         merged = lambda d1, d2: dict(d1.items() + d2.items())
         features_list = [merged(features_list[i], ngram_features[i]) 
             for i in range(len(features_list))]
+
+        #if count == 0:
+        #    #print "\n" + "-" * 80
+        #    #print "features_list"
+        #    #for elem in features_list : print elem
+        #    #print "\n" + "-" * 80
+        #    count = 1
         
         return features_list
 
@@ -221,6 +346,9 @@ class Model:
     # output: A hash table of features
     #         features include: word, length, mitre, stem_porter
     def features_for_word(self, word):
+
+        #global count2
+
         features = {'dummy':1}    # always have >0 dimensions
 
         # word_shape, word, length, mitre, stem_porter, stem_lancaster
@@ -255,6 +383,13 @@ class Model:
                 
             if feature == "word_shape":
                 wordShapes = getWordShapes(word)
+
+                #if count2 < 3:
+                #    #print "word:       ", word
+                #    #print "wordShapes: ", wordShapes
+                #    #print "\n" + "-" * 80
+                #    print ''
+
                 for i, shape in enumerate(wordShapes):
                     features[(feature + str(i), shape)] = 1
                     
@@ -279,7 +414,12 @@ class Model:
             if feature == "def_class":
                 features[(feature, None)] = self.get_def_class(word)
 
+        #if count2 < 3:
+        #    count2 += 1
+
         return features
+
+
 
     mitre_features = {
         "INITCAP" : r"^[A-Z].*$",
@@ -302,6 +442,8 @@ class Model:
         "DATESEPERATOR" : r"^[-/]$",
     }
     
+
+
     def is_test_result (self, context):
         # note: make spaces optional? 
         regex = r"^[A-Za-z]+( )*(-|--|:|was|of|\*|>|<|more than|less than)( )*[0-9]+(%)*"
