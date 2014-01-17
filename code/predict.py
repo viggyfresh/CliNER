@@ -73,11 +73,10 @@ def main():
         note.read_i2b2(txt)
 
         # Use the model to predict the concept labels
+        # Returns a hash table with:
+        #     keys as 1,2,4 (SVM, LIN, CRF)
+        #     values as list of list of concept tokens (one-to-one with dat_list)
         labels = model.predict(note)
-
-        # labels (above) is a hash table
-        # the keys are 1,2,4 (SVM, LIN, and CRF)
-        # each value is a list of concept labels, like from the Note class
 
 
         con = os.path.split(txt)[-1]
