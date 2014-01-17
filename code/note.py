@@ -9,8 +9,10 @@ class Note:
     def __init__(self):
         # data     - A list of lines directly from the file
         # concepts - A one-to-one correspondence of each word's concept
+        # classifications - A list of tuples that convey concept labels
         self.data     = []
         self.concepts = []
+        self.classifications = []
 
 
 
@@ -26,49 +28,87 @@ class Note:
                 # Add sentence to the data list
                 self.data.append(line)
 
-                # For each word, store a corresponding concept label
-                tmp = []
-                for word in line.split():
-                    tmp.append('none')
-                self.concepts.append(tmp)
-
-
 
         # If an accompanying concept file was specified, read it
         if con:
             with open(con) as f:
                 for line in f:
-                    c, t = line.split('||')
-                    t = t[3:-2]
-                    c = c.split()
-                    start = c[-2].split(':')
-                    end = c[-1].split(':')
+
+                    # concept
+                    prefix, suffix = line.split('||')
+                    txt = prefix.split()
+                    con = suffix[3:-2]
+
+                    start = txt[-2].split(':')
+                    end   = txt[-1].split(':')
+
                     assert "concept spans one line", start[0] == end[0]
-                    l = int(start[0]) - 1
+
+                    # lineno
+                    l = int(start[0])
+
+                    # starttok
+                    # endtok
                     start = int(start[1])
                     end = int(end[1])
 
-                    for i in range( start, end+1 ):
-                        self.concepts[l][i] = t
+                    # Add the classification to the Note object
+                    self.classifications.append( (con,l,start,end) )
+
+                    #print "\n" + "-" * 80
 
 
 
     # Note::write_i2b2()
     #
     # @param  con.    A path to the file of where to write the prediction.
-    # @param  labels. A list of predictions of labels for the given text.
+    # @param  labels. A list of classifications
     #
     # Write the concept predictions to a given file in i2b2 format
     def write_i2b2(self, con, labels):
 
+        # List of list of words (line-by-line)
+        tlist = self.txtlist()
+
+        #for i, elem in enumerate(self.data):
+        #    print i, ": ", elem
+
         with open(con, 'w') as f:
-            for i, tmp in enumerate(zip(self.txtlist(), labels)):
-                datum, label = tmp
-                for j, tmp in enumerate(zip(datum, label)):
-                    datum, label = tmp
-                    if label != 'none':
-                        idx = "%d:%d" % (i + 1, j)
-                        print >>f, "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx, idx, label)
+
+            for classification in labels:
+
+                    # Ensure 'none' classifications are skipped
+                    if classification[0] == 'none':
+                        continue
+
+                    concept = classification[0]
+                    lineno  = classification[1]
+                    start   = classification[2]
+                    end     = classification[3]
+
+                    # A list of words (corresponding line from the text file)
+                    text = tlist[lineno-1]
+
+                    #print "\n" + "-" * 80
+                    #print "start:       ", start
+                    #print "text:        ", text
+                    #print "text[start]: ", text[start]
+
+                    # The text string of words that has been classified
+                    datum = text[start]
+                    for j in range(start, end):
+                        datum += " " + text[j+1] 
+
+                    # Line:TokenNumber of where the concept starts and ends
+                    idx1 = "%d:%d" % (lineno, start)
+                    idx2 = "%d:%d" % (lineno, end  )
+
+                    # Classification
+                    label = concept
+
+                    # Print format
+                    print >>f, "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx1, idx2, label)
+                    print "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx1, idx2, label)
 
 
 
@@ -236,6 +276,39 @@ class Note:
     #
     # @return a list of lists of the concepts associated with each word from data
     def conlist( self ):
+
+        # Cached for later calls
+        if self.concepts: return self.concepts
+
+        # For each word, store a corresponding concept label
+        # Initially, all labels will be stored as 'none'
+        for line in self.data:
+            tmp = []
+            for word in line.split():
+                tmp.append('none')
+            self.concepts.append(tmp)
+
+        #for i, elem in enumerate(self.data):
+        #    print i, ": ", elem
+
+        # Use the classifications to correct all mislabled 'none's
+        for classification in self.classifications:
+
+            #print "classification:    ", classification
+            #print "classification[0]: ", classification[0]
+            #print "classification[1]: ", classification[1]
+            #print "classification[2]: ", classification[2]
+            #print "classification[3]: ", classification[3]
+
+            concept = classification[0]
+            lineno  = classification[1] - 1
+            start   = classification[2]
+            end     = classification[3]            
+
+            self.concepts[lineno][start] = concept
+            for i in range(start, end):
+                self.concepts[lineno][i+1] = concept
+
         return self.concepts
 
 
