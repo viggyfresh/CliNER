@@ -7,8 +7,8 @@ class Note:
 
     # Constructor
     def __init__(self):
-	# data     - A list of lines directly from the file
-	# concepts - A one-to-one correspondence of each word's concept
+        # data     - A list of lines directly from the file
+        # concepts - A one-to-one correspondence of each word's concept
         self.data     = []
         self.concepts = []
 
@@ -21,35 +21,35 @@ class Note:
     def read_i2b2(self, txt, con=None):
 
         # Read in the medical text
-	with open(txt) as f:
-	    for line in f:
-		# Add sentence to the data list
+        with open(txt) as f:
+            for line in f:
+                # Add sentence to the data list
                 self.data.append(line)
 
-		# For each word, store a corresponding concept label
-		tmp = []
-		for word in line.split():
-		    tmp.append('none')
-		self.concepts.append(tmp)
+                # For each word, store a corresponding concept label
+                tmp = []
+                for word in line.split():
+                    tmp.append('none')
+                self.concepts.append(tmp)
 
 
 
         # If an accompanying concept file was specified, read it
-	if con:
-	    with open(con) as f:
-		for line in f:
-		    c, t = line.split('||')
-		    t = t[3:-2]
-		    c = c.split()
-		    start = c[-2].split(':')
-		    end = c[-1].split(':')
-		    assert "concept spans one line", start[0] == end[0]
-		    l = int(start[0]) - 1
-		    start = int(start[1])
-		    end = int(end[1])
+        if con:
+            with open(con) as f:
+                for line in f:
+                    c, t = line.split('||')
+                    t = t[3:-2]
+                    c = c.split()
+                    start = c[-2].split(':')
+                    end = c[-1].split(':')
+                    assert "concept spans one line", start[0] == end[0]
+                    l = int(start[0]) - 1
+                    start = int(start[1])
+                    end = int(end[1])
 
-		    for i in range(start, end + 1):
-			self.concepts[l][i] = t
+                    for i in range( start, end+1 ):
+                        self.concepts[l][i] = t
 
 
 
@@ -61,14 +61,14 @@ class Note:
     # Write the concept predictions to a given file in i2b2 format
     def write_i2b2(self, con, labels):
 
-	with open(con, 'w') as f:
-	    for i, tmp in enumerate(zip(self.txtlist(), labels)):
-		datum, label = tmp
-		for j, tmp in enumerate(zip(datum, label)):
-		    datum, label = tmp
-		    if label != 'none':
-			idx = "%d:%d" % (i + 1, j)
-			print >>f, "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx, idx, label)
+        with open(con, 'w') as f:
+            for i, tmp in enumerate(zip(self.txtlist(), labels)):
+                datum, label = tmp
+                for j, tmp in enumerate(zip(datum, label)):
+                    datum, label = tmp
+                    if label != 'none':
+                        idx = "%d:%d" % (i + 1, j)
+                        print >>f, "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx, idx, label)
 
 
 
@@ -79,42 +79,42 @@ class Note:
     def read_plain(self, txt, con=None):
 
         # Read in the medical text
-	with open(txt) as f:
+        with open(txt) as f:
 
             for line in f:
-		# Add sentence to the data list
-		self.data.append(line)
+                # Add sentence to the data list
+                self.data.append(line)
 
-		# For each word, store a corresponding concept label
-		tmp = []
-		for word in line.split():
-		    tmp.append('none')
-		self.concepts.append(tmp)
+                # For each word, store a corresponding concept label
+                tmp = []
+                for word in line.split():
+                    tmp.append('none')
+                self.concepts.append(tmp)
 
 
         # If an accompanying concept file was specified, read it
-	if con:
-	    with open(con) as f:
-		for line in f:
-		    c, t = line.split('||')
-		    t = t[3:-2]
-		    c = c.split()
+        if con:
+            with open(con) as f:
+                for line in f:
+                    c, t = line.split('||')
+                    t = t[3:-2]
+                    c = c.split()
 
-		    start = c[-2].split(':')
-		    end = c[-1].split(':')
+                    start = c[-2].split(':')
+                    end = c[-1].split(':')
 
-		    assert "concept spans one line", start[0] == end[0]
-		    l = int(start[0]) - 1
-		    start = int(start[1])
-		    end = int(end[1])
+                    assert "concept spans one line", start[0] == end[0]
+                    l = int(start[0]) - 1
+                    start = int(start[1])
+                    end = int(end[1])
 
                     # Tokenize the input intervals
                     stok = len(self.data[l][:start].split())
                     etok = len(self.data[l][start:end+1].split()) + stok - 1
 
                     # Update the corresponding concept labels
-		    for i in range(stok, etok + 1):
-	               self.concepts[l][i] = t
+                    for i in range(stok, etok + 1):
+                        self.concepts[l][i] = t
 
 
 
@@ -179,7 +179,7 @@ class Note:
                 tmp = []
                 for i, group in enumerate(line.split('<')):
                     # All odd groups have label info (because of line split)
-		    # ex. 'treatment>discharge medications'
+                    # ex. 'treatment>discharge medications'
                     if (i%2):
                         # Get concept label
                         match = re.search('(\w+)>(.+)', group)
@@ -196,7 +196,7 @@ class Note:
                     # If even group , then process with 'none' labels
                     else:
                         for word in group.split():
-			    # / closes the xml tag of a previous label (skip)
+                # / closes the xml tag of a previous label (skip)
                             if word[0] == '/':
                                 continue
                             else:
@@ -236,10 +236,10 @@ class Note:
     #
     # @return a list of lists of the concepts associated with each word from data
     def conlist( self ):
-	return self.concepts
+        return self.concepts
 
 
 
     # For iterating
     def __iter__(self):
-	return iter(self.data)
+        return iter(self.data)
