@@ -52,9 +52,9 @@ class Model:
     
 
 
-        # Model::train()
-        #
-        # @param note. A Note object that has data for training the model
+    # Model::train()
+    #
+    # @param note. A Note object that has data for training the model
     def train(self, note):
 
         # Get the data and annotations from the Note object
