@@ -10,9 +10,11 @@ class Note:
         # data     - A list of lines directly from the file
         # concepts - A one-to-one correspondence of each word's concept
         # classifications - A list of tuples that convey concept labels
-        self.data     = []
-        self.concepts = []
+        # boundaries      - A one-to-one correspondence of each word's BIO status
+        self.data            = []
+        self.concepts        = []
         self.classifications = []
+        self.boundaries      = []
 
 
 
@@ -27,6 +29,9 @@ class Note:
             for line in f:
                 # Add sentence to the data list
                 self.data.append(line)
+
+                # Make put a temporary 'O' in each spot
+                self.boundaries.append( ['O' for _ in line.split()] )
 
 
         # If an accompanying concept file was specified, read it
@@ -50,10 +55,23 @@ class Note:
                     # starttok
                     # endtok
                     start = int(start[1])
-                    end = int(end[1])
+                    end   = int(  end[1])
 
                     # Add the classification to the Note object
                     self.classifications.append( (con,l,start,end) )
+
+                    #print "txt:   ", txt
+                    #print "l:     ", l
+                    #print "start: ", start
+                    #print "end:   ", end
+                    #print "line:  ", self.data[l-1]
+
+                    # Beginning of a concept
+                    self.boundaries[l-1][start] = 'B'
+
+                    # Inside of a concept
+                    for i in range(start,end):
+                        self.boundaries[l-1][i+1] = 'I'
 
                     #print "\n" + "-" * 80
 
@@ -72,6 +90,7 @@ class Note:
 
         #for i, elem in enumerate(self.data):
         #    print i, ": ", elem
+
 
         with open(con, 'w') as f:
 
@@ -108,8 +127,45 @@ class Note:
 
                     # Print format
                     print >>f, "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx1, idx2, label)
-                    print "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx1, idx2, label)
+                    #print "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx1, idx2, label)
 
+
+
+    # Note::write_BIOs_labels()
+    #
+    # @param  _.      Filename. Ignore it.
+    # @param  labels. A list of list of BIOs labels
+    #
+    # Print the prediction of BIOs concept boundary classification
+    def write_BIOs_labels(self, _, labels):
+
+        # List of list of words (line-by-line)
+        text = self.txtlist()
+
+        for i, concept_line in enumerate(labels):
+    
+            # stores the current streak
+            queue = [] 
+
+            # C-style array indexing. Probably could be done a better way.
+            # Used because I needed the ability of lookahead
+            for j in range(len(concept_line)):
+    
+                # Beginning of a concept boundary
+                if concept_line[j] != 'O':
+    
+                    # Increase size of current streak
+                    queue.append(text[i][j])
+    
+                    # lookahead (check if streak will continue)
+                    if (j+1 == len(concept_line))or \
+                       (concept_line[j+1] != 'I'):
+                           print '%d:%d %d:%d' % (i+1,j-len(queue)+1,i+1,j)
+                           print ' '.join(queue)
+                           print ''
+                           # Reset streak
+                           queue = []
+        
 
 
     # Note::read_plain()
@@ -311,6 +367,13 @@ class Note:
 
         return self.concepts
 
+
+
+    # boundaries()
+    #
+    # @return a list of lists of the BIO vals associated with each word from data
+    def boundlist( self ):
+        return self.boundaries
 
 
     # For iterating
