@@ -1,41 +1,15 @@
 from __future__ import with_statement
 
-import time
 import os
 import pickle
-import re
-import subprocess
-import sys
-import nltk
-import nltk.corpus.reader
-import nltk.stem
 import helper
-
-from sets import Set
-from sets import ImmutableSet
-
-from wordshape import *
-
 import libml
 
+import clicon_features
 
-#count = 0
-#count2 = 0
-#def my_sort(pair1, pair2):
-#    a = pair1[0][0]
-#    b = pair2[0][0]
-#    if a == b: return 0
-#    if a <  b: return -1
-#    return 1
 
 
 class Model:
-    sentence_features = ImmutableSet(["pos", "stem_wordnet", "test_result", "prev", "next"])
-    word_features = ImmutableSet(["word", "length", "mitre", "stem_porter", "stem_lancaster", "word_shape"])
-    # THESE ARE FEATURES I TRIED THAT DON'T LOOK THAT PROMISING
-    # I have some faith in "metric_unit" and "has_problem_form"
-    # "radial_loc" may be too rare and "def_class" could be over fitting
-    # "metric_unit", "radial_loc", "has_problem_form", "def_class"
     
     labels = {
         "none":0,
@@ -45,12 +19,24 @@ class Model:
     }
     reverse_labels = {v:k for k, v in labels.items()}
     
+
+
+    # IOBs labels
+    IOBs_labels = {
+        'O':0,
+        'B':1,
+        'I':2
+    }
+    reverse_IOBs_labels = {v:k for k,v in IOBs_labels.items()}
+
+
     @staticmethod
     def load(filename='awesome.model'):
         with open(filename) as model:
             model = pickle.load(model)
         model.filename = filename
         return model
+
 
     # Constructor
     def __init__(self, filename='awesome.model', type=libml.ALL):
@@ -61,96 +47,178 @@ class Model:
 
         self.filename = os.path.realpath(filename)
         self.type = type
-        self.vocab = {}
+        self.IOB_vocab = {}
+        self.concept_vocab = {}
         
-        self.enabled_features = Model.sentence_features | Model.word_features
     
+
         
     # Model::train()
     #
-    # @param note. A Note object that has data for training the model
-    def train(self, note):
+    # @param notes. A Note object that has data for training the model
+    def train(self, notes):
 
         # Get the data and annotations from the Note object
 
         # data   - A list of list of the medical text's words
         # labels - A list of list of concepts (1:1 with data)
-        data   = note.txtlist()
-        labels = note.conlist()
+        data   = []
+        labels = []
+        chunks = []
+        for note in notes:
+            data   += note.txtlist()
+            labels += note.conlist()
+            chunks += note.boundlist()
 
 
-        # rows is a list of a list of hash tables
-        rows = []
-        for sentence in data:
-            rows.append(self.features_for_sentence(sentence))
- 
-        #print "\n" + "-" * 80 + "\n"
-        #print "len(rows)"
-        #print len(rows)
+        # Create object that is a wrapper for the features
+        feat_obj = clicon_features.FeatureWrapper(data)
 
-        #print "\n" + "-" * 80 + "\n"
-        #print "rows[0]"
-        #for elem in rows[0]:
-        #    for it in sorted(elem.items(),my_sort) : print it
-        #    print "\n"
-        #print "\n" + "-" * 80 + "\n"
 
-        #print "\n" + "-" * 80 + "\n"
-        #print "len(rows[0])"
-        #print len(rows[0])
-        #print "\n" + "-" * 80 + "\n"
-
-        #print "rows[0][0]"
-        #print rows[0][0]
-        #print "\n" + "-" * 80 + "\n"
-
-        #print "self.vocab"
-        #print self.vocab
-        #print "\n" + "-" * 80 + "\n"
-        #print "\n" * 4
+        # IOB tagging 
+        prose    = []
+        nonprose = []
+        prose_line_numbers    = []
+        nonprose_line_numbers = []
+        for i,line in enumerate(data):
+            isProse,feats = feat_obj.IOB_features_for_sentence(line)
+            if isProse:
+                prose.append( feats )
+                prose_line_numbers.append(i)
+            else:
+                nonprose.append( feats )
+                nonprose_line_numbers.append(i)
 
 
         # each list of hash tables (one list per line in file)
-        for row in rows:
+        #for row in rows:
+        for row in prose + nonprose:
             # each hash table (one hash table per word in the line)
             for features in row:
                 # each key (tuple) pair in hash table (one key per feature)
                 for feature in features:
-                    # assigning a unique number to each feature
-                    # ex. Here are three key,value pairs that go into self.vocab
-                    # (('word_shape4', 'WT-Xx'), 2)
-                    # (('next_pos', 'NNP'), 3)
-                    # (('next_word', 'Date'), 4)
-                    if feature not in self.vocab:
-                        self.vocab[feature] = len(self.vocab) + 1
-
-        #def tmp_sort(pair1, pair2):
-        #    return pair1[1] - pair2[1]
-
-        #print "self.vocab"
-        #print self.vocab
-        #print "\n" + "-" * 80 + "\n"
-        #for elem in sorted( self.vocab.items(), tmp_sort ) : print elem
-        #print "\n" + "-" * 80 + "\n"
+                    # assigning a unique number to each (feature,value) pair
+                    if feature not in self.IOB_vocab:
+                        self.IOB_vocab[feature] = len(self.IOB_vocab) + 1
 
 
-        # A list of a list encodings of concept labels (ex. 'none' => 0)
-        # [ [0, 0, 0], [0], [0, 0, 0], [0], [0, 0, 0, 0, 0, 2, 2, 0, 1] ]
-        label_lu = lambda l: Model.labels[l]
-        labels = [map(label_lu, x) for x in labels]
+        # IOB labels
+        # A list of a list encodings of concept labels (ex. 'B' => 1)
+        # [ [0, 0, 0], [0], [0, 0, 0], [0], [0, 0, 0, 0, 0, 1, 2, 0, 1] ]
+        label_lu = lambda l: Model.IOBs_labels[l]
+        chunks = [map(label_lu, x) for x in chunks]
 
-    
         # list of a list of hash tables (all keys & values now numbers)
-        feat_lu = lambda f: {self.vocab[item]:f[item] for item in f}
-        rows = [map(feat_lu, x) for x in rows]
+        feat_lu = lambda f: {self.IOB_vocab[item]:f[item] for item in f}
+        prose = [map(feat_lu, x) for x in prose]
+        nonprose = [map(feat_lu, x) for x in nonprose]
         
-        libml.write_features(self.filename, rows, labels, self.type)
 
+        # Segregate chunks into 'Prose CHUNKS' and 'Nonprose CHUNKS'
+        prose_ind    = 0
+        nonprose_ind = 0
+        pchunks = []
+        nchunks = []
+        p_end_flag = False
+        n_end_flag = False
+        for i,line in enumerate(chunks):
+            if   (not p_end_flag) and (i == prose_line_numbers[prose_ind]):
+                pchunks.append(line)
+                prose_ind += 1
+                if prose_ind == len(prose_line_numbers): p_end_flag = True
+            elif (not n_end_flag) and (i == nonprose_line_numbers[nonprose_ind]):
+                nchunks.append(line)
+                nonprose_ind += 1
+                if nonprose_ind == len(nonprose_line_numbers): n_end_flag = True
+            else:
+                # Should never really get here
+                print 'Line #%d is neither prose nor nonprose!' % i
+                print line, '\n'
+
+
+        prose_model    = self.filename + '1'
+        nonprose_model = self.filename + '2'
+
+        libml.write_features(   prose_model,    prose, pchunks, self.type)
+        libml.write_features(nonprose_model, nonprose, nchunks, self.type)
+
+        libml.train(   prose_model, self.type)
+        libml.train(nonprose_model, self.type)
+
+
+        ####################
+        #    Second Pass   #
+        ####################
+
+
+        # IOB labels
+        # undo encodings of concept labels (ex. 1 => 'B')
+        label_lu = lambda l: Model.reverse_IOBs_labels[l]
+        chunks = [map(label_lu, x) for x in chunks]
+
+
+        # Merge 'B' words with its 'I's (and account for minor change in indices)
+        tmp = feat_obj.generate_chunks(data,chunks,labels)
+
+        # text_chunks    - a merged text (highly similiar to data, except merged)
+        # concept_chunks - one-to-one concept classification with text_chunks
+        # hits           - one-to-one concept token indices  with text_chunks
+        text_chunks, concept_chunks, hits = tmp
+
+
+        # rows is a list of a list of hash tables
+        # it is used for holding the features that will be used for training
+        rows = []
+        text_matches    = []
+        concept_matches = []
+        for hit in hits:
+            i,j = hit
+            rows.append(feat_obj.concept_features(text_chunks[i], j))
+
+            text_matches.append(text_chunks[i][j])
+            concept_matches.append(concept_chunks[i][j])
+
+
+        # each hash table (one hash table per word in the line)
+        for features in rows:
+            # each key (tuple) pair in hash table (one key per feature)
+            for feature in features:
+                # assigning a unique number to each (feature,value) pair
+                if feature not in self.concept_vocab:
+                    self.concept_vocab[feature] = len(self.concept_vocab) + 1
+
+
+        # Encode concept labels to numbers (ex. 'treatment' => 1)
+        # NOTE: There are no longer 'none' classifications
+        # ex. [1,2,1]
+        labels = []
+        for con in concept_matches:
+            #print con
+            tmp = Model.labels[con]
+            labels.append(tmp)
+
+
+        # Purpose: Encode something like ('chunk', 'rehabilitation') as a unique
+        #          number, as determined by the self.concept_vocab hash table
+        #feat_lu = lambda f: {self.concept_vocab[item]:f[item] for item in f}
+        #rows = [map(feat_lu, x) for x in rows]
+        tmp_rows = []
+        for fdict in rows:
+            #print fdict
+            tmp =  {self.concept_vocab[key]:fdict[key] for key in fdict}
+            tmp_rows.append(tmp)
+        rows = tmp_rows
+
+        # Write second pass model to file
+        second_pass_model = self.filename + '3'
+        libml.write_features(second_pass_model, [rows], [labels], self.type)
+        libml.train(second_pass_model, self.type)
+
+
+        # Pickle dump
         with open(self.filename, "w") as model:
             pickle.dump(self, model)
 
-        # Train the model
-        libml.train(self.filename, self.type)
 
 
         
@@ -162,357 +230,228 @@ class Model:
         # data - A list of list of the medical text's words
         data = note.txtlist()
 
-        # rows <- list of a list of hash tables
-        # each list of hash tables (one list per line in file)
-        # each hash table (one hash table per word in the line)
-        # each key (tuple) pair in hash table (one key per feature)
-        rows = []   
-        for sentence in data:
-            rows.append(self.features_for_sentence(sentence))
+        # A wrapper for features
+        feat_obj = clicon_features.FeatureWrapper(data)
+
+        # prose and nonprose - each store a list of sentence feature dicts
+        prose    = []
+        nonprose = []
+        prose_line_numbers    = []
+        nonprose_line_numbers = []
+        for i,line in enumerate(data):
+            # returns both the feature dict AND whether the sentence was prose
+            isProse,feats = feat_obj.IOB_features_for_sentence(line)
+            if isProse:
+                prose.append( feats )
+                prose_line_numbers.append(i)
+            else:
+                nonprose.append( feats )
+                nonprose_line_numbers.append(i)
 
 
-        feat_lu = lambda f: {self.vocab[item]:f[item] for item in f if item in self.vocab}
-        rows = [map(feat_lu, x) for x in rows]
-        libml.write_features(self.filename, rows, None, self.type);
+        # FIXME
+        # Not sure if this should be reset, but it makes sense to me to do it
+        # But why is it a data member if it shouldnt persist
+        self.IOB_vocab = {}
 
-        # Use the trained model to make predictions
-        libml.predict(self.filename, self.type)
+        # Create a mapping of each (feature,value) pair to a unique number
+        for row in prose + nonprose:
+            for features in row:
+                for feature in features:
+                    if feature not in self.IOB_vocab:
+                        self.IOB_vocab[feature] = len(self.IOB_vocab) + 1
 
+
+        # For applying the (key,value) mapping
+        feat_lu = lambda f: {self.IOB_vocab[item]:f[item] for item in f if item in self.IOB_vocab}
+
+
+        # Prose (predict, and read predictions)
+        prose = [map(feat_lu, x) for x in prose]
+        prose_model = self.filename + '1'
+
+        libml.write_features(prose_model, prose, None, self.type);
+        libml.predict(prose_model, self.type)
+
+        prose_labels_list = libml.read_labels(prose_model, self.type)
         
-        # A hash table
-        # the keys are 1,2,4 (LIN, CRF, and SVM)
-        # each value is a list of concept labels encodings
-        labels_list = libml.read_labels(self.filename, self.type)
-        
 
-        print "labels_list"
-        print labels_list
-        print "\n" + "-" * 80
+        # Nonprose (predict, and read predictions)
+        nonprose = [map(feat_lu, x) for x in nonprose]
+        nonprose_model = self.filename + '2'
+
+        libml.write_features(nonprose_model, nonprose, None, self.type);
+        libml.predict(nonprose_model, self.type)
+
+        nonprose_labels_list = libml.read_labels(nonprose_model, self.type)
 
 
+        # Stitch prose and nonprose labels lists together
+
+        labels = []
+        prose_ind    = 0
+        nonprose_ind = 0
+        p_end_flag = (len(   prose_line_numbers) == 0)
+        n_end_flag = (len(nonprose_line_numbers) == 0)
+        labels_list = {}
+
+        for key in [self.type]:
+
+            # Pretty much renaming just for length/readability pruposes
+            plist =    prose_labels_list[key]
+            nlist = nonprose_labels_list[key]
+
+            for i in range( len(data) ):
+                if   (not p_end_flag) and (i == prose_line_numbers[prose_ind]):
+                    line  = plist[0:len(data[i]) ] # Beginning
+                    plist = plist[  len(data[i]):] # The rest
+                    labels += line
+                    prose_ind += 1
+                    if prose_ind == len(prose_line_numbers): p_end_flag = True
+
+                elif (not n_end_flag) and (i == nonprose_line_numbers[nonprose_ind]):
+                    line  = nlist[0:len(data[i]) ] # Beginning
+                    nlist = nlist[  len(data[i]):] # The rest
+                    labels += line
+                    nonprose_ind += 1
+                    if nonprose_ind == len(nonprose_line_numbers): n_end_flag = True
+
+                else:
+                    # Shouldn't really get here ever
+                    print 'Line #%d is neither prose nor nonprose!' % i
+   
+            labels_list[key] = labels
+
+
+        # IOB labels
         # translate labels_list into a readable format
-        # ex. change all occurences of 0 -> 'none'
+        # ex. change all occurences of 1 -> 'B'
         for t, labels in labels_list.items():
             tmp = []
             for sentence in data:
                 tmp.append([labels.pop(0) for i in range(len(sentence))])
-                tmp[-1] = map(lambda l: l.strip(), tmp[-1])
-                tmp[-1] = map(lambda l: Model.reverse_labels[int(l)],tmp[-1])
+                tmp[-1]= map(lambda l: l.strip(), tmp[-1])
+                tmp[-1]= map(lambda l: Model.reverse_IOBs_labels[int(l)],tmp[-1])
                 labels_list[t] = tmp
 
-        print "labels_list"
-        print labels_list
-        print "\n" + "-" * 80
+        #print '-'*80
+        #print "\nlabels_list"
+        #print labels_list
+        #print "\n" + "-" * 80
 
 
-        # Group classified tokens based on adjacency
-        nontrivial_concepts = ImmutableSet( ['treatment', 'problem', 'test'] )
-        tmp_hash = {}
-        for t,labels in labels_list.items():
+        # Reminder: list of list of words (line-by-line)
+        text = data
 
-            tmp = [] # Stores a list of classifications
-                     #    A classification is a 4-tuple:
-                     #    (concept, lineno, starttok, endtok)
-            start_ind = 0
-            end_ind   = 0
-            streak = 0 # To keep count of the streak of classified tokens
-            for i, concept_line in enumerate(labels):
-
-                # C-style array indexing. Probably could be done a better way
-                # used because I needed the ability of lookahead
-                for j in range(len(concept_line)):
-
-                    # Non-trivial classification
-                    if concept_line[j] in nontrivial_concepts:
-                    
-                        # Increase size of current streak
-                        streak  += 1
-             
-                        # lookahead (check if streak will continue)
-                        if (j+1 == len(concept_line))or \
-                           (concept_line[j] != concept_line[j+1]):
-                               # Add streak
-                               tmp.append((concept_line[j], i+1, j-streak+1, j))
-                               # Reset count
-                               streak = 0
-
-            tmp_hash[t] = tmp
+        # List of list of tokens (similar to 'text', but concepts are grouped)
+        chunked = {1:[], 2:[], 4:[]}
 
 
-        print tmp_hash
-        print "\n" + "-" * 80
+        # Create tokens of full concept boundaries for second classifier
+        for t,chunks in labels_list.items():
 
-        # The new labels_list is a translated version
-        #return labels_list
-        return tmp_hash
+
+            # Merge 'B' words with its 'I's to form phrased chunks
+            tmp = feat_obj.generate_chunks(text,chunks)
+
+            # text_chunks    - a merged text 
+            # place_holder   - ignore. It has a value of []
+            # hits           - one-to-one concept token indices with text_chunks
+            text_chunks, place_holder, hits = tmp
+
+            # Store chunked text
+            chunked[t] = text_chunks
+
+
+        #############################
+        #        Second Pass        #
+        #############################
+
+
+        # Predict classification for chunks
+        # FIXME - possible error - only predicts on 4
+        text_chunks        = chunked[4]
 
 
 
-    # Model::feature_for_sentence
-    #
-    # input:  A sentence/line from a medical text file (list of words)
-    # output: A list of hash tables (one hash table per word)
-    def features_for_sentence(self, sentence):
-
-        # Question! -  What do the values of each key,value pair represent?
-
-        #global count
-
-        features_list = []
-
-        for word in sentence:
-            features_list.append(self.features_for_word(word))
+        # rows         - the format for representing feats for machine learning
+        # text_matches - the phrase chunks corresponding to classifications
+        rows = []
+        text_matches    = []
+        for hit in hits:
+            i,j = hit
+            rows.append(feat_obj.concept_features(text_chunks[i], j))
+            text_matches.append(text_chunks[i][j])
 
 
-        tags = None
-        for feature in Model.sentence_features:
-            if feature not in self.enabled_features:
+        # FIXME
+        # Not sure if this should be reset, but it makes sense to me to do it
+        # But why is it a data member if it shouldnt persist
+        self.concept_vocab = {}
+
+        for features in rows:
+            for feature in features:
+                if feature not in self.concept_vocab:
+                    self.concept_vocab[feature] = len(self.concept_vocab) + 1
+
+        # Purpose: Encode something like ('chunk', 'rehabilitation') as a unique
+        #          number, as determined by the self.concept_vocab hash table
+        tmp_rows = []
+        for fdict in rows:
+            #print fdict
+            tmp =  {self.concept_vocab[key]:fdict[key] for key in fdict}
+            tmp_rows.append(tmp)
+        rows = tmp_rows
+
+
+        # Predict using model
+        second_pass_model = self.filename + '3'
+        libml.write_features(second_pass_model, [rows], None, self.type);
+        libml.predict(second_pass_model, self.type)
+        second_pass_labels_list = libml.read_labels(second_pass_model, self.type)
+
+
+        # FIXME - I probably shouldn't have to do this
+        # I don't know why it doesn't use all ML libs 
+        for t in [1,2,4]:
+            if t not in second_pass_labels_list:
+                second_pass_labels_list[t] = []
+
+
+        # translate labels_list into a readable format
+        # ex. change all occurences of 0 -> 'none'
+        for t, labels in second_pass_labels_list.items():
+
+            if labels == []:
+                # FIXME - this means that there are ML libs not being used
+                #print '\nNot predicting on: ', t, '\n'
                 continue
 
-            if feature == "pos":
-
-                tags = tags or nltk.pos_tag(sentence)
-
-                for i, features in enumerate(features_list):
-                    tag = tags[i][1]
-                    features[(feature, tag)] = 1
-
-                #if count == 0:
-                #    print "tags"
-                #    print tags
-                #    print "\n" + "-" * 80 + "\n"
-                #    print "feature_list\n"
-                #    for it in features_list:
-                #        for elem in sorted(it.items(),my_sort) : print elem
-                #        print ""
-                #    print "\n" + "-" * 80 + "\n"
-                    
-            if feature == "stem_wordnet":
-                tags = tags or nltk.pos_tag(sentence)
-                morphy_tags = {
-                    'NN':nltk.corpus.reader.wordnet.NOUN,
-                    'JJ':nltk.corpus.reader.wordnet.ADJ,
-                    'VB':nltk.corpus.reader.wordnet.VERB,
-                    'RB':nltk.corpus.reader.wordnet.ADV}
-                morphy_tags = [(w, morphy_tags.setdefault(t[:2], nltk.corpus.reader.wordnet.NOUN)) for w,t in tags]
-                st = nltk.stem.WordNetLemmatizer()
-                for i, features in enumerate(features_list):
-                    tag = morphy_tags[i]
-                    features[(feature, st.lemmatize(*tag))] = 1
-                    
-            if feature == "test_result":
-                for index, features in enumerate(features_list):
-                    right = " ".join([w for w in sentence[index:]])
-                    if self.is_test_result(right):
-                        features[(feature, None)] = 1
-
-                    
-        ngram_features = [{} for i in range(len(features_list))]
-        if "prev" in self.enabled_features:
-            prev = lambda f: {("prev_"+k[0], k[1]): v for k,v in f.items()}
-            prev_list = map(prev, features_list)
-            for i in range(len(features_list)):
-                if i == 0:
-                    ngram_features[i][("prev", "*")] = 1
-                else:
-                    ngram_features[i].update(prev_list[i-1])
-                
-        if "next" in self.enabled_features:
-            next = lambda f: {("next_"+k[0], k[1]): v for k,v in f.items()}
-            next_list = map(next, features_list)
-            for i in range(len(features_list)):
-                if i == len(features_list) - 1:
-                    ngram_features[i][("next", "*")] = 1
-                else:
-                    ngram_features[i].update(next_list[i+1])
-        
-        merged = lambda d1, d2: dict(d1.items() + d2.items())
-        features_list = [merged(features_list[i], ngram_features[i]) 
-            for i in range(len(features_list))]
-
-        #if count == 0:
-        #    #print "\n" + "-" * 80
-        #    #print "features_list"
-        #    #for elem in features_list : print elem
-        #    #print "\n" + "-" * 80
-        #    count = 1
-        
-        return features_list
+            tmp = []
+            for sentence in [text_matches]:
+                tmp.append([labels.pop(0) for i in range(len(sentence))])
+                tmp[-1] = map(lambda l: l.strip(), tmp[-1])
+                tmp[-1] = map(lambda l: Model.reverse_labels[int(l)],tmp[-1])
+                second_pass_labels_list[t] = tmp
 
 
+        # Put predictions into format for Note class to read
+        retVal = {}
+        for t in [1,2,4]: 
 
-    # input:  a single word, like 
-    #         Admission
-    # output: A hash table of features
-    #         features include: word, length, mitre, stem_porter
-    def features_for_word(self, word):
+            # Skip non-predictions
+            if second_pass_labels_list[t] == []: continue
 
-        #global count2
+            classifications = []
+            for hit,concept in zip(hits, second_pass_labels_list[t][0]):
+                i,j = hit
+                length = len(text_chunks[i][j].split())
+                #print (concept, i, j, j+length-1 )
+                classifications.append(  (concept, i+1, j, j+length-1 ) )
 
-        features = {'dummy':1}    # always have >0 dimensions
-
-        # word_shape, word, length, mitre, stem_porter, stem_lancaster
-        for feature in Model.word_features:
-
-            # word_shape, test_result, word, pos, next, length, stem_wordnet, mitre, stem_porter, prev, stem_lancaster
-            if feature not in self.enabled_features:
-                continue
-
-            if feature == "word":
-                features[(feature, word)] = 1
-
-            if feature == "length":
-                features[(feature, None)] = len(word)
-            
-            if feature == "mitre":
-                for f in Model.mitre_features:
-                    if re.search(Model.mitre_features[f], word):
-                        features[(feature, f)] = 1
-                        
-            if feature == "stem_porter":
-                st = nltk.stem.PorterStemmer()
-                features[(feature, st.stem(word))] = 1
-                
-            if feature == "stem_lancaster":
-                st = nltk.stem.LancasterStemmer()
-                features[(feature, st.stem(word))] = 1
-                
-            if feature == "stem_snowball":
-                st = nltk.stem.SnowballStemmer("english")
-                #features[(feature, st.stem(word))] = 1
-                
-            if feature == "word_shape":
-                wordShapes = getWordShapes(word)
-
-                #if count2 < 3:
-                #    #print "word:       ", word
-                #    #print "wordShapes: ", wordShapes
-                #    #print "\n" + "-" * 80
-                #    print ''
-
-                for i, shape in enumerate(wordShapes):
-                    features[(feature + str(i), shape)] = 1
-                    
-            if feature == "metric_unit":
-                unit = 0
-                if self.is_weight(word):
-                    unit = 1
-                elif self.is_size(word):
-                    unit = 2
-                features[(feature, None)] = unit
-            
-            # look for prognosis locaiton
-            #if feature == "radial_loc":
-            # THIS MIGHT BE BUGGED
-            #    if self.is_prognosis_location(word):
-            #        features[(feature, None)] = 1 
-            
-            if feature == "has_problem_form":
-                if self.has_problem_form(word):
-                    features[(feature, None)] = 1
-            
-            if feature == "def_class":
-                features[(feature, None)] = self.get_def_class(word)
-
-        #if count2 < 3:
-        #    count2 += 1
-
-        return features
+            retVal[t] = classifications
 
 
+        # Return values
+        return retVal
 
-    mitre_features = {
-        "INITCAP" : r"^[A-Z].*$",
-        "ALLCAPS" : r"^[A-Z]+$",
-        "CAPSMIX" : r"^[A-Za-z]+$",
-        "HASDIGIT" : r"^.*[0-9].*$",
-        "SINGLEDIGIT" : r"^[0-9]$",
-        "DOUBLEDIGIT" : r"^[0-9][0-9]$",
-        "FOURDIGITS" : r"^[0-9][0-9][0-9][0-9]$",
-        "NATURALNUM" : r"^[0-9]+$",
-        "REALNUM" : r"^[0-9]+.[0-9]+$",
-        "ALPHANUM" : r"^[0-9A-Za-z]+$",
-        "HASDASH" : r"^.*-.*$",
-        "PUNCTUATION" : r"^[^A-Za-z0-9]+$",
-        "PHONE1" : r"^[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$",
-        "PHONE2" : r"^[0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$",
-        "FIVEDIGIT" : r"^[0-9][0-9][0-9][0-9][0-9]",
-        "NOVOWELS" : r"^[^AaEeIiOoUu]+$",
-        "HASDASHNUMALPHA" : r"^.*[A-z].*-.*[0-9].*$ | *.[0-9].*-.*[0-9].*$",
-        "DATESEPERATOR" : r"^[-/]$",
-    }
-    
-
-
-    def is_test_result (self, context):
-        # note: make spaces optional? 
-        regex = r"^[A-Za-z]+( )*(-|--|:|was|of|\*|>|<|more than|less than)( )*[0-9]+(%)*"
-        if not re.search(regex, context):
-            return re.search(r"^[A-Za-z]+ was (positive|negative)", context)
-        return True
-
-    def is_weight (self, word):
-        regex = r"^[0-9]*(mg|g|milligrams|grams)$"
-        return re.search(regex, word)
-        
-    def is_size (self, word): 
-        regex = r"^[0-9]*(mm|cm|millimeters|centimeters)$"
-        return re.search(regex, word)
-
-    def is_prognosis_location (self, word):
-        regex = r"^(c|C)[0-9]+(-(c|C)[0-9]+)*$"
-        return re.search(regex, word)
-    
-    def has_problem_form (self, word):
-         regex = r".*(ic|is)$"
-         return re.search(regex, word)
-    
-    # checks for a definitive classification at the word level
-    def get_def_class (self, word):
-        test_terms = {
-            "eval", "evaluation", "evaluations",
-            "sat", "sats", "saturation", 
-            "exam", "exams", 
-            "rate", "rates",
-            "test", "tests", 
-            "xray", "xrays", 
-            "screen", "screens", 
-            "level", "levels",
-            "tox"
-        }
-        problem_terms = {
-            "swelling", 
-            "wound", "wounds", 
-            "symptom", "symptoms", 
-            "shifts", "failure", 
-            "insufficiency", "insufficiencies",
-            "mass", "masses", 
-            "aneurysm", "aneurysms",
-            "ulcer", "ulcers",
-            "trama", "cancer",
-            "disease", "diseased",
-            "bacterial", "viral",
-            "syndrome", "syndromes",
-            "pain", "pains"
-            "burns", "burned",
-            "broken", "fractured"
-        }
-        treatment_terms = {
-            "therapy", 
-            "replacement",
-            "anesthesia",
-            "supplement", "supplemental",
-            "vaccine", "vaccines"
-            "dose", "doses",
-            "shot", "shots",
-            "medication", "medicine",
-            "treament", "treatments"
-        }
-        if word.lower() in test_terms:
-            return 1
-        elif word.lower() in problem_terms:
-            return 2
-        elif word.lower() in treatment_terms:
-            return 3
-        return 0
-    
