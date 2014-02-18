@@ -156,6 +156,9 @@ class FeatureWrapper:
         #genia_feats = self.next_GENIA_line()
         #if not genia_feats: genia_feats = self.next_GENIA_line()
 
+        # If sentence is empty
+        if not sentence: return {}
+
         # List of dictionaries of features
         line_features = [ {('dummy',1):1} for _ in sentence ]
 
@@ -166,7 +169,6 @@ class FeatureWrapper:
         # Feature: QANN uncased word
 
         # Feature: Uncased previous word
-        line_features[0].update( { (        'prev_word','<START>') : 1} )
         line_features[0].update( { ('uncased_prev_word','<START>') : 1} )
         for i in range(1,len(sentence)):
             line_features[i].update( { ('uncased_prev_word',sentence[i-1].lower()) : 1} )
@@ -192,6 +194,10 @@ class FeatureWrapper:
     # input:  A sentence
     # output: Boolean yes/no
     def prose_sentence(self, sentence):
+
+        # Empty sentence is not prose
+        if not sentence:
+            return False
 
         if sentence[-1] == '.' or sentence[-1] == '?':
             return True
