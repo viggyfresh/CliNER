@@ -15,12 +15,14 @@ def main():
     dest = "input", 
     help = "The input files to predict", 
     default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/test_data/*')
+    #default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '/home/wboag/ConceptExtraction-master/data/test_data/*')
     )
 
     parser.add_argument("-o", 
     dest = "output", 
     help = "The directory to write the output", 
     default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/test_predictions')
+    #default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '/home/wboag/ConceptExtraction-master/data/test_predictions')
     )
 
     parser.add_argument("-m",
@@ -72,9 +74,10 @@ def main():
         note = Note()
         note.read_i2b2(txt)
 
+
         # Use the model to predict the concept labels
         # Returns a hash table with:
-        #     keys as 1,2,4 (SVM, LIN, CRF)
+        #     keys as 1,2,4
         #     values as list of list of concept tokens (one-to-one with dat_list)
         labels = model.predict(note)
 
@@ -92,10 +95,13 @@ def main():
             if t == libml.CRF:
                 helper.mkpath(os.path.join(args.output, "crf"))
                 con_path = os.path.join(path, "crf", con)
-                
+                    
             # Output the concept predictions
             note.write_i2b2(con_path, labels[t])
             #note.write_plain(con_path, labels[t])   # in case of plain format
+
+            #note.write_BIOs_labels(con_path, labels[t])
+
 
 
 if __name__ == '__main__':
