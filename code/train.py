@@ -16,22 +16,20 @@ def main():
     parser.add_argument("-t", 
     dest = "txt", 
     help = "The files that contain the training examples",
-    #default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/txt/*')
-    default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/beth/txt/record-33.txt')
+    default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/txt/*')
     )
     
     parser.add_argument("-c", 
     dest = "con", 
     help = "The files that contain the labels for the training examples",
-    #default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/concept/*')
-    default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/beth/concept/record-33.txt')
+    default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/concept/*')
     )
     
     parser.add_argument("-m",
     dest = "model",
     help = "Path to the model that should be generated",
     #default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../models/awesome.model')
-    default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../models/run_models/run.model')
+    default = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../models/run_models/run.model')
     )
 
     parser.add_argument("-d",
@@ -93,7 +91,6 @@ def main():
             #training_list.append(txt_files_map[k])
 
 
-
     # What kind of model should be used? (ex. SVM vs. CRF)
     type = 0
     if not args.no_svm:
@@ -129,7 +126,7 @@ def main():
 
 
     # Train the model using the Note's data
-    model.train(notes[0])
+    model.train(notes)
 
 
 if __name__ == '__main__':
