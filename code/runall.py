@@ -35,54 +35,54 @@ print
 
 # Calculate commands
 def get_cmds(function):
-	commands = []
-	for i in range(1,n+1):
-		for c in itertools.combinations(features, i):
-			# commands from single feature up
-			cmd_features = [f if f in c else 'X' for f in features]
-			commands.append(function(cmd_features))
-			
-			# commands from full feature down
-			cmd_features = ['X' if f in c else f for f in features]
-			commands.append(function(cmd_features))
+    commands = []
+    for i in range(1, n+1):
+        for c in itertools.combinations(features, i):
+            # commands from single feature up
+            cmd_features = [f if f in c else 'X' for f in features]
+            commands.append(function(cmd_features))
 
-	# commands for full feature only
-	commands.append(function(features))
-	return commands
+            # commands from full feature down
+            cmd_features = ['X' if f in c else f for f in features]
+            commands.append(function(cmd_features))
+
+    # commands for full feature only
+    commands.append(function(features))
+    return commands
 
 # Drive process execution
 def execute(commands, sleep=1):
-	ps = []
-	for cmd in commands:
-		p = Popen(cmd)
-		ps.append(p)
-	print "Done"
-	
-	was_finished = -1
-	while True:
-		ps_status = [p.poll() for p in ps]
-		now_finished = len(ps_status) - ps_status.count(None)
-		if now_finished > was_finished:
-			print "\tCompleted: %d/%d\r" % (now_finished, len(ps_status)),
-			sys.stdout.flush()
-			if now_finished == len(ps_status):
-				break
-		was_finished = now_finished
-		time.sleep(sleep)
+    ps = []
+    for cmd in commands:
+        p = Popen(cmd)
+        ps.append(p)
+    print "Done"
+
+    was_finished = -1
+    while True:
+        ps_status = [p.poll() for p in ps]
+        now_finished = len(ps_status) - ps_status.count(None)
+        if now_finished > was_finished:
+            print "\tCompleted: %d/%d\r" % (now_finished, len(ps_status)),
+            sys.stdout.flush()
+            if now_finished == len(ps_status):
+                break
+        was_finished = now_finished
+        time.sleep(sleep)
 
 ###############################################################################
 # Train
 ###############################################################################
 def train(cmd_features):
-	modelname = os.path.join(model_path, "-".join(cmd_features), "model")
-	cmd = ["python", our_train, "-m", modelname]
-	cmd += ["--no-svm"]
-	cmd += ["-e"] + [f for f in cmd_features if f != 'X']
-	if _TEST:
-		cmd += ["-t", os.path.join(data_path, "concept_assertion_relation_training_data", "merged", "txt", "record-105.txt")]
-		cmd += ["-c", os.path.join(data_path, "concept_assertion_relation_training_data", "merged", "concept", "record-105.con")]
-	return cmd
-	
+    modelname = os.path.join(model_path, "-".join(cmd_features), "model")
+    cmd = ["python", our_train, "-m", modelname]
+    cmd += ["--no-svm"]
+    cmd += ["-e"] + [f for f in cmd_features if f != 'X']
+    if _TEST:
+        cmd += ["-t", os.path.join(data_path, "concept_assertion_relation_training_data", "merged", "txt", "record-105.txt")]
+        cmd += ["-c", os.path.join(data_path, "concept_assertion_relation_training_data", "merged", "concept", "record-105.con")]
+    return cmd
+
 print "BEGIN train"
 print "\tCalculating training commands...",
 commands = get_cmds(train)
@@ -97,15 +97,15 @@ print
 # Predict
 ###############################################################################
 def predict(cmd_features):
-	modelname = os.path.join(model_path, "-".join(cmd_features), "model")
-	cmd = ["python", our_predict, "-m", modelname]
-	cmd += ["-o", os.path.join(model_path, "-".join(cmd_features), "test_predictions")]
-	if _TEST:
-		cmd += ["-i", os.path.join(data_path, "concept_assertion_relation_training_data", "merged", "txt", "record-105.txt")]
-	else:
-		cmd += ["-i", os.path.join(data_path, "test_data", "*")]
-	return cmd
-	
+    modelname = os.path.join(model_path, "-".join(cmd_features), "model")
+    cmd = ["python", our_predict, "-m", modelname]
+    cmd += ["-o", os.path.join(model_path, "-".join(cmd_features), "test_predictions")]
+    if _TEST:
+        cmd += ["-i", os.path.join(data_path, "concept_assertion_relation_training_data", "merged", "txt", "record-105.txt")]
+    else:
+        cmd += ["-i", os.path.join(data_path, "test_data", "*")]
+    return cmd
+
 print "BEGIN predict"
 print "\tCalculating prediction commands...",
 commands = get_cmds(predict)
@@ -120,17 +120,17 @@ print
 # Evaluate
 ###############################################################################
 def evaluate(cmd_features):
-	cmd = ["python", our_evaluate]
-	cmd += ["-c", os.path.join(model_path, "-".join(cmd_features), "test_predictions")]
-	cmd += ["-o", os.path.join(model_path, "-".join(cmd_features), "evaluation.txt")]
-	if _TEST:
-		cmd += ["-t", os.path.join(data_path, "concept_assertion_relation_training_data", "merged", "txt", "record-105.txt")]
-		cmd += ["-r", os.path.join(data_path, "concept_assertion_relation_training_data", "merged", "concept")]
-	else:
-		cmd += ["-t", os.path.join(data_path, "test_data", "*")]
-		cmd += ["-r", os.path.join(data_path, "reference_standard_for_test_data", "concepts")]
-	return cmd
-	
+    cmd = ["python", our_evaluate]
+    cmd += ["-c", os.path.join(model_path, "-".join(cmd_features), "test_predictions")]
+    cmd += ["-o", os.path.join(model_path, "-".join(cmd_features), "evaluation.txt")]
+    if _TEST:
+        cmd += ["-t", os.path.join(data_path, "concept_assertion_relation_training_data", "merged", "txt", "record-105.txt")]
+        cmd += ["-r", os.path.join(data_path, "concept_assertion_relation_training_data", "merged", "concept")]
+    else:
+        cmd += ["-t", os.path.join(data_path, "test_data", "*")]
+        cmd += ["-r", os.path.join(data_path, "reference_standard_for_test_data", "concepts")]
+    return cmd
+
 print "BEGIN evaluate"
 print "\tCalculating evaluation commands...",
 commands = get_cmds(evaluate)

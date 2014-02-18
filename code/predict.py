@@ -26,29 +26,29 @@ def main():
     )
 
     parser.add_argument("-m",
-    dest = "model",
-    help = "The model to use for prediction",
-    default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../models/run_models/run.model')
+        dest = "model",
+        help = "The model to use for prediction",
+        default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../models/run_models/run.model')
     )
-    
+
     parser.add_argument("--no-svm",
-    dest = "no_svm",
-    action = "store_true",
-    help = "Disable SVM model generation",
+        dest = "no_svm",
+        action = "store_true",
+        help = "Disable SVM model generation",
     )
 
     parser.add_argument("--no-lin",
-    dest = "no_lin",
-    action = "store_true",
-    help = "Disable LIN model generation",
+        dest = "no_lin",
+        action = "store_true",
+        help = "Disable LIN model generation",
     )
 
     parser.add_argument("--no-crf",
-    dest = "no_crf",
-    action = "store_true",
-    help = "Disable CRF model generation",
+        dest = "no_crf",
+        action = "store_true",
+        help = "Disable CRF model generation",
     )
-    
+
     args = parser.parse_args()
 
     # Locate the test files
@@ -66,13 +66,14 @@ def main():
         model.type &= ~libml.LIN
     if args.no_crf:
         model.type &= ~libml.CRF
-        
+
 
     for txt in files:
 
         # Read the data into a Note object
         note = Note()
         note.read_i2b2(txt)
+        #note.read_plain(txt)   # TEMP - in case of plain format
 
 
         # Use the model to predict the concept labels
@@ -84,7 +85,7 @@ def main():
 
         con = os.path.split(txt)[-1]
         con = con[:-3] + 'con'
-            
+
         for t in libml.bits(model.type):
             if t == libml.SVM:
                 helper.mkpath(os.path.join(args.output, "svm"))
@@ -95,7 +96,7 @@ def main():
             if t == libml.CRF:
                 helper.mkpath(os.path.join(args.output, "crf"))
                 con_path = os.path.join(path, "crf", con)
-                    
+
             # Output the concept predictions
             note.write_i2b2(con_path, labels[t])
             #note.write_plain(con_path, labels[t])   # in case of plain format

@@ -10,12 +10,12 @@ import clicon_features
 
 
 class Model:
-    
+
     labels = {
-        "none":0,
-        "treatment":1,
-        "problem":2,
-        "test":3
+        "none": 0,
+        "treatment": 1,
+        "problem": 2,
+        "test": 3
     }
     reverse_labels = {v:k for k, v in labels.items()}
     
@@ -37,7 +37,6 @@ class Model:
         model.filename = filename
         return model
 
-
     # Constructor
     def __init__(self, filename='awesome.model', type=libml.ALL):
         model_directory = os.path.dirname(filename)
@@ -52,11 +51,11 @@ class Model:
         
     
 
-        
-    # Model::train()
-    #
-    # @param notes. A Note object that has data for training the model
-    def train(self, notes):
+
+        # Model::train()
+        #
+        # @param note. A Note object that has data for training the model
+    def train(self, note):
 
         # Get the data and annotations from the Note object
 
@@ -222,9 +221,10 @@ class Model:
 
 
         
+
     # Model::predict()
     #
-    # @param note. A Note object that contains the data
+    # @param note. A Note object that contains the training data
     def predict(self, note):
 
         # data - A list of list of the medical text's words
@@ -350,7 +350,6 @@ class Model:
         # Create tokens of full concept boundaries for second classifier
         for t,chunks in labels_list.items():
 
-
             # Merge 'B' words with its 'I's to form phrased chunks
             tmp = feat_obj.generate_chunks(text,chunks)
 
@@ -369,7 +368,7 @@ class Model:
 
 
         # Predict classification for chunks
-        # FIXME - possible error - only predicts on 4
+        # FIXME - should not be hard-coded
         text_chunks        = chunked[4]
 
 

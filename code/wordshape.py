@@ -1,7 +1,7 @@
 import re
 from sets import Set
 
-BOUNDARY_SIZE = 2;
+BOUNDARY_SIZE = 2
 
 NOWORDSHAPE = -1
 WORDSHAPEDAN1 = 0
@@ -19,6 +19,7 @@ WORDSHAPECHRIS3USELC = 11
 
 greek = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "theta", "iota", "kappa", "lambda", "omicron", "rho", "sigma", "tau", "upsilon", "omega"]
 biogreek = r"alpha|beta|gamma|delta|epsilon|zeta|theta|iota|kappa|lambda|omicron|rho|sigma|tau|upsilon|omega"
+
 
 def lookupShaper(name):
     if name is None:
@@ -50,16 +51,19 @@ def lookupShaper(name):
     else:
         return NOWORDSHAPE
 
+
 def dontUseLC(shape):
     return shape == WORDSHAPEDAN2 or shape == WORDSHAPEDAN2BIO or shape == WORDSHAPEJENNY1 or shape == WORDSHAPECHRIS2 or shape == WORDSHAPECHRIS3
+
 
 def wordShape(inStr, wordShaper):
     return wordShape(inStr, wordShaper, None)
 
-def wordShape(inStr, wordShaper, knownLCWords): 
+
+def wordShape(inStr, wordShaper, knownLCWords):
     if knownLCWords is not None and dontUseLC(wordShaper):
         knownLCWords = None
-    
+
     if wordShaper == NOWORDSHAPE:
         return inStr
     elif wordShaper == WORDSHAPEDAN1:
@@ -86,6 +90,7 @@ def wordShape(inStr, wordShaper, knownLCWords):
         return wordShapeChris2(inStr, True, knownLCWords)
     elif wordShaper == WORDSHAPECHRIS3USELC:
         return wordShapeChris2(inStr, True, knownLCWords)
+
 
 def wordShapeDan1(s):
     digit = True
@@ -122,17 +127,17 @@ def wordShapeDan2(s, knownLCWords):
     for c in s:
         m = c
         if c.isdigit():
-        	m = 'd'
+            m = 'd'
         if c.islower() or c == '_':
-        	m = 'x'
+            m = 'x'
         if c.isupper():
-        	m = 'X'
+            m = 'X'
         if m != 'x' and m != 'X':
             nonLetters = True
         if m != lastM:
             sb += m
         lastM = m
-      
+
     if length <= 3:
         sb += ':' + str(length)
 
@@ -140,7 +145,8 @@ def wordShapeDan2(s, knownLCWords):
         if not nonLetters and knownLCWords.contains(s.lower()):
             sb += 'k'
     return sb
-    
+
+
 def wordShapeJenny1(s):
     sb = "WT-"
     lastM = '~'
@@ -159,18 +165,18 @@ def wordShapeJenny1(s):
 
         for gr in greek:
             if s.startswith(gr):
-              m = 'g'
-              i = i + len(gr) - 1
-              break
+                m = 'g'
+                i = i + len(gr) - 1
+                break
 
         if m != 'x' and m != 'X':
             nonLetters = True
-      
+
         if m != lastM:
             sb += m
 
         lastM = m
-      
+
     if length <= 3:
         sb += ':' + str(length)
 
@@ -179,47 +185,49 @@ def wordShapeJenny1(s):
       #      sb += 'k'
     return sb
 
+
 def wordShapeChris2(s, omitIfInBoundary, knownLCWords):
-	length = len(s)
-	if length <= BOUNDARY_SIZE * 2:
-		return wordShapeChris2Short(s, length, knownLCWords)
-	else:
-		return wordShapeChris2Long(s, omitIfInBoundary, length, knownLCWords)
+    length = len(s)
+    if length <= BOUNDARY_SIZE * 2:
+        return wordShapeChris2Short(s, length, knownLCWords)
+    else:
+        return wordShapeChris2Long(s, omitIfInBoundary, length, knownLCWords)
+
 
 def wordShapeChris2Short(s, length, knownLCWords):
-	sblength = length
-	sb = ""
-	
-	if knownLCWords is not None:
-		 sblength = length + 1
-	
-	nonLetters = False
-	
-	for i in range (0, length):
-	    c = s[i]
-	    m = c
-	    if c.isdigit():
-	        m = 'd'
-	    if c.islower():
-	        m  = 'x'
-	    if c.isupper() or c.istitle():
-	        m = 'X'
+    sblength = length
+    sb = ""
 
-	    for gr in greek:
-	        if s.startswith(gr):
-	          m = 'g'
-	          i = i + len(gr) - 1
-	          break
+    if knownLCWords is not None:
+        sblength = length + 1
 
-	    if m != 'x' and m != 'X':
-	        nonLetters = True
-      
-	    sb += m
-    
-	if knownLCWords is not None:
-	    if not nonLetters and knownLCWords.contains(s.lower()):
-	        sb += 'k'
-	return sb
+    nonLetters = False
+
+    for i in range (0, length):
+        c = s[i]
+        m = c
+        if c.isdigit():
+            m = 'd'
+        if c.islower():
+            m  = 'x'
+        if c.isupper() or c.istitle():
+            m = 'X'
+
+        for gr in greek:
+            if s.startswith(gr):
+                m = 'g'
+                i = i + len(gr) - 1
+                break
+
+        if m != 'x' and m != 'X':
+            nonLetters = True
+
+        sb += m
+
+    if knownLCWords is not None:
+        if not nonLetters and knownLCWords.contains(s.lower()):
+            sb += 'k'
+    return sb
 
 
 def wordShapeChris2Long (s, omitIfInBoundary,  length,  knownLCWords):
@@ -261,9 +269,9 @@ def wordShapeChris2Long (s, omitIfInBoundary,  length,  knownLCWords):
 
         sbSize = beginUpto + endUpto + len(seenSet)
 
-        if knownLCWords is not None: 
+        if knownLCWords is not None:
             sbSize += 1
-            
+
         sb = ""
         sb += beginChars
         if omitIfInBoundary:
@@ -273,7 +281,7 @@ def wordShapeChris2Long (s, omitIfInBoundary,  length,  knownLCWords):
                     if beginChars[i] == ch:
                         insert = False
                         break
-    
+
                 for i in range (0, endUpto):
                     if endChars[i] == ch:
                         insert = False
@@ -295,8 +303,10 @@ def wordShapeChris2Long (s, omitIfInBoundary,  length,  knownLCWords):
   #  else:
    #     return wordShapeDan2(s, knownLCWords)
 
+
 def containsGreekLetter (s):
     return re.search(biogreek, s)
+
 
 def wordShapeChris1 (s):
     length = len(s)
@@ -307,13 +317,13 @@ def wordShapeChris1 (s):
     number = True
     seenDigit = False
     seenNonDigit = False
-    
+
     for i in range(0, length):
         ch = s[i]
         digit = ch.isdigit()
         if digit:
             seenDigit = True
-        else: 
+        else:
             seenNonDigit = True
         digit = digit or ch == '.' or ch == ',' or (i == 0 and (ch == '-' or ch == '+'))
         if not digit:
@@ -337,7 +347,7 @@ def wordShapeChris1 (s):
     seenLower = False
     seenUpper = False
     allCaps = True
-    allLower = True 
+    allLower = True
     initCap = False
     dash = False
     period = False
@@ -363,50 +373,50 @@ def wordShapeChris1 (s):
         elif (let):
             seenLower = True
             allCaps = False
-    
+
         if i == 0 and (up or tit):
             initCap = True
 
     if length == 2 and initCap and period:
-          return "ACRONYM1"
+        return "ACRONYM1"
     elif seenUpper and allCaps and not seenDigit and period:
-          return "ACRONYM"
+        return "ACRONYM"
     elif seenDigit and dash and not seenUpper and not seenLower:
-          return "DIGIT-DASH"
+        return "DIGIT-DASH"
     elif initCap and seenLower and seenDigit and dash:
-          return "CAPITALIZED-DIGIT-DASH"
+        return "CAPITALIZED-DIGIT-DASH"
     elif initCap and seenLower and seenDigit:
-          return "CAPITALIZED-DIGIT"
+        return "CAPITALIZED-DIGIT"
     elif initCap and seenLower & dash:
-          return "CAPITALIZED-DASH"
+        return "CAPITALIZED-DASH"
     elif initCap and seenLower:
-          return "CAPITALIZED"
+        return "CAPITALIZED"
     elif seenUpper and allCaps and seenDigit and dash:
-          return "ALLCAPS-DIGIT-DASH"
+        return "ALLCAPS-DIGIT-DASH"
     elif seenUpper and allCaps and seenDigit:
-          return "ALLCAPS-DIGIT"
+        return "ALLCAPS-DIGIT"
     elif seenUpper and allCaps and dash:
-          return "ALLCAPS"
+        return "ALLCAPS"
     elif seenUpper and allCaps:
-          return "ALLCAPS"
+        return "ALLCAPS"
     elif seenLower and allLower and seenDigit and dash:
-          return "LOWERif wordShaper ==-DIGIT-DASH"
+        return "LOWERif wordShaper ==-DIGIT-DASH"
     elif seenLower and allLower and seenDigit:
-          return "LOWERif wordShaper ==-DIGIT"
+        return "LOWERif wordShaper ==-DIGIT"
     elif seenLower and allLower and dash:
-          return "LOWERif wordShaper ==-DASH"
+        return "LOWERif wordShaper ==-DASH"
     elif seenLower and allLower:
-          return "LOWERif wordShaper =="
+        return "LOWERif wordShaper =="
     elif seenLower and seenDigit:
-          return "MIXEDif wordShaper ==-DIGIT"
+        return "MIXEDif wordShaper ==-DIGIT"
     elif seenLower:
-          return "MIXEDif wordShaper =="
+        return "MIXEDif wordShaper =="
     elif seenDigit:
-          return "SYMBOL-DIGIT"
+        return "SYMBOL-DIGIT"
     else:
-          return "SYMBOL"
-		  
+        return "SYMBOL"
+
 
 # gets Chris1, Dan1, Jenny1, Chris2 and Dan2 word shapes
 def getWordShapes(word):
-	return [wordShapeChris1(word), wordShapeDan1(word), wordShapeJenny1(word), wordShapeChris2(word, False, None), wordShapeDan2(word, None)]
+    return [wordShapeChris1(word), wordShapeDan1(word), wordShapeJenny1(word), wordShapeChris2(word, False, None), wordShapeDan2(word, None)]

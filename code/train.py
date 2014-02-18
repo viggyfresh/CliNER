@@ -1,6 +1,5 @@
 import os
 import os.path
-import sys
 import glob
 import argparse
 import helper
@@ -10,9 +9,11 @@ from sets import Set
 from model import Model
 from note import *
 
+
 def main():
     parser = argparse.ArgumentParser()
 
+<<<<<<< HEAD
     parser.add_argument("-t", 
     dest = "txt", 
     help = "The files that contain the training examples",
@@ -24,7 +25,7 @@ def main():
     help = "The files that contain the labels for the training examples",
     default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/concept/*')
     )
-    
+
     parser.add_argument("-m",
     dest = "model",
     help = "Path to the model that should be generated",
@@ -33,35 +34,35 @@ def main():
     )
 
     parser.add_argument("-d",
-    dest = "disabled_features",
-    help = "The features that should not be used",
-    nargs = "+",
-    default = None
+        dest = "disabled_features",
+        help = "The features that should not be used",
+        nargs = "+",
+        default = None
     )
 
     parser.add_argument("-e",
-    dest = "enabled_features",
-    help = "The features that should be used. This option trumps -d",
-    nargs = "+",
-    default = None
+        dest = "enabled_features",
+        help = "The features that should be used. This option trumps -d",
+        nargs = "+",
+        default = None
     )
 
     parser.add_argument("--no-svm",
-    dest = "no_svm",
-    action = "store_true",
-    help = "Disable SVM model generation",
+        dest = "no_svm",
+        action = "store_true",
+        help = "Disable SVM model generation",
     )
 
     parser.add_argument("--no-lin",
-    dest = "no_lin",
-    action = "store_true",
-    help = "Disable LIN model generation",
+        dest = "no_lin",
+        action = "store_true",
+        help = "Disable LIN model generation",
     )
 
     parser.add_argument("--no-crf",
-    dest = "no_crf",
-    action = "store_true",
-    help = "Disable CRF model generation",
+        dest = "no_crf",
+        action = "store_true",
+        help = "Disable CRF model generation",
     )
 
 
@@ -87,9 +88,8 @@ def main():
         if k in con_files_map:
             training_list.append((txt_files_map[k], con_files_map[k]))
 
-            # TEMP - useful for when I was reading in XML files
-            #training_list.append(txt_files_map[k])
-
+        # TEMP - useful for when I was reading in XML files
+        #training_list.append(txt_files_map[k])
 
     # What kind of model should be used? (ex. SVM vs. CRF)
     type = 0
@@ -99,30 +99,28 @@ def main():
         type = type | libml.LIN
     if not args.no_crf:
         type = type | libml.CRF
-    
 
 
     # Read the data into a Note object
     notes = []
     for txt, con in training_list:
     #for txt in training_list:
-        note_tmp = Note()                # Create Note
-
-        #    --- Alternative data formats  ---
+        # Alternative data formats
         #note_tmp.read_plain(txt, con)    # plain
         #note_tmp.read_xml(txt)           # xml
-        note_tmp.read_i2b2(txt, con)      # i2b2 (normal)
 
-        notes.append( note_tmp )         # Add the Note to the list
+        note_tmp = Note()                # Create Note
+        note_tmp.read_i2b2(txt, con)     # Read data into Note
+        notes.append(note_tmp)         # Add the Note to the list
 
 
     # Create a Machine Learning model
     model = Model(filename = args.model, type = type)
-    
+
     if args.disabled_features != None:
         model.enabled_features = model.enabled_features - Set(args.disabled_features)
     if args.enabled_features != None:
-        model.enabled_features = Set(args.enabled_features)        
+        model.enabled_features = Set(args.enabled_features)
 
 
     # Train the model using the Note's data
