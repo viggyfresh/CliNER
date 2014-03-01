@@ -14,18 +14,41 @@ __date__   = 'Jan. 27, 2014'
 
 import nltk
 import re
+from sets import ImmutableSet
+from wordshape import getWordShapes
 
 import clicon_genia_interface
+
+from umls_cache import UmlsCache
+import umls
+
+
 
 
 class FeatureWrapper:
 
 
+    # Feature Enabling
+    enabled_IOB_prose_sentence_features = ImmutableSet( ['prev_POS', 'pos', 'GENIA'] )
+    enabled_IOB_prose_word_features     = ImmutableSet( ['Generic#', 'last_two_letters', 'prev_word', 'uncased_prev_word' ] )
+
+    enabled_IOB_nonprose_sentence_features = ImmutableSet( ['prev_POS'] )
+    enabled_IOB_nonprose_word_features     = ImmutableSet( ['word', 'uncased_prev_word'] )
+
+    enabled_concept_features = ImmutableSet( ['chunk', 'unigram', 'first-four-letters', 'stem_wordnet', 'test_result', 'umls_semantic_type_word'] )
+    enabled_concept_word_features = ImmutableSet(['word', 'length', 'mitre', 'stem_porter', 'stem_lancaster', 'word_shape'])
+
+
     # Run the GENIA tagger on the given data
     def __init__(self, data):
-        #self.GENIA_features = clicon_genia_interface.genia(data)
-        self.GENIA_counter = 0
+        
+        # Only run GENIA tagger if feature is enabled
+        if 'GENIA' in self.enabled_IOB_prose_sentence_features:
+            self.GENIA_features = clicon_genia_interface.genia(data)
+            self.GENIA_counter = 0
 
+        # cache for the mappings of all umls lookups made
+        self.umls_lookup_cache = UmlsCache()
 
 
     # Iterate through GENIA Tagger features
@@ -54,94 +77,160 @@ class FeatureWrapper:
 
         # Different features depending on whether sentence is 'prose'
         if isProse:
-            line_features = self.IOB_prose_features_for_sentence(sentence)
+            features_list =    self.IOB_prose_features_for_sentence(sentence)
         else:
-            line_features = self.IOB_nonprose_features_for_sentence(sentence)
+            features_list = self.IOB_nonprose_features_for_sentence(sentence)
 
         # Return features as well as indication of whether it is prose or not
-        return (isProse, line_features)
+        return (isProse, features_list)
 
 
 
     # IOB_prose_features_for_sentence()
     #
     # input:  A sentence
-    # output: A hash table of features
+    # output: A list of hash tables of features
     def IOB_prose_features_for_sentence(self, sentence):
 
+        features_list = []
 
-        # List of dictionaries of features
-        line_features = [ {('dummy',1):1} for _ in sentence ]
-
-        # Feature: Generic# stemmed word
+        # Get a feature set for each word in the sentence
         for i,word in enumerate(sentence):
-            generic = re.sub('[0-9]','0',word)
-            line_features[i].update( { ('Generic#',generic) : 1})
-
-        # Feature: Previous word
-        line_features[0].update(     { (        'prev_word',           '<START>' ) : 1} )
-        for i in range(1,len(sentence)):
-            line_features[i].update( { ('uncased_prev_word',sentence[i-1].lower()) : 1} )
-
-        # Feature Uncased previous word
-        line_features[0].update(     { ('uncased_prev_word',           '<START>' ) : 1} )
-        for i in range(1,len(sentence)):
-            line_features[i].update( { (        'prev_word',sentence[i-1]        ) : 1} )
-
-        # Feature: Last two leters of word
-        for word in sentence:
-            line_features[i].update( { ('last_two_letters',word[-2:]) : 1} )
-
-        # Feature: Previous POS
-        pos_tagged = nltk.pos_tag(sentence)
-        line_features[0].update( { ('prev_POS','<START>') : 1} )
-        for i in range(1,len(sentence)):
-            line_features[i].update( { ('prev_POS',pos_tagged[i-1]) : 1} )
-
-        # Feature: 1-token part-of-speech context
-        for (i,(_,pos)) in enumerate(pos_tagged):
-            line_features[i].update( { ('pos',pos) : 1} )
-
-        # Feature: UMLS concept hypernyms
-
-        # GENIA features
-        for i in range(len(sentence)):
-
-            # FIXME - Do not call GENIA features right now
-            #         (to speed up runtime during development)
-            continue
-
-            # Get the GENIA features of the current sentence
-            genia_feats = self.next_GENIA_line()
-            if not genia_feats: genia_feats = self.next_GENIA_line()
+            features_list.append( self.IOB_prose_features_for_word(sentence,i) )
 
 
-            # Feature: Current word's GENIA features
-            keys = ['GENIA-stem','GENIA-POS','GENIA-chunktag']
-            curr = genia_feats[i]
-            output =  dict( (('curr-'+k, curr[k]), 1) for k in keys if k in curr)
+        # Allow for particular features to be enabled
+        for feature in self.enabled_IOB_prose_sentence_features:
 
-            # Feature: Previous word's GENIA features
-            if i:
-                prev = genia_feats[i]
-                output =  dict( (('prev-'+k,   prev[k]), 1) for k in keys if k in prev)
-            else:
-                output =  dict( (('prev-'+k, '<START>'), 1) for k in keys if k in curr)
-
-            # Feature: Next word's GENIA stem
-            # Note: This is done retroactively, updating the previous token
-            if i > 0:
-               line_features[i-1].update( {('next-GENIA-stem',curr['GENIA-stem']) : 1} )
-            # Do not accidentally skip the final token
-            if i == (len(sentence) - 1):
-                line_features[i].update( { ('next-GENIA-stem','<END>') : 1} )
-
-            line_features[i].update(output)
-
-        # MetaMap semantic type
+            # Feature: Previous POS
+            if feature == 'prev_POS':
+                pos_tagged = nltk.pos_tag(sentence)
+                features_list[0].update( {('prev_POS','<START>') : 1} )
+                for i in range(1,len(sentence)):
+                    features_list[i].update( {('prev_POS',pos_tagged[i-1]) : 1} )
 
 
-        return line_features
+            # Feature: 1-token part-of-speech context
+            if feature == 'pos':
+                for (i,(_,pos)) in enumerate(pos_tagged):
+                    features_list[i].update( { ('pos',pos) : 1} )
+
+            # Feature: UMLS semantic type for the sentence
+            if feature == 'umls_semantic_type_sentence':
+
+                # a list of the uml semantic of the largest substring(s).  
+                sentence_mapping = umls.umls_semantic_type_sentence( self.umls_lookup_cache,  sentence )
+
+                # If there are no mappings.    
+                if( len(sentence_mapping) == 0 ):
+                    for i , features in enumerate( features_list):
+                        features[(feature , None ) ] = 1 
+                # assign the umls definitions to the vector for each word in the sentence.     
+                else:
+                    for i , features in enumerate( features_list):
+                        for concept in sentence_mapping:
+                            features[(feature , concept ) ] = 1
+
+            # Feature: UMLS semantic concext
+            if feature == 'umls_semantic_context':
+
+                # a list of lists, each sub list contains the umls definition of the largest string the word is in
+                umls_semantic_context_mappings = umls.umls_semantic_context_of_words( self.umls_lookup_cache , sentence ) 
+ 
+                # assign the umls definitions in the sublists to the vector of the corresponding word 
+                for i , features in enumerate( features_list ):
+
+                    #if there are no mappings
+                    if umls_semantic_context_mappings[i] == None:
+                        features[(feature,None)] = 1
+                    #if there is a mapping, there could be multiple contexts, iterate through the sublist  
+                    else:
+                        for mapping in umls_semantic_context_mappings[i]:
+                            features[(feature,mapping)] = 1
+
+            # GENIA features
+            if feature == 'GENIA':
+
+                # Get the GENIA features of the current sentence
+                genia_feats = self.next_GENIA_line()
+                if not genia_feats: genia_feats = self.next_GENIA_line()
+
+                for i in range(len(sentence)):
+
+                    # Feature: Current word's GENIA features
+                    keys = ['GENIA-stem','GENIA-POS','GENIA-chunktag']
+                    curr = genia_feats[i]
+                    output =  dict( (('curr-'+k, curr[k]), 1) for k in keys if k in curr)
+
+                    # Feature: Previous word's GENIA features
+                    if i == 0:
+                        output =  dict( (('prev-'+k, '<START>'), 1) for k in keys if k in curr)
+                    else:
+                        prev = genia_feats[i]
+                        output =  dict( (('prev-'+k,   prev[k]), 1) for k in keys if k in prev)
+
+                    # Feature: Next word's GENIA stem
+                    # Note: This is done by updating the previous token's dict
+                    if i != (len(sentence) - 1):
+                       features_list[i-1].update( {('next-GENIA-stem',curr['GENIA-stem']) : 1} )
+                    else:
+                        features_list[i].update( { ('next-GENIA-stem','<END>') : 1} )
+
+                    features_list[i].update(output)
+
+
+        return features_list
+
+
+
+    # IOB_prose_features_for_word()
+    #
+    # input:  A single word
+    # output: A dictionary of features
+    def IOB_prose_features_for_word(self, sentence, i):
+
+        # Abbreviation for most features,
+        #    although some will require index for context
+        word = sentence[i]
+
+
+        # Feature: <dummy>
+        features = {'dummy': 1}  # always have >0 dimensions
+
+
+        # Allow for particular features to be enabled
+        for feature in self.enabled_IOB_prose_word_features:
+
+
+            # Feature: Generic# stemmed word
+            if feature == 'Generic#':
+                generic = re.sub('[0-9]','0',word)
+                features.update( { ('Generic#',generic) : 1 } )
+
+
+            # Feature: Last two leters of word
+            if feature == 'last_two_letters':
+                features.update( { ('last_two_letters',word[-2:]) : 1 } )
+
+
+            # Feature: Previous word
+            if feature == 'prev_word':
+                if i == 0:
+                    features.update( {('prev_word',    '<START>' ) : 1} )
+                else:
+                    features.update( {('prev_word', sentence[i-1]) : 1} )
+
+
+            # Feature Uncased previous word
+            if feature == 'uncased_prev_word':
+                if i == 0:
+                    features.update( {('uncased_prev_word',          '<START>'  ) : 1} )
+                else:
+                    features.update( {('uncased_prev_word',sentence[i-1].lower()) : 1} )
+
+
+        return features
+
 
 
 
@@ -152,40 +241,68 @@ class FeatureWrapper:
     def IOB_nonprose_features_for_sentence(self, sentence):
 
         # Get the GENIA features of the current sentence
-        # The GENIA featurs are not used for nonprose, but it keeps things aligned for the prose
-        #genia_feats = self.next_GENIA_line()
-        #if not genia_feats: genia_feats = self.next_GENIA_line()
+        #    (not used for nonprose, but it keeps things aligned for the prose)
+        if 'GENIA' in self.enabled_IOB_prose_sentence_features:
+            genia_feats = self.next_GENIA_line()
+            if not genia_feats: genia_feats = self.next_GENIA_line()
 
         # If sentence is empty
         if not sentence: return {}
 
-        # List of dictionaries of features
-        line_features = [ {('dummy',1):1} for _ in sentence ]
+        features_list = []
 
-        # Feature: The word, itself
+        # Get a feature set for each word in the sentence
         for i,word in enumerate(sentence):
-            line_features[i].update( { ('word',word.lower()) : 1} )
+            features_list.append( self.IOB_prose_features_for_word(sentence,i) )
 
-        # Feature: QANN uncased word
 
-        # Feature: Uncased previous word
-        line_features[0].update( { ('uncased_prev_word','<START>') : 1} )
-        for i in range(1,len(sentence)):
-            line_features[i].update( { ('uncased_prev_word',sentence[i-1].lower()) : 1} )
+        # Allow for particular features to be enabled
+        for feature in self.enabled_IOB_nonprose_sentence_features:
 
-        # 3-token part-of-speech context
+            # Feature: Previous POS
+            if feature == 'prev_POS':
+                pos_tagged = nltk.pos_tag(sentence)
+                features_list[0].update( {('prev_POS','<START>') : 1} )
+                for i in range(1,len(sentence)):
+                    features_list[i].update( {('prev_POS',pos_tagged[i-1]) : 1} )
 
-        # MetaMap semantic type
 
-        # MetaMap CUI
+        return features_list
 
-        # Feature: Previous POS
-        pos_tagged = nltk.pos_tag(sentence)
-        line_features[0].update( { ('prev_POS','<START>') : 1} )
-        for i in range(1,len(sentence)):
-            line_features[i].update( { ('prev_POS',pos_tagged[i-1]) : 1} )
 
-        return line_features
+
+    # IOB_nonprose_features_for_word()
+    #
+    # input:  A single word
+    # output: A dictionary of features
+    def IOB_nonprose_features_for_word(self, sentence, i):
+
+        # Abbreviation for most features,
+        #    although some will require index for context
+        word = sentence[i]
+
+
+        # Feature: <dummy>
+        features = {'dummy': 1}  # always have >0 dimensions
+
+  
+        # Allow for particular features to be enabled
+        for feature in self.enabled_IOB_nonprose_word_features:
+
+            # Feature: The word, itself
+            if feature == 'word':
+                features.update( { ('word',word.lower()) : 1} )
+
+            # Feature: Uncased previous word
+            if feature == 'uncased_prev_word':
+                if i == 0:
+                    features.update( {('uncased_prev_word','<START>'            ) : 1} )
+                else:
+                    features.update( {('uncased_prev_word',sentence[i-1].lower()) : 1} )
+
+
+        return features
+
 
 
 
@@ -229,7 +346,7 @@ class FeatureWrapper:
             return False
 
 
-    # prose::word()
+    # prose_word()
     #
     # input:  A word
     # output: Boolean yes/no
@@ -344,35 +461,234 @@ class FeatureWrapper:
     # output: A list of hash tables (one hash table per word)
     def concept_features(self, sentence, ind):
 
-        retVal = {}
+        features = {}
 
-        retVal.update( { ('chunk',sentence[ind]) :  1 } )
-
-        # Feature: Uncased unigrams
-        for i,word in enumerate( sentence[ind].split() ):
-            featname = 'unigram-%d' % i
-            retVal.update( { (featname, word.lower()) :  1 } )
-
-        # Feature: First four letters of each word
-        prefix_list = [ word[0:4] for word in sentence[ind].split() ]
-        for i,word in enumerate(prefix_list):
-            featname = 'first-four-letters-%d' % i
-            retVal.update( { (featname, word) :  1 } )
-
-        # Feature: Stemmed previous word
+        # Get features for each unigram
+        for i in range(len(sentence[ind])):
+            features.update( self.concept_features_for_word( sentence[ind], i ) )
 
 
-        # Feature: Uncased previous bigram
+        # Allow for particular features to be enabled
+        for feature in self.enabled_IOB_prose_sentence_features:
+
+            # Feature: the chunk itself
+            if feature == 'chunk':
+                features.update( { ('chunk',sentence[ind]) :  1 } )
+
+            # Feature: Uncased unigrams
+            if feature == 'unigram':
+                for i,word in enumerate( sentence[ind].split() ):
+                    featname = 'unigram-%d' % i
+                    features.update( { (featname, word.lower()) :  1 } )
+
+            # Feature: First four letters of each word
+            if feature == 'first-four-letters':
+                prefix_list = [ word[:4] for word in sentence[ind].split() ]
+                for i,word in enumerate(prefix_list):
+                    featname = 'first-four-letters-%d' % i
+                    features.update( { (featname, word) :  1 } )
+
+            # Feature: UMLS Semantic Type (ignores context)
+            if feature == 'umls_semantic_type_word':
+
+                # Get a semantic type for each unigram
+                for i,word in enmuerate(sentence[ind]):
+                    mapping = umls.umls_semantic_type_word(self.umls_lookup_cache , word )          
+                    #If there is no umls semantic type. 
+                    featname = 'umls_semantic_type_word"%d' % i
+                    if( mapping == None ):
+                        features[(feature,None)] = 1
+                    else:
+                        features[(feature , mapping )] = 1
+
+            # Feature: Stemmed Word
+            if feature == "stem_wordnet":
+                tags = tags or nltk.pos_tag(sentence)
+                morphy_tags = {
+                    'NN':nltk.corpus.reader.wordnet.NOUN,
+                    'JJ':nltk.corpus.reader.wordnet.ADJ,
+                    'VB':nltk.corpus.reader.wordnet.VERB,
+                    'RB':nltk.corpus.reader.wordnet.ADV}
+                morphy_tags = [(w, morphy_tags.setdefault(t[:2], nltk.corpus.reader.wordnet.NOUN)) for w,t in tags]
+                st = nltk.stem.WordNetLemmatizer()
+                for i, features in enumerate(features_list):
+                    tag = morphy_tags[i]
+                    features[(feature, st.lemmatize(*tag))] = 1
+
+            # Feature: Test Result
+            if feature == "test_result":
+                for index, features in enumerate(features_list):
+                    right = " ".join([w for w in sentence[index:]])
+                    if self.is_test_result(right):
+                        features[(feature, None)] = 1
 
 
-        # Feature: Argument type + nearest predicate
+        return features
 
 
-        # Feature: UMLS concept type
+
+    # concept_features_for_word()
+    #
+    # input:  A single word
+    # output: A dictionary of features
+    def concept_features_for_word(self, chunk, i):
+
+        # Abbreviation for most features,
+        #    although some will require index for context
+        word = chunk[i]
 
 
-        # Feature Wikipedia concept type
+        # Feature: <dummy>
+        features = {'dummy': 1}  # always have >0 dimensions
 
-        return retVal
+
+        # word_shape, word, length, mitre, stem_porter, stem_lancaster
+        for feature in self.enabled_concept_word_features:
+
+            if feature == "word":
+                features[(feature, word)] = 1
+
+            if feature == "length":
+                features[(feature, None)] = len(word)
+
+            if feature == "mitre":
+                for f in self.mitre_features:
+                    if re.search(self.mitre_features[f], word):
+                        features[(feature, f)] = 1
+
+            if feature == "stem_porter":
+                st = nltk.stem.PorterStemmer()
+                features[(feature, st.stem(word))] = 1
+
+            if feature == "stem_lancaster":
+                st = nltk.stem.LancasterStemmer()
+                features[(feature, st.stem(word))] = 1
+
+            if feature == "stem_snowball":
+                st = nltk.stem.SnowballStemmer("english")
+                features[(feature, st.stem(word))] = 1
+
+            if feature == "word_shape":
+                wordShapes = getWordShapes(word)
+                for i, shape in enumerate(wordShapes):
+                    features[(feature + str(i), shape)] = 1
+
+            if feature == "metric_unit":
+                unit = 0
+                if self.is_weight(word):
+                    unit = 1
+                elif self.is_size(word):
+                    unit = 2
+                features[(feature, None)] = unit
+
+            # look for prognosis locaiton
+            #if feature == "radial_loc":
+            # THIS MIGHT BE BUGGED
+            #    if is_prognosis_location(word):
+            #        features[(feature, None)] = 1
+
+            if feature == "has_problem_form":
+                if self.has_problem_form(word):
+                    features[(feature, None)] = 1
+
+            if feature == "def_class":
+                features[(feature, None)] = self.get_def_class(word)
+
+        return features
+
+
+
+    mitre_features = {
+        "INITCAP": r"^[A-Z].*$",
+        "ALLCAPS": r"^[A-Z]+$",
+        "CAPSMIX": r"^[A-Za-z]+$",
+        "HASDIGIT": r"^.*[0-9].*$",
+        "SINGLEDIGIT": r"^[0-9]$",
+        "DOUBLEDIGIT": r"^[0-9][0-9]$",
+        "FOURDIGITS": r"^[0-9][0-9][0-9][0-9]$",
+        "NATURALNUM": r"^[0-9]+$",
+        "REALNUM": r"^[0-9]+.[0-9]+$",
+        "ALPHANUM": r"^[0-9A-Za-z]+$",
+        "HASDASH": r"^.*-.*$",
+        "PUNCTUATION": r"^[^A-Za-z0-9]+$",
+        "PHONE1": r"^[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$",
+        "PHONE2": r"^[0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$",
+        "FIVEDIGIT": r"^[0-9][0-9][0-9][0-9][0-9]",
+        "NOVOWELS": r"^[^AaEeIiOoUu]+$",
+        "HASDASHNUMALPHA": r"^.*[A-z].*-.*[0-9].*$ | *.[0-9].*-.*[0-9].*$",
+        "DATESEPERATOR": r"^[-/]$",
+    }
+
+    def is_test_result( context):
+        # note: make spaces optional?
+        regex = r"^[A-Za-z]+( )*(-|--|:|was|of|\*|>|<|more than|less than)( )*[0-9]+(%)*"
+        if not re.search(regex, context):
+            return re.search(r"^[A-Za-z]+ was (positive|negative)", context)
+        return True
+
+    def is_weight( word):
+        regex = r"^[0-9]*(mg|g|milligrams|grams)$"
+        return re.search(regex, word)
+
+    def is_size( word):
+        regex = r"^[0-9]*(mm|cm|millimeters|centimeters)$"
+        return re.search(regex, word)
+
+    def is_prognosis_location( word):
+        regex = r"^(c|C)[0-9]+(-(c|C)[0-9]+)*$"
+        return re.search(regex, word)
+
+    def has_problem_form( word):
+        regex = r".*(ic|is)$"
+        return re.search(regex, word)
+
+    # checks for a definitive classification at the word level
+    def get_def_class( word):
+        test_terms = {
+            "eval", "evaluation", "evaluations",
+            "sat", "sats", "saturation",
+            "exam", "exams",
+            "rate", "rates",
+            "test", "tests",
+            "xray", "xrays",
+            "screen", "screens",
+            "level", "levels",
+            "tox"
+        }
+        problem_terms = {
+            "swelling",
+            "wound", "wounds",
+            "symptom", "symptoms",
+            "shifts", "failure",
+            "insufficiency", "insufficiencies",
+            "mass", "masses",
+            "aneurysm", "aneurysms",
+            "ulcer", "ulcers",
+            "trama", "cancer",
+            "disease", "diseased",
+            "bacterial", "viral",
+            "syndrome", "syndromes",
+            "pain", "pains"
+            "burns", "burned",
+            "broken", "fractured"
+        }
+        treatment_terms = {
+            "therapy",
+            "replacement",
+            "anesthesia",
+            "supplement", "supplemental",
+            "vaccine", "vaccines"
+            "dose", "doses",
+            "shot", "shots",
+            "medication", "medicine",
+            "treament", "treatments"
+        }
+        if word.lower() in test_terms:
+            return 1
+        elif word.lower() in problem_terms:
+            return 2
+        elif word.lower() in treatment_terms:
+            return 3
+        return 0
 
 
