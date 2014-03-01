@@ -87,6 +87,12 @@ def main():
         con = con[:-3] + 'con'
 
         for t in libml.bits(model.type):
+
+            # FIXME - workaround. I'm not sure why it doesnt make some 
+            if t not in labels: 
+                note.write_i2b2(con_path,[])
+                continue
+
             if t == libml.SVM:
                 helper.mkpath(os.path.join(args.output, "svm"))
                 con_path = os.path.join(path, "svm", con)
@@ -96,6 +102,7 @@ def main():
             if t == libml.CRF:
                 helper.mkpath(os.path.join(args.output, "crf"))
                 con_path = os.path.join(path, "crf", con)
+
 
             # Output the concept predictions
             note.write_i2b2(con_path, labels[t])

@@ -1,12 +1,11 @@
 from __future__ import with_statement
 
 import os
-import pickle
+import cPickle as pickle
 import helper
 import libml
 
 import clicon_features
-
 
 
 class Model:
@@ -287,15 +286,22 @@ class Model:
 
 
         # Stitch prose and nonprose labels lists together
-
-        labels = []
-        prose_ind    = 0
-        nonprose_ind = 0
-        p_end_flag = (len(   prose_line_numbers) == 0)
-        n_end_flag = (len(nonprose_line_numbers) == 0)
         labels_list = {}
 
-        for key in [self.type]:
+
+        # FIXME - incorrect
+        for key in libml.bits(self.type):
+
+            # FIXME - workaround for key
+            #if not prose_labels_list[key]: 
+            #    labels_list[2] = {}
+            #    continue
+
+            labels = []
+            prose_ind    = 0
+            nonprose_ind = 0
+            p_end_flag = (len(   prose_line_numbers) == 0)
+            n_end_flag = (len(nonprose_line_numbers) == 0)
 
             # Pretty much renaming just for length/readability pruposes
             plist =    prose_labels_list[key]
@@ -327,6 +333,7 @@ class Model:
         # translate labels_list into a readable format
         # ex. change all occurences of 1 -> 'B'
         for t, labels in labels_list.items():
+            if not labels_list[t]: continue
             tmp = []
             for sentence in data:
                 tmp.append([labels.pop(0) for i in range(len(sentence))])
@@ -350,6 +357,8 @@ class Model:
         # Create tokens of full concept boundaries for second classifier
         for t,chunks in labels_list.items():
 
+            # FIXME - workaround
+            if not labels_list[t]: continue
 
             # Merge 'B' words with its 'I's to form phrased chunks
             tmp = feat_obj.generate_chunks(text,chunks)

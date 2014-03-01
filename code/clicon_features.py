@@ -29,7 +29,7 @@ class FeatureWrapper:
 
 
     # Feature Enabling
-    enabled_IOB_prose_sentence_features = ImmutableSet( ['prev_POS', 'pos', 'GENIA'] )
+    enabled_IOB_prose_sentence_features = ImmutableSet( ['prev_POS', 'pos', 'GENIA', 'umls_semantic_type_sentence', 'umls_semantic_context'] )
     enabled_IOB_prose_word_features     = ImmutableSet( ['Generic#', 'last_two_letters', 'prev_word', 'uncased_prev_word' ] )
 
     enabled_IOB_nonprose_sentence_features = ImmutableSet( ['prev_POS'] )

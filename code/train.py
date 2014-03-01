@@ -13,7 +13,6 @@ from note import *
 def main():
     parser = argparse.ArgumentParser()
 
-<<<<<<< HEAD
     parser.add_argument("-t", 
     dest = "txt", 
     help = "The files that contain the training examples",
