@@ -48,6 +48,8 @@ def genia( data ):
     @return      A list of dcitionaries of the genia tagger's output.
     '''
 
+    # FIXME - crashes when the is an empty line in the file
+
 
     # FIXME - write list to file and then feed it to GENIA
     # FIXME - hard coded directory!!
