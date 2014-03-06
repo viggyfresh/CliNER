@@ -29,19 +29,27 @@ class FeatureWrapper:
 
 
     # Feature Enabling
-    enabled_IOB_prose_sentence_features = ImmutableSet( ['prev_POS', 'pos', 'GENIA', 'umls_semantic_type_sentence', 'umls_semantic_context'] )
-    enabled_IOB_prose_word_features     = ImmutableSet( ['Generic#', 'last_two_letters', 'prev_word', 'uncased_prev_word' ] )
+    enabled_IOB_prose_sentence_features = ImmutableSet( ['prev_POS', 'pos', 'stem_wordnet', 'GENIA', 'umls_semantic_type_sentence', 'umls_semantic_context'] )
+    enabled_IOB_prose_word_features     = ImmutableSet( ['Generic#', 'last_two_letters', 'prev_word', 'uncased_prev_word', 'word','length', 'mitre', 'stem_porter', 'stem_lancaster', 'word_shape' ] )
 
     enabled_IOB_nonprose_sentence_features = ImmutableSet( ['prev_POS'] )
     enabled_IOB_nonprose_word_features     = ImmutableSet( ['word', 'uncased_prev_word'] )
 
-    enabled_concept_features = ImmutableSet( ['chunk', 'unigram', 'first-four-letters', 'stem_wordnet', 'test_result', 'umls_semantic_type_word'] )
+    enabled_concept_sentence_features = ImmutableSet( ['chunk', 'unigram', 'first-four-letters', 'umls_semantic_type_word'] )
+
+    #stem_wordnet
+    #test_result
+    #all features of previous token
+    #all features of next token
+    #metric_unit
+    #has_problem_form
+    #def_class
     enabled_concept_word_features = ImmutableSet(['word', 'length', 'mitre', 'stem_porter', 'stem_lancaster', 'word_shape'])
 
 
-    # Run the GENIA tagger on the given data
+    # Instantiate an FeatureWrapper object
     def __init__(self, data):
-        
+
         # Only run GENIA tagger if feature is enabled
         if 'GENIA' in self.enabled_IOB_prose_sentence_features:
             self.GENIA_features = clicon_genia_interface.genia(data)
@@ -49,6 +57,7 @@ class FeatureWrapper:
 
         # cache for the mappings of all umls lookups made
         self.umls_lookup_cache = UmlsCache()
+
 
 
     # Iterate through GENIA Tagger features
@@ -94,9 +103,14 @@ class FeatureWrapper:
 
         features_list = []
 
+
         # Get a feature set for each word in the sentence
         for i,word in enumerate(sentence):
             features_list.append( self.IOB_prose_features_for_word(sentence,i) )
+
+
+        # Only POS tag once
+        pos_tagged = []
 
 
         # Allow for particular features to be enabled
@@ -104,28 +118,29 @@ class FeatureWrapper:
 
             # Feature: Previous POS
             if feature == 'prev_POS':
-                pos_tagged = nltk.pos_tag(sentence)
+                pos_tagged = pos_tagged or nltk.pos_tag(sentence)
                 features_list[0].update( {('prev_POS','<START>') : 1} )
                 for i in range(1,len(sentence)):
                     features_list[i].update( {('prev_POS',pos_tagged[i-1]) : 1} )
 
 
-            # Feature: 1-token part-of-speech context
+            # Feature: Part of Speech
             if feature == 'pos':
+                pos_tagged = pos_tagged or nltk.pos_tag(sentence)
                 for (i,(_,pos)) in enumerate(pos_tagged):
                     features_list[i].update( { ('pos',pos) : 1} )
 
             # Feature: UMLS semantic type for the sentence
             if feature == 'umls_semantic_type_sentence':
 
-                # a list of the uml semantic of the largest substring(s).  
+                # a list of the uml semantic of the largest substring(s).
                 sentence_mapping = umls.umls_semantic_type_sentence( self.umls_lookup_cache,  sentence )
 
-                # If there are no mappings.    
+                # If there are no mappings.
                 if( len(sentence_mapping) == 0 ):
                     for i , features in enumerate( features_list):
-                        features[(feature , None ) ] = 1 
-                # assign the umls definitions to the vector for each word in the sentence.     
+                        features[(feature , None ) ] = 1
+                # assign the umls definitions to the vector for each word in the sentence.
                 else:
                     for i , features in enumerate( features_list):
                         for concept in sentence_mapping:
@@ -134,16 +149,16 @@ class FeatureWrapper:
             # Feature: UMLS semantic concext
             if feature == 'umls_semantic_context':
 
-                # a list of lists, each sub list contains the umls definition of the largest string the word is in
-                umls_semantic_context_mappings = umls.umls_semantic_context_of_words( self.umls_lookup_cache , sentence ) 
- 
-                # assign the umls definitions in the sublists to the vector of the corresponding word 
+                # each sub list contains the umls definition of the largest string the word is in
+                umls_semantic_context_mappings = umls.umls_semantic_context_of_words( self.umls_lookup_cache , sentence )
+
+                # assign the umls definitions in the sublists to the vector of the corresponding word
                 for i , features in enumerate( features_list ):
 
                     #if there are no mappings
                     if umls_semantic_context_mappings[i] == None:
                         features[(feature,None)] = 1
-                    #if there is a mapping, there could be multiple contexts, iterate through the sublist  
+                    #if there is a mapping, there could be multiple contexts, iterate through the sublist
                     else:
                         for mapping in umls_semantic_context_mappings[i]:
                             features[(feature,mapping)] = 1
@@ -218,15 +233,47 @@ class FeatureWrapper:
                 if i == 0:
                     features.update( {('prev_word',    '<START>' ) : 1} )
                 else:
+                    #print len(sentence)
+                    #print i
                     features.update( {('prev_word', sentence[i-1]) : 1} )
 
 
-            # Feature Uncased previous word
-            if feature == 'uncased_prev_word':
-                if i == 0:
-                    features.update( {('uncased_prev_word',          '<START>'  ) : 1} )
-                else:
-                    features.update( {('uncased_prev_word',sentence[i-1].lower()) : 1} )
+            # FIXME - adding pass two features to pass 1 (good? bad?)
+            if feature == "word":
+                features[(feature, word)] = 1
+
+            if feature == "length":
+                features[(feature, None)] = len(word)
+
+            if feature == "mitre":
+                for f in self.mitre_features:
+                    if re.search(self.mitre_features[f], word):
+                        features[(feature, f)] = 1
+
+            if feature == "stem_porter":
+                st = nltk.stem.PorterStemmer()
+                features[(feature, st.stem(word))] = 1
+
+            if feature == "stem_lancaster":
+                st = nltk.stem.LancasterStemmer()
+                features[(feature, st.stem(word))] = 1
+
+            if feature == "stem_snowball":
+                st = nltk.stem.SnowballStemmer("english")
+                features[(feature, st.stem(word))] = 1
+
+            if feature == "word_shape":
+                wordShapes = getWordShapes(word)
+                for j, shape in enumerate(wordShapes):
+                    features[(feature + str(j), shape)] = 1
+
+            if feature == "metric_unit":
+                unit = 0
+                if self.is_weight(word):
+                    unit = 1
+                elif self.is_size(word):
+                    unit = 2
+                features[(feature, None)] = unit
 
 
         return features
@@ -253,7 +300,7 @@ class FeatureWrapper:
 
         # Get a feature set for each word in the sentence
         for i,word in enumerate(sentence):
-            features_list.append( self.IOB_prose_features_for_word(sentence,i) )
+            features_list.append( self.IOB_nonprose_features_for_word(sentence,i) )
 
 
         # Allow for particular features to be enabled
@@ -265,7 +312,6 @@ class FeatureWrapper:
                 features_list[0].update( {('prev_POS','<START>') : 1} )
                 for i in range(1,len(sentence)):
                     features_list[i].update( {('prev_POS',pos_tagged[i-1]) : 1} )
-
 
         return features_list
 
@@ -285,7 +331,7 @@ class FeatureWrapper:
         # Feature: <dummy>
         features = {'dummy': 1}  # always have >0 dimensions
 
-  
+
         # Allow for particular features to be enabled
         for feature in self.enabled_IOB_nonprose_word_features:
 
@@ -467,9 +513,10 @@ class FeatureWrapper:
         for i in range(len(sentence[ind])):
             features.update( self.concept_features_for_word( sentence[ind], i ) )
 
+        tags = None
 
         # Allow for particular features to be enabled
-        for feature in self.enabled_IOB_prose_sentence_features:
+        for feature in self.enabled_concept_sentence_features:
 
             # Feature: the chunk itself
             if feature == 'chunk':
@@ -492,9 +539,9 @@ class FeatureWrapper:
             if feature == 'umls_semantic_type_word':
 
                 # Get a semantic type for each unigram
-                for i,word in enmuerate(sentence[ind]):
-                    mapping = umls.umls_semantic_type_word(self.umls_lookup_cache , word )          
-                    #If there is no umls semantic type. 
+                for i,word in enumerate(sentence[ind]):
+                    mapping = umls.umls_semantic_type_word(self.umls_lookup_cache , word )
+                    #If there is no umls semantic type.
                     featname = 'umls_semantic_type_word"%d' % i
                     if( mapping == None ):
                         features[(feature,None)] = 1
@@ -521,6 +568,7 @@ class FeatureWrapper:
                     right = " ".join([w for w in sentence[index:]])
                     if self.is_test_result(right):
                         features[(feature, None)] = 1
+
 
 
         return features
@@ -690,5 +738,4 @@ class FeatureWrapper:
         elif word.lower() in treatment_terms:
             return 3
         return 0
-
 
