@@ -226,8 +226,9 @@ class Model:
     # @param note. A Note object that contains the data
     def predict(self, note):
 
-        # data - A list of list of the medical text's words
-        data = note.txtlist()
+        # data   - A list of list of the medical text's words
+        data   = note.txtlist()
+
 
         # A wrapper for features
         feat_obj = clicon_features.FeatureWrapper(data)
@@ -329,6 +330,7 @@ class Model:
             labels_list[key] = labels
 
 
+
         # IOB labels
         # translate labels_list into a readable format
         # ex. change all occurences of 1 -> 'B'
@@ -341,6 +343,8 @@ class Model:
                 tmp[-1]= map(lambda l: Model.reverse_IOBs_labels[int(l)],tmp[-1])
                 labels_list[t] = tmp
 
+
+
         #print '-'*80
         #print "\nlabels_list"
         #print labels_list
@@ -351,7 +355,8 @@ class Model:
         text = data
 
         # List of list of tokens (similar to 'text', but concepts are grouped)
-        chunked = {1:[], 2:[], 4:[]}
+        chunked   = {1:[], 2:[], 4:[]}
+        hits_list = {1:[], 2:[], 4:[]}
 
 
         # Create tokens of full concept boundaries for second classifier
@@ -365,11 +370,18 @@ class Model:
 
             # text_chunks    - a merged text 
             # place_holder   - ignore. It has a value of []
-            # hits           - one-to-one concept token indices with text_chunks
+            # hit_tmp        - one-to-one concept token indices with text_chunks
             text_chunks, place_holder, hits = tmp
 
+            print '\n'*5 + '-'*80 + '\n'*5
+            print hits
+            for foo,bar in enumerate(text_chunks):
+                print foo, ': ', bar
+            print hits
+
             # Store chunked text
-            chunked[t] = text_chunks
+            chunked[t]   = text_chunks
+            hits_list[t] = hits
 
 
         #############################
@@ -379,8 +391,10 @@ class Model:
 
         # Predict classification for chunks
         # FIXME - possible error - only predicts on 4
-        text_chunks        = chunked[4]
+        text_chunks        =   chunked[1]
+        hits               = hits_list[1]
 
+        #print labels_list
 
 
         # rows         - the format for representing feats for machine learning
@@ -391,6 +405,9 @@ class Model:
             i,j = hit
             rows.append(feat_obj.concept_features(text_chunks[i], j))
             text_matches.append(text_chunks[i][j])
+
+
+        #print text_matches
 
 
         # FIXME
@@ -413,6 +430,9 @@ class Model:
         rows = tmp_rows
 
 
+        #print rows
+
+
         # Predict using model
         second_pass_model = self.filename + '3'
         libml.write_features(second_pass_model, [rows], None, self.type);
@@ -426,6 +446,8 @@ class Model:
             if t not in second_pass_labels_list:
                 second_pass_labels_list[t] = []
 
+
+        #print second_pass_labels_list
 
         # translate labels_list into a readable format
         # ex. change all occurences of 0 -> 'none'
@@ -442,6 +464,9 @@ class Model:
                 tmp[-1] = map(lambda l: l.strip(), tmp[-1])
                 tmp[-1] = map(lambda l: Model.reverse_labels[int(l)],tmp[-1])
                 second_pass_labels_list[t] = tmp
+
+
+        #print second_pass_labels_list
 
 
         # Put predictions into format for Note class to read
