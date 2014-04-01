@@ -8,14 +8,22 @@ def umls_semantic_type_word( umls_string_cache , sentence ):
         mapping = umls_string_cache.get_map( sentence )
     else:
         concept = SQLookup.string_lookup( sentence )
+        #print sentence, ' - NOT FOUND'
+        #print '\t', concept
         if concept != None:
-            umls_string_cache.add_map( sentence , concept[0] )
+            #umls_string_cache.add_map( sentence , concept[0] )
+            umls_string_cache.add_map( sentence , concept )
         else:
             umls_string_cache.add_map( sentence , None )
         mapping = umls_string_cache.get_map(sentence)
 
+    #print 'umls_semantic_type_word - returning:'
+    #print mapping
+    #print ''
+
     return mapping  
     
+
 def umls_semantic_context_of_words( umls_string_cache, sentence ):
      
     #Defines the largest string span for the sentence.
@@ -45,12 +53,19 @@ def umls_semantic_context_of_words( umls_string_cache, sentence ):
             #If the string is not in cache, look the umls concept up and add to the cache. 
             if not( umls_string_cache.has_key( rawstring ) ):
                 #SQLookup returns a tuple if there is a result or None is there is not.  
-                concept = SQLookup.string_lookup( rawstring ) 
+                concept = SQLookup.string_lookup( rawstring )
                 
-                if concept != None:
-                    umls_string_cache.add_map( rawstring , concept[0] )
+#                print concept 
+    
+                if not concept:
+                    umls_string_cache.add_map( rawstring, None ) 
                 else:
-                    umls_string_cache.add_map( rawstring , None ) 
+                    umls_string_cache.add_map( rawstring, concept ) ; 
+            
+#                if concept != None:
+ #                   umls_string_cache.add_map( rawstring , concept[0] )
+  #              else:
+   #                 umls_string_cache.add_map( rawstring , None ) 
 
             #Store the concept into concept_span_dict with its span as a key.
             concept_span_dict[(ti,ti+currentWindowSize-1)] = umls_string_cache.get_map( rawstring )
@@ -58,7 +73,7 @@ def umls_semantic_context_of_words( umls_string_cache, sentence ):
             #For each substring of the sentence if there is a definition obtained from 
             #SQLookup assign the concept to every word that is within in the substring.
             #If the currrent span is a substring update otherwise if it is not a substring add the new found context. 
-            if umls_string_cache.get_map(rawstring) != None:
+            if umls_string_cache.get_map(rawstring):
 
                 for i in range( ti , ti + currentWindowSize ):  
                     
@@ -76,7 +91,13 @@ def umls_semantic_context_of_words( umls_string_cache, sentence ):
                             if umls_context_list[i].count( [ti,ti+currentWindowSize -1] ) == 0 :
                                 umls_context_list[i].append( [ ti , ti +currentWindowSize - 1 ] ) 
     
+
+    #print '\t\t', umls_context_list
+
     #create a list of sublists each sublist represents the contexts for which the word appears in the sentence
+
+ #   print umls_context_list 
+
     mappings = [] 
     for i in umls_context_list:
         spans = i 
@@ -86,12 +107,22 @@ def umls_semantic_context_of_words( umls_string_cache, sentence ):
             sub_mappings = []
             for j in spans:
                 sub_mappings.append( concept_span_dict[tuple(j)])
-            mappings.append( list(set(sub_mappings)) )
-    
+            #print '\t\t\t', sub_mappings
+            #print ''
+            #mappings.append( list(set(sub_mappings)) )
+            mappings.append( sub_mappings )
+#    print mappings
+#    print sentence 
+ #   print '\t\t\t', mappings
+
     return mappings 
 
 def umls_semantic_type_sentence( cache , sentence ):
+
+    #print sentence
+
     #Defines the largest string span for the sentence.                                                                                               
+
     WINDOW_SIZE = 7
 
     #holds the mappings for every substring of size 1 to WINDOW_SIZE             
@@ -117,21 +148,28 @@ def umls_semantic_type_sentence( cache , sentence ):
 
                 concept = string_lookup( rawstring )
 
-                if concept != None:
-                    cache.add_map( rawstring , concept[0] )
+                #cache.add_map( rawstring , concept )
+
+                if concept:
+                    cache.add_map( rawstring , concept )
                 else:
-                    cache.add_map( rawstring  , None )
+                    cache.add_map( rawstring  , [] )
 
                 mappings[rawstring] = cache.get_map( rawstring )
-
+#            print "rawstring: ", rawstring
+ #           print "mappings: " ,mappings[rawstring] 
     size_s = 0
 
     phrase = []
 
-    #get longest sub string with a mapping                                                                                                                                                                  
-    for mapping in mappings.iteritems():
+    
+    #print "mappings: " , mappings 
+    #get longest sub string with a mapping 
 
-        if( mapping[1] != None ):
+    for mapping in mappings.iteritems():
+        #print mapping 
+        if(  mapping[1]  ):
+ #           print mapping 
             if( len( mapping[0] )   > size_s ):
 
                 phrase = []
@@ -140,7 +178,57 @@ def umls_semantic_type_sentence( cache , sentence ):
                 continue
             if( len(mapping[0]) == size_s ):
                 phrase.append( mapping[1] )
-    
+  
+#    print "phrase: " , phrase
+#    print phrase 
     return phrase
 
+
+
+# Get the semantic types for a given word
+def get_cui( cache , word ):
+
+    # If hypernyms already in cache
+    if cache.has_key( word + '--cuis' ):
+
+        cuis = cache.get_map( word + '--cuis' )
+
+    else:
+
+        # Get cui
+        cuis = SQLookup.cui_lookup(word)
+
+        # Eliminate duplicates
+        cuis = list(set(cuis))
+        cuis = [c[0] for c in cuis]
+
+        # Store result in cache
+        cache.add_map( word + '--cuis', cuis )
+
+    return cuis
+
+
+
+# Get the hypernyms of a string
+def umls_hypernyms( cache, string ):
+
+    # If hypernyms already in cache
+    if cache.has_key( string + '--hypernyms' ):
+
+        hyps = cache.get_map( string + '--hypernyms' )
+
+    else:
+
+        # Get hypernyms
+        hyps = SQLookup.hypernyms_lookup(string)
+
+        # Eliminate duplicates
+        #hyps = list(set(hyps))
+        #hyps = [cui[0] for cui in hyps]
+        #hyps = hyps[0]
+
+        # Store result in cache
+        cache.add_map( string + '--hypernyms' , hyps )
+
+    return hyps
 
