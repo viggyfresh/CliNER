@@ -41,11 +41,11 @@ class Note:
 
                     # concept
                     prefix, suffix = line.split('||')
-                    txt = prefix.split()
-                    con = suffix[3:-2]
+                    text = prefix.split()
+                    conc = suffix[3:-2]
 
-                    start = txt[-2].split(':')
-                    end   = txt[-1].split(':')
+                    start = text[-2].split(':')
+                    end   = text[-1].split(':')
 
                     assert "concept spans one line", start[0] == end[0]
 
@@ -58,7 +58,7 @@ class Note:
                     end   = int(  end[1])
 
                     # Add the classification to the Note object
-                    self.classifications.append( (con,l,start,end) )
+                    self.classifications.append( (conc,l,start,end) )
 
                     #print "txt:   ", txt
                     #print "l:     ", l
@@ -67,7 +67,11 @@ class Note:
                     #print "line:  ", self.data[l-1]
 
                     # Beginning of a concept
-                    self.boundaries[l-1][start] = 'B'
+                    try:
+                        self.boundaries[l-1][start] = 'B'
+                    except:
+                        print 'txt: ', txt
+                        print 'con: ', con
 
                     # Inside of a concept
                     for i in range(start,end):
@@ -101,7 +105,7 @@ class Note:
                         continue
 
                     concept = classification[0]
-                    lineno  = classification[1]
+                    lineno  = classification[1] + 1
                     start   = classification[2]
                     end     = classification[3]
 
@@ -110,8 +114,10 @@ class Note:
 
                     #print "\n" + "-" * 80
                     #print "start:       ", start
+                    #print "end          ", end
                     #print "text:        ", text
                     #print "text[start]: ", text[start]
+                    #print "concept:     ", concept
 
                     # The text string of words that has been classified
                     datum = text[start]
@@ -125,6 +131,10 @@ class Note:
                     # Classification
                     label = concept
 
+                    # Fixing issue involving i2b2 format (remove capitalization)
+                    lowercased = [w.lower() for w in datum.split()]
+                    datum = ' '.join(lowercased)
+
                     # Print format
                     print >>f, "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx1, idx2, label)
                     #print "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx1, idx2, label)
@@ -137,7 +147,9 @@ class Note:
     # @param  labels. A list of list of BIOs labels
     #
     # Print the prediction of BIOs concept boundary classification
-    def write_BIOs_labels(self, _, labels):
+    def write_BIOs_labels(self, filename, labels):
+
+        fid = open(filename,"w")
 
         # List of list of words (line-by-line)
         text = self.txtlist()
@@ -160,9 +172,9 @@ class Note:
                     # lookahead (check if streak will continue)
                     if (j+1 == len(concept_line))or \
                        (concept_line[j+1] != 'I'):
-                           print '%d:%d %d:%d' % (i+1,j-len(queue)+1,i+1,j)
-                           print ' '.join(queue)
-                           print ''
+                           print >>fid, '%d:%d %d:%d' % (i+1,j-len(queue)+1,i+1,j)
+                           print >>fid, ' '.join(queue)
+                           print >>fid, ''
                            # Reset streak
                            queue = []
         
