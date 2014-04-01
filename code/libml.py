@@ -174,7 +174,7 @@ class Worker(Thread):
                 # print('worker {0} stop.'.format(self.name))
                 break
             try:
-                rate = self.run_one(2.0**cexp,2.0**gexp)
+                rate = self.run_one(1.0,1e-5)
                 if rate is None: raise RuntimeError("get no rate")
             except:
                 # we failed, let others do that and we just quit
