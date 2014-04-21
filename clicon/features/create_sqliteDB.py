@@ -6,28 +6,28 @@ def create_db():
     
     print "\ncreating umls.db" 
     #connect to the .db file we are creating. 
-    conn = sqlite3.connect( "../umls_tables/umls.db" ) 
+    conn = sqlite3.connect( "umls_tables/umls.db" ) 
     
     conn.text_factory = str 
 
     print "opening files" 
     #load data in files.
     try:
-        MRSTY_TABLE = open( ( "../umls_tables/MRSTY"), "r" )
+        MRSTY_TABLE = open( ( "umls_tables/MRSTY"), "r" )
     except IOError:
         print "\nNo file to use for creating MRSTY table\n" 
         conn.close() 
         sys.exit() 
 
     try:
-        MRCON_TABLE = open( ("../umls_tables/MRCON") , "r" ) 
+        MRCON_TABLE = open( ("umls_tables/MRCON") , "r" ) 
     except IOError:
         print "\nNo file to use for creating MRCON table\n" 
         conn.close() 
         sys.exit() 
 
     try:
-        MRREL_TABLE = open( ( "../umls_tables/MRREL") , "r" )
+        MRREL_TABLE = open( ( "umls_tables/MRREL") , "r" )
     except IOError:
         print "\nNo file to use for creating MRREL table\n"
         conn.close()
