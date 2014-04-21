@@ -4,8 +4,9 @@ import os
 import cPickle as pickle
 import helper
 import libml
+import sys
 
-import clicon_features
+from features.clicon_features import clicon_features
 
 
 class Model:
