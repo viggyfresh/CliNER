@@ -6,7 +6,7 @@ import helper
 import libml
 import sys
 
-from features.clicon_features import clicon_features
+from features import clicon_features
 
 
 class Model:
@@ -75,12 +75,15 @@ class Model:
         feat_obj = clicon_features.FeatureWrapper(data)
 
         # First pass
+        print 'first'
         self.first_train(data, labels, bounds, feat_obj)
 
         # Second pass
+        print 'second'
         self.second_train(data, labels, bounds, feat_obj)
 
         # Pickle dump
+        print 'pickle dump'
         with open(self.filename, "w") as model:
             pickle.dump(self, model)
     
@@ -92,10 +95,14 @@ class Model:
     # @param notes. A list of Note objects that has data for training the model
     def first_train(self, data, labels, chunks, feat_obj=None):
 
+        print '\tbegin first_train()'
+
         # If not given
         if not feat_obj: 
             # Create object that is a wrapper for the features
             feat_obj = clicon_features.FeatureWrapper(data)
+
+        print '\tfeat_obj created'
 
         # IOB tagging
         prose    = []
@@ -103,7 +110,7 @@ class Model:
         prose_line_numbers    = []
         nonprose_line_numbers = []
         for i,line in enumerate(data):
-            isProse,feats = feat_obj.IOB_features_for_sentence(line)
+            isProse,feats = feat_obj.IOB_features(line)
             if isProse:
                 prose.append( feats )
                 prose_line_numbers.append(i)
@@ -111,6 +118,7 @@ class Model:
                 nonprose.append( feats )
                 nonprose_line_numbers.append(i)
 
+        print '\tfeatures assigned'
 
         # Encode each feature as a unique number
         for row in prose + nonprose:
@@ -119,6 +127,7 @@ class Model:
                     if feature not in self.IOB_vocab:
                         self.IOB_vocab[feature] = len(self.IOB_vocab) + 1
 
+        print '\tfeature dict encoding'
 
         # IOB labels
         # A list of a list encodings of concept labels (ex. 'B' => 1)
@@ -130,6 +139,8 @@ class Model:
         feat_lu = lambda f: {self.IOB_vocab[item]:f[item] for item in f}
         prose = [map(feat_lu, x) for x in prose]
         nonprose = [map(feat_lu, x) for x in nonprose]
+
+        print '\tsegregate "chunks" list into prose and nonprose'
 
         # Segregate chunks into 'Prose CHUNKS' and 'Nonprose CHUNKS'
         prose_ind    = 0
@@ -154,6 +165,8 @@ class Model:
 
         prose_model    = self.filename + '1'
         nonprose_model = self.filename + '2'
+
+        print '\twriting features to libml'
 
         # Use CRF
         libml.write_features(   prose_model,    prose, pchunks, libml.CRF)
@@ -193,29 +206,33 @@ class Model:
         text_chunks, concept_chunks, hits = tmp
 
 
-        # rows is a list of a list of hash tables
-        # it is used for holding the features that will be used for training
+        # Collect 'hits' to model 'text_chunks' layout
+        row_hits   = [ [] for _ in text_chunks ]
+        for (i,j) in hits: 
+            row_hits[i].append(j)
+
+
+        # rows            - list of list of h-tables (all non-'none' in 2d order)
+        # concept_matches - 1-1 correspondence with rows. Numeric labels (1,2,3)
         rows = []
         concept_matches = []
-        row_line = []
-        con_line = []
-        for ind in range(len((hits))):
-            i,j = hits[ind]
-            
-            # Get features
-             
-            row_line.append(feat_obj.concept_features(text_chunks[i], j))
+        for i,chunk_inds in enumerate(row_hits):
 
-            # Corresponding labels (libml encodings of 'treatment','problem',etc)
-            con_tmp = concept_chunks[i][j]
-            con_tmp = Model.labels[con_tmp]
-            con_line.append( con_tmp )
+            # Ignore uninteresting rows
+            if not chunk_inds: continue
 
-            if (ind == len(hits)-1) or (i != hits[ind+1][0]):
-                rows.append(row_line)
-                row_line = []
-                concept_matches.append(con_line)
-                con_line = []
+            # Features for each chunk in the sentence
+            row = feat_obj.concept_features(text_chunks[i], chunk_inds)
+
+            # Could probably be condensed with some lambda stuff
+            row_concepts = []
+            for con in concept_chunks[i]:
+                if con != 'none':
+                    row_concepts.append( Model.labels[con] )
+
+            rows.append(row)
+            concept_matches.append( row_concepts )
+
 
 
         # Encode each feature as a unique number
@@ -288,7 +305,7 @@ class Model:
         nonprose_line_numbers = []
         for i,line in enumerate(data):
             # returns both the feature dict AND whether the sentence was prose
-            isProse,feats = feat_obj.IOB_features_for_sentence(line)
+            isProse,feats = feat_obj.IOB_features(line)
             if isProse:
                 prose.append( feats )
                 prose_line_numbers.append(i)
@@ -374,19 +391,25 @@ class Model:
             # Create object that is a wrapper for the features
             feat_obj = clicon_features.FeatureWrapper()
 
-        # rows            - the format for representing feats for libml
-        # concept_matches - labels (ex. 'treatment') encoded for libml
-        rows = []
-        row_line = []
-        for ind in range(len((hits))):
-            i,j = hits[ind]
-            
-            # Get features
-            row_line.append(feat_obj.concept_features(text_chunks[i], j))
+        # Collect 'hits' to model 'text_chunks' layout
+        row_hits   = [ [] for _ in text_chunks ]
+        for (i,j) in hits:
+            row_hits[i].append(j)
 
-            if (ind == len(hits)-1) or (i != hits[ind+1][0]):
-                rows.append(row_line)
-                row_line = []
+
+        # rows            - list of list of h-tables (all non-'none' in 2d order)
+        # concept_matches - 1-1 correspondence with rows. Numeric labels (1,2,3)
+        rows = []
+        concept_matches = []
+        for i,chunk_inds in enumerate(row_hits):
+
+            # Ignore uninteresting rows
+            if not chunk_inds: continue
+
+            # Features for each chunk in the sentence
+            row = feat_obj.concept_features(text_chunks[i], chunk_inds)
+            rows.append(row)
+
 
 
         # Purpose: Encode something like ('chunk', 'rehabilitation') as a unique

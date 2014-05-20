@@ -59,6 +59,11 @@ def main():
     # Load model
     model = Model.load(args.model)
 
+
+    # file names
+    print files
+
+
     for txt in files:
 
         # Read the data into a Note object

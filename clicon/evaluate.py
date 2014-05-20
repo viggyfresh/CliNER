@@ -77,9 +77,14 @@ def main():
         labels = Model.labels   # hash tabble: label -> index
         confusion = [[0] * len(labels) for e in labels]
 
-            # txt <- medical text
-            # con <- model predictions
-            # ref <- actual labels
+
+        print files
+        print ''
+
+
+        # txt <- medical text
+        # con <- model predictions
+        # ref <- actual labels
         for txt, con, ref in files:
 
             # A note that represents the model's predictions

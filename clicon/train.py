@@ -100,6 +100,10 @@ def main():
         type = type | libml.CRF
 
 
+    # file names
+    print training_list
+
+
     # Read the data into a Note object
     notes = []
     for txt, con in training_list:

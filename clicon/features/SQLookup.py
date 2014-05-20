@@ -9,13 +9,13 @@ WINDOW_SIZE = 7
 def SQLConnect():
 
     #try to connect to the sqlite database. Make one otherwise
-    if( os.path.isfile( "../umls_tables/umls.db" ) ):
+    if( os.path.isfile( "umls_tables/umls.db" ) ):
         print "\ndb exists" 
-        db = sqlite3.connect( "../umls_tables/umls.db" ) 
+        db = sqlite3.connect( "umls_tables/umls.db" ) 
     else:
         print "\ndb doesn't exist"
         create_sqliteDB.create_db() 
-        db = sqlite3.connect( "../umls_tables/umls.db" )
+        db = sqlite3.connect( "umls_tables/umls.db" )
     db.text_factory = str
     return db.cursor()
 

@@ -1,9 +1,12 @@
 import cPickle as pickle 
+import os
 
 class UmlsCache:
     def __init__(self):
         try:
-            self.cache = pickle.load( open( "umls_cache" , "rb" ) ) ;
+            prefix = os.path.abspath('')
+            filename = os.path.join( prefix, 'umls_cache' )
+            self.cache = pickle.load( open( filename , "rb" ) ) ;
         except IOError:
             self.cache = {} 
     
