@@ -10,6 +10,6 @@ setup(
 	],
 	entry_points='''
 		[console_scripts]
-		clicon=clicon.clicon:clicon
+		clicon=clicon.cli:clicon
 	''',
 )
