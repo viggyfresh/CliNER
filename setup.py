@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
 	name='clicon',
-	version='0.1',
+	version='0.1dev',
 	packages=find_packages(),
 	install_requires=[
 		'click',
