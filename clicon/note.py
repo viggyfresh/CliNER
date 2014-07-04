@@ -1,13 +1,14 @@
 from __future__ import with_statement
 
 import re
+from copy import copy
 
 
 class Note:
 
     # Constructor
     def __init__(self):
-        # data     - A list of lines directly from the file
+        # data     - A list of list of words
         # concepts - A one-to-one correspondence of each word's concept
         # classifications - A list of tuples that convey concept labels
         # boundaries      - A one-to-one correspondence of each word's BIO status
@@ -28,7 +29,7 @@ class Note:
         with open(txt) as f:
             for line in f:
                 # Add sentence to the data list
-                self.data.append(line)
+                self.data.append(line.split())
 
                 # Make put a temporary 'O' in each spot
                 self.boundaries.append( ['O' for _ in line.split()] )
@@ -80,74 +81,104 @@ class Note:
                     #print "\n" + "-" * 80
 
 
+    def write_txt(self):
 
-    # Note::write_i2b2()
-    #
-    # @param  con.    A path to the file of where to write the prediction.
-    # @param  labels. A list of classifications
-    #
-    # Write the concept predictions to a given file in i2b2 format
-    def write_i2b2(self, con, labels):
+        """
+        Note::write_txt()
+
+        Purpose: Output the text of a file (without xml annotations)
+
+        @return  A string containing the text of the file.
+        """
+
+        retStr = ''
+
+        for line in self.txtlist():
+            retStr += ' '.join(line) + '\n'
+
+        return retStr
+
+
+
+    def write_i2b2_con(self, labels=None):
+
+        """
+        Note::write_i2b2_con()
+        
+        Purpose: Write the concept predictions to a given file in i2b2 format
+        
+        @param  labels. A list of classifications
+        @return         A string of i2b2 concept file data
+        """
+
+        retStr = ''
 
         # List of list of words (line-by-line)
         tlist = self.txtlist()
 
-        #for i, elem in enumerate(self.data):
-        #    print i, ": ", elem
+        # labels or self.concepts ?
+        if labels:
+            classifications = labels
+        elif self.classifications:
+            classifications = self.classifications
+        else:
+            raise Exception('Cannot write concept file: must specify labels')
 
 
-        with open(con, 'w') as f:
+        for classification in classifications:
 
-            for classification in labels:
+            # Ensure 'none' classifications are skipped
+            if classification[0] == 'none':
+                continue
 
-                    # Ensure 'none' classifications are skipped
-                    if classification[0] == 'none':
-                        continue
+            concept = classification[0]
+            lineno  = classification[1] + 1
+            start   = classification[2]
+            end     = classification[3]
 
-                    concept = classification[0]
-                    lineno  = classification[1] + 1
-                    start   = classification[2]
-                    end     = classification[3]
+            # A list of words (corresponding line from the text file)
+            text = tlist[lineno-1]
 
-                    # A list of words (corresponding line from the text file)
-                    text = tlist[lineno-1]
+            #print "\n" + "-" * 80
+            #print "start:       ", start
+            #print "end          ", end
+            #print "text:        ", text
+            #print "text[start]: ", text[start]
+            #print "concept:     ", concept
 
-                    #print "\n" + "-" * 80
-                    #print "start:       ", start
-                    #print "end          ", end
-                    #print "text:        ", text
-                    #print "text[start]: ", text[start]
-                    #print "concept:     ", concept
+            # The text string of words that has been classified
+            datum = text[start]
+            for j in range(start, end):
+                datum += " " + text[j+1] 
 
-                    # The text string of words that has been classified
-                    datum = text[start]
-                    for j in range(start, end):
-                        datum += " " + text[j+1] 
+            # Line:TokenNumber of where the concept starts and ends
+            idx1 = "%d:%d" % (lineno, start)
+            idx2 = "%d:%d" % (lineno, end  )
 
-                    # Line:TokenNumber of where the concept starts and ends
-                    idx1 = "%d:%d" % (lineno, start)
-                    idx2 = "%d:%d" % (lineno, end  )
+            # Classification
+            label = concept
 
-                    # Classification
-                    label = concept
+            # Fixing issue involving i2b2 format (remove capitalization)
+            lowercased = [w.lower() for w in datum.split()]
+            datum = ' '.join(lowercased)
 
-                    # Fixing issue involving i2b2 format (remove capitalization)
-                    lowercased = [w.lower() for w in datum.split()]
-                    datum = ' '.join(lowercased)
+            # Print format
+            retStr += "c=\"%s\" %s %s||t=\"%s\"\n" % (datum, idx1, idx2, label)
 
-                    # Print format
-                    print >>f, "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx1, idx2, label)
-                    #print "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx1, idx2, label)
-
+        return retStr
 
 
-    # Note::write_BIOs_labels()
-    #
-    # @param  _.      Filename. Ignore it.
-    # @param  labels. A list of list of BIOs labels
-    #
-    # Print the prediction of BIOs concept boundary classification
+
     def write_BIOs_labels(self, filename, labels):
+
+        """
+        Note::write_BIOs_labels()
+        
+        Purpose: Print the prediction of BIOs concept boundary classification
+        
+        @param  _.      Filename. Ignore it.
+        @param  labels. A list of list of BIOs labels
+        """
 
         fid = open(filename,"w")
 
@@ -264,65 +295,124 @@ class Note:
 
 
 
-    # Note::read_xml()
-    #
-    # @param txt. A file path for the xml formatted medical record
-    def read_xml(self, txt):
+    def read_xml(self, xml):
 
-       # FIXME: By storing the 'data' as a list of lines from the file
-       #          instead of a list of list of words, xml does not fit nicely
-       # Possible solution: Switch back to list of list of words
-       # Alternative:       Store edited sentences from the file to remove <>
+        """
+        Note::read_xml()
+        
+        Purpose: Read data from an xml-annotated file into a Note object
 
+        @param xml. A file path for the xml formatted medical record
+        """
 
         # Read in the medical text
-        with open(txt) as f:
+        with open(xml) as f:
 
-            for line in f:
+            for lineno,line in enumerate(f.readlines()):
+
                 # Add sentence to the data list
-                self.data.append(line)
+                data_line = []
+                for word in line.split():
+                    if (word[0] != '<') and (word[-1] != '>'):
+                        data_line.append(word)
+                self.data.append(data_line)
 
 
-                # For each word, store a corresponding concept label
-                tmp = []
-                for i, group in enumerate(line.split('<')):
-                    # All odd groups have label info (because of line split)
-                    # ex. 'treatment>discharge medications'
-                    if (i%2):
-                        # Get concept label
-                        match = re.search('(\w+)>(.+)', group)
-                        if not match: 
-                            print "\nUnexpected file format\n"
-                            exit(1)
+                # Stored data for self.classifications
+                concept = 'N/A'
+                start_ind = -1
+                i = 0
 
-                        label = match.group(1)
-                        words = match.group(2)
-                       
-                        # Add the label once for every word
-                        for word in words.split():
-                            tmp.append(label)
-                    # If even group , then process with 'none' labels
+                # State variable is sufficient because concepts are not nested
+                inside_concept = False
+                for word in line.split():
+
+                    # Search for xml tag
+                    match = re.search('<(.*)>', word)
+                    if match:
+
+                        con = match.group(1)
+                        
+                        # end tag
+                        if con[0] != '/':
+                            # store data 
+                            concept = con
+                            start_ind = i
+
+                            # state variable
+                            inside_concept = True
+
+                        # begin tag
+                        else:
+                            # store data 
+                            tup = (concept,lineno,start_ind,i-1)
+                            self.classifications.append(tup)
+
+                            # state variable
+                            inside_concept = False
+
+                    # non-tag text
                     else:
-                        for word in group.split():
-                # / closes the xml tag of a previous label (skip)
-                            if word[0] == '/':
-                                continue
-                            else:
-                                tmp.append('none')
-                # Add line of labels to the 'concepts' data member
-                self.concepts.append(tmp)
+
+                        # Next token
+                        i += 1
 
 
 
-    # Note::write_xml()
-    #
-    # @param  con.    A path to the file of where to write the prediction.
-    # @param  labels. A list of predictions of labels for the given text.
-    #
-    # Write the concept predictions to a given file in xml format
-    def write_xml(self, con, labels):
-        # xml formats do not have associated concept files
-        return
+
+    def write_xml(self):
+
+        """
+        Note::write_xml()
+        
+        Purpose: Output the data in xml format
+
+        @return  A string containing xml-formatted data
+        """
+
+        # Intermediate copy
+        toks = copy(self.data)
+
+        # Order classification tuples so they are accessed right to left
+        # Assumption: sorted() is a stable sort
+        tags = sorted(self.classifications, key=lambda x:x[2], reverse=True)
+        tags = sorted(tags                , key=lambda x:x[1]              )
+
+        #print toks
+        #print ''
+        #print ''
+
+        # Insert each xml tag into its proper location
+        for tag in tags:
+
+            # Decode classification tuple
+            con   = tag[0]
+            line  = tag[1] - 1
+            start = tag[2]
+            end   = tag[3]
+
+            #print tag
+            #print 'line:   ', toks[line]
+            #print 'phrase: ', toks[line][start:end+1]
+
+            # Insert tags
+            toks[line].insert(end+1, '</' + con + '>')
+            toks[line].insert(start, '<'  + con + '>')
+
+            #print 'line:   ', toks[line]
+            #print ''
+
+
+        # Stitch text back together
+        toks = [  ' '.join(s)  for  s  in toks  ]
+        toks = '\n'.join(toks)
+
+        #print toks
+        #print ''
+        #print ''
+
+
+        return toks
 
 
 
@@ -331,12 +421,7 @@ class Note:
     #
     # @return the data from the medical text broken into line-word format
     def txtlist( self ):
-        # Goal: Break self.data sentences into lists of words
-        ans = []
-        for sent in self.data:
-            ans.append(sent.split())
-
-        return ans
+        return self.data
 
 
 
@@ -352,7 +437,7 @@ class Note:
         # Initially, all labels will be stored as 'none'
         for line in self.data:
             tmp = []
-            for word in line.split():
+            for word in line:
                 tmp.append('none')
             self.concepts.append(tmp)
 
