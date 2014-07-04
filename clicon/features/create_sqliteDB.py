@@ -1,33 +1,35 @@
 #database.py creates a .db file for performing umls searches. 
 import sqlite3  
 import sys
+import os
 
 def create_db(): 
     
     print "\ncreating umls.db" 
     #connect to the .db file we are creating. 
-    conn = sqlite3.connect( "umls_tables/umls.db" ) 
+    db_dir = os.path.join( os.environ['CLICON_DIR'], 'umls_tables' )
+    conn = sqlite3.connect( os.path.join(db_dir, 'umls.db') ) 
     
     conn.text_factory = str 
 
     print "opening files" 
     #load data in files.
     try:
-        MRSTY_TABLE = open( ( "umls_tables/MRSTY"), "r" )
+        MRSTY_TABLE = open( os.path.join(db_dir,'MRSTY'), "r" )
     except IOError:
         print "\nNo file to use for creating MRSTY table\n" 
         conn.close() 
         sys.exit() 
 
     try:
-        MRCON_TABLE = open( ("umls_tables/MRCON") , "r" ) 
+        MRCON_TABLE = open( os.path.join(db_dir,'MRCON') , "r" ) 
     except IOError:
         print "\nNo file to use for creating MRCON table\n" 
         conn.close() 
         sys.exit() 
 
     try:
-        MRREL_TABLE = open( ( "umls_tables/MRREL") , "r" )
+        MRREL_TABLE = open( os.path.join(db_dir,'MRREL') , "r" )
     except IOError:
         print "\nNo file to use for creating MRREL table\n"
         conn.close()

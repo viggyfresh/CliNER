@@ -4,8 +4,8 @@ import os
 class UmlsCache:
     def __init__(self):
         try:
-            prefix = os.path.abspath('')
-            filename = os.path.join( prefix, 'umls_cache' )
+            db_dir = os.path.join( os.environ['CLICON_DIR'], 'umls_tables' )
+            filename = os.path.join( db_dir, 'umls_cache' )
             self.cache = pickle.load( open( filename , "rb" ) ) ;
         except IOError:
             self.cache = {} 
@@ -20,4 +20,6 @@ class UmlsCache:
         return self.cache[string] 
  
     def __del__(self):  
-        pickle.dump( self.cache, open("umls_cache", "wb" ) )    
+        db_dir = os.path.join( os.environ['CLICON_DIR'], 'umls_tables' )
+        filename = os.path.join( db_dir, 'umls_cache' )
+        pickle.dump( self.cache, open(filename, "wb" ) )    
