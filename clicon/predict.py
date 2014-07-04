@@ -100,7 +100,9 @@ def main():
 
 
             # Output the concept predictions
-            note.write_i2b2(con_path, labels[t])
+            output = note.write_i2b2_con(labels[t])
+            with open(con_path, 'w') as f:
+                print >>f, output
             #note.write_plain(con_path, labels[t])   # in case of plain format
 
             #note.write_BIOs_labels(con_path, labels[t])
