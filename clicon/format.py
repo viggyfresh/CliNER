@@ -48,6 +48,10 @@ def main():
     args = parser.parse_args()
 
 
+    print 'CALLING FORMAT.PY'
+    return
+
+
     # A list of text    file paths
     # A list of concept file paths
     txt_files = glob.glob(args.txt)
