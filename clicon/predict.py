@@ -10,7 +10,9 @@ from model import Model
 from note import *
 
 def main():
+
     parser = argparse.ArgumentParser()
+
     parser.add_argument("-i", 
     dest = "input", 
     help = "The input files to predict", 
@@ -27,6 +29,12 @@ def main():
         dest = "model",
         help = "The model to use for prediction",
         default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../models/run_models/run.model')
+    )
+
+    parser.add_argument("-f",
+        dest = "format",
+        help = "Data format (i2b2 or xml).",
+        default = 'i2b2'
     )
 
     parser.add_argument("--no-svm",
@@ -51,6 +59,7 @@ def main():
 
     # Locate the test files
     files = glob.glob(args.input)
+    format = args.format
 
     # Load a model and make a prediction for each file
     path = args.output
@@ -69,18 +78,13 @@ def main():
         # Read the data into a Note object
         note = Note()
         note.read_i2b2(txt)
-        #note.read_plain(txt)   # TEMP - in case of plain format
 
 
         # Use the model to predict the concept labels
         # Returns a hash table with:
         #     keys as 1,2,4
         #     values as list of list of concept tokens (one-to-one with dat_list)
-        try:
-            labels = model.predict(note)
-        except IndexError:  # FIXME - Not sure what causes this (something GENIA-related)
-            continue
-
+        labels = model.predict(note)
 
         con = os.path.split(txt)[-1]
         con = con[:-3] + 'con'
@@ -100,10 +104,13 @@ def main():
 
 
             # Output the concept predictions
-            note.write_i2b2(con_path, labels[t])
-            #note.write_plain(con_path, labels[t])   # in case of plain format
-
-            #note.write_BIOs_labels(con_path, labels[t])
+            if format == 'i2b2':
+                output = note.write_i2b2(labels[t])
+            elif format == 'xml':
+                output =  note.write_xml(labels[t])
+            else:
+                output = ''
+            print output
 
 
 

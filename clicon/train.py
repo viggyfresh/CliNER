@@ -46,6 +46,12 @@ def main():
         default = None
     )
 
+    parser.add_argument("-f",
+        dest = "format",
+        help = "Data format (i2b2 or xml).",
+        default = 'i2b2'
+    )
+
     parser.add_argument("--no-svm",
         dest = "no_svm",
         action = "store_true",
@@ -75,59 +81,53 @@ def main():
     con_files = glob.glob(args.con)
 
 
-    # ex. {'record-13': 'record-13.txt'}
-    # ex. {'record-13': 'record-13.con'}
-    txt_files_map = helper.map_files(txt_files)
-    con_files_map = helper.map_files(con_files)
+    # i2b2 or xml
+    format = args.format
 
 
-    # ex. training_list =  [ ('record-13.txt', 'record-13.con') ]
-    training_list = []
-    for k in txt_files_map:
-        if k in con_files_map:
-            training_list.append((txt_files_map[k], con_files_map[k]))
+    if format == 'i2b2':
 
-        # TEMP - useful for when I was reading in XML files
-        #training_list.append(txt_files_map[k])
+        # ex. {'record-13': 'record-13.con'}
+        txt_files_map = helper.map_files(txt_files)
+        con_files_map = helper.map_files(con_files)
 
-    # What kind of model should be used? (ex. SVM vs. CRF)
-    type = 0
-    if not args.no_svm:
-        type = type | libml.SVM
-    if not args.no_lin:
-        type = type | libml.LIN
-    if not args.no_crf:
-        type = type | libml.CRF
+        # ex. training_list =  [ ('record-13.txt', 'record-13.con') ]
+        training_list = []
+        for k in txt_files_map:
+            if k in con_files_map:
+                training_list.append((txt_files_map[k], con_files_map[k]))
+
+        # file names
+        print training_list
+
+        # Read the data into a Note object
+        notes = []
+        for txt, con in training_list:
+            note_tmp = Note()             # Create Note
+            note_tmp.read_i2b2(txt, con)  # Read data into Note
+            notes.append(note_tmp)        # Add the Note to the list
 
 
-    # file names
-    print training_list
+    elif format == 'xml':
 
+        # file names
+        print txt_files
 
-    # Read the data into a Note object
-    notes = []
-    for txt, con in training_list:
-    #for txt in training_list:
-        # Alternative data formats
-        #note_tmp.read_plain(txt, con)    # plain
-        #note_tmp.read_xml(txt)           # xml
-
-        note_tmp = Note()                # Create Note
-        note_tmp.read_i2b2(txt, con)     # Read data into Note
-        notes.append(note_tmp)         # Add the Note to the list
+        # Read the data into a Note object
+        notes = []
+        for xml in txt_files:
+            note_tmp = Note()             # Create Note
+            note_tmp.read_xml(xml)        # Read data into Note
+            notes.append(note_tmp)        # Add the Note to the list
 
 
     # Create a Machine Learning model
-    model = Model(filename = args.model, type = type)
-
-    if args.disabled_features != None:
-        model.enabled_features = model.enabled_features - Set(args.disabled_features)
-    if args.enabled_features != None:
-        model.enabled_features = Set(args.enabled_features)
+    model = Model(filename = args.model, type = libml.LIN)
 
 
     # Train the model using the Note's data
     model.train(notes)
+
 
 
 if __name__ == '__main__':

@@ -11,99 +11,92 @@ def clicon():
 
 # Train
 @clicon.command()
-@click.option('--txt', 
-              default='data/concept_assertion_relation_training_data/beth/txt/record-13.txt',
-              help='Text files for training.')
-@click.option('--con', 
+@click.option('--annotations', 
               default='data/concept_assertion_relation_training_data/beth/concept/record-13.con',
               help='Concept files for training.')
 @click.option('--model', 
               default='models/run_models/run.model',
               help='Model output by train.')
-@click.option('--clicon_dir', 
-              envvar='CLICON_DIR',
-              help='Base CliCon directory (should be shell env variable).')
-def train(txt, con, model, clicon_dir):
+@click.option('--format', 
+              default='i2b2',
+              help='Data format (i2b2 or xml).')
+@click.argument('input')
+def train(annotations, model, format, input):
 
     # Base directory
-    if not clicon_dir:
+    BASE_DIR = os.environ.get('CLICON_DIR')
+    if not BASE_DIR:
         raise Exception('Environment variable CLICON_DIR must be defined')
-    BASE_DIR = clicon_dir
 
     # Executable
     runable = os.path.join(BASE_DIR,'clicon/train.py')
 
     # Command line arguments
-    txt_path   = os.path.join(BASE_DIR,   txt)
-    con_path   = os.path.join(BASE_DIR,   con)
-    model_path = os.path.join(BASE_DIR, model)
+    txt_path   = os.path.join(BASE_DIR,       input)
+    con_path   = os.path.join(BASE_DIR, annotations)
+    model_path = os.path.join(BASE_DIR,       model)
+
+    print 'training'
 
     # Build command
     cmd = 'python ' + runable                         \
+                    + ' -f   '  + format              \
                     + ' -t \"'  + txt_path    + '\"'  \
                     + ' -c \"'  + con_path    + '\"'  \
                     + ' -m '    + model_path
 
     # Execute train.py
-    #print '\tBASE_DIR: ', BASE_DIR
-    #print '\tcmd: ', cmd
-    #return
     errnum, output = commands.getstatusoutput(cmd)
 
-    #print '\terrnum: ', errnum
-
-    #print '\toutput:'
+    # Display output
     for line in output.split('\n'):
-        #print '\t\t', line
         print line
 
 
 
 # Predict
 @clicon.command()
-@click.option('--txt', 
-              default='data/concept_assertion_relation_training_data/beth/txt/record-13.txt',
-              help='Text files for training.')
-@click.option('--output',
-              default='data/test_predictions',
-              help='The directory to write the output')
 @click.option('--model', 
               default='models/run_models/run.model',
               help='Model used to predict on files')
-@click.option('--clicon_dir', 
-              envvar='CLICON_DIR',
-              help='Base CliCon directory (should be shell env variable).')
-def predict(txt, output, model, clicon_dir):
+@click.option('--out', 
+              default='data/test_predictions',
+              help='The directory to write the output')
+@click.option('--format', 
+              default='i2b2',
+              help='Data format (i2b2 or xml).')
+@click.argument('input')
+def predict(model, out, format, input):
 
     # Base directory
-    if not clicon_dir:
+    BASE_DIR = os.environ.get('CLICON_DIR')
+    if not BASE_DIR:
         raise Exception('Environment variable CLICON_DIR must be defined')
-    BASE_DIR = clicon_dir
+
+    print 'BASE_DIR: ', BASE_DIR
 
     # Executable
     runable = os.path.join(BASE_DIR,'clicon/predict.py')
 
     # Command line arguments
-    txt_path    = os.path.join(BASE_DIR,    txt)
-    output_path = os.path.join(BASE_DIR, output)
-    model_path  = os.path.join(BASE_DIR,  model)
+    txt_path   = os.path.join(BASE_DIR, input)
+    out_path   = os.path.join(BASE_DIR,   out)
+    model_path = os.path.join(BASE_DIR, model)
+
+    print 'predicting'
 
     # Build command
     cmd = 'python ' + runable                         \
+                    + ' -f   '  + format              \
                     + ' -i \"'  + txt_path    + '\"'  \
-                    + ' -o '    + output_path         \
+                    + ' -o '    + out_path            \
                     + ' -m '    + model_path
 
-    # Execute train.py
-    #print '\tBASE_DIR: ', BASE_DIR
-    #print '\tcmd: ', cmd
+    # Execute predict.py
     errnum, output = commands.getstatusoutput(cmd)
 
-    #print '\terrnum: ', errnum
-
-    #print '\toutput:'
+    # Display output
     for line in output.split('\n'):
-        #print '\t\t', line
         print line
 
 

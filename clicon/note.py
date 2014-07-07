@@ -269,12 +269,6 @@ class Note:
     # @param txt. A file path for the xml formatted medical record
     def read_xml(self, txt):
 
-       # FIXME: By storing the 'data' as a list of lines from the file
-       #          instead of a list of list of words, xml does not fit nicely
-       # Possible solution: Switch back to list of list of words
-       # Alternative:       Store edited sentences from the file to remove <>
-
-
         # Read in the medical text
         with open(txt) as f:
 
@@ -314,15 +308,19 @@ class Note:
 
 
 
-    # Note::write_xml()
-    #
-    # @param  con.    A path to the file of where to write the prediction.
-    # @param  labels. A list of predictions of labels for the given text.
-    #
-    # Write the concept predictions to a given file in xml format
-    def write_xml(self, con, labels):
+    def write_xml(self, labels):
+
+        """
+        Note::write_xml()
+        
+        Purpose: Write the concept predictions in xml format
+        
+        @param  labels. A list of predictions of labels for the given text.
+        @return         A string for the xml-annotated file
+        """
+
         # xml formats do not have associated concept files
-        return
+        return "FIXME: write_xml() not implemented"
 
 
 
