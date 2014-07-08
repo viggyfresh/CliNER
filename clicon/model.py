@@ -173,35 +173,12 @@ class Model:
         pchunks  = flatten(pchunks)
         nchunks  = flatten(nchunks)
 
-
-
-        print 'prose'
-        print prose
-        print '\n'
-
-        print 'pchunks'
-        print pchunks
-        print '\n'
-
-        print 'nchunks'
-        print prose
-        print '\n'
-
-        print 'nonprose'
-        print nonprose
-        print '\n'
-
-
-        print '\twriting features to sci'
-
-
-
-        # Use CRF
         sci.write_features(   prose_model,    prose, pchunks)
         sci.write_features(nonprose_model, nonprose, nchunks)
 
-        sci.train(   prose_model)
-        sci.train(nonprose_model)
+        mtype = sci.LIN
+        sci.train(   prose_model, mtype)
+        sci.train(nonprose_model, mtype)
 
 
         # Pickle dump - Done during train(), not first_train() 
@@ -268,20 +245,23 @@ class Model:
 
         # Purpose: Encode something like ('chunk', 'rehabilitation') as a unique
         #          number, as determined by the self.concept_vocab hash table
-        feat_lu = lambda f: {self.concept_vocab[item]: f[item] for item in f}
-        rows = [map(feat_lu, x) for x in rows]
+        #feat_lu = lambda f: {self.concept_vocab[item]: f[item] for item in f}
+        #rows = [map(feat_lu, x) for x in rows]
+        rows            = flatten(rows)
+        concept_matches = flatten(concept_matches)
+
+
+        print concept_matches
 
 
         # Write second pass model to file
         second_pass_model = self.filename + '3'
         mtype = sci.LIN
-        sci.write_features(second_pass_model, rows, concept_matches, mtype)
-        #sci.write_features(second_pass_model, rows, concept_matches, self.type)
+        sci.write_features(second_pass_model, rows, concept_matches)
 
 
         # Train the model
         sci.train(second_pass_model, mtype)      # Use LIN
-        #sci.train(second_pass_model, self.type)
 
 
         
@@ -338,27 +318,34 @@ class Model:
 
 
         # For applying the (key,value) mapping
-        feat_lu = lambda f: {self.IOB_vocab[item]:f[item] for item in f if item in self.IOB_vocab}
+        #feat_lu = lambda f: {self.IOB_vocab[item]:f[item] for item in f if item in self.IOB_vocab}
 
 
         # Prose (predict, and read predictions)
-        prose = [map(feat_lu, x) for x in prose]
+        #prose = [map(feat_lu, x) for x in prose]
+        prose = flatten(prose)
+        nonprose = flatten(nonprose)
+
         prose_model = self.filename + '1'
+        nonprose_model = self.filename + '2'
 
-        sci.write_features(prose_model, prose, None, sci.CRF);
-        sci.predict(prose_model, sci.CRF)
+        mtype = sci.LIN
 
-        prose_labels_list = sci.read_labels(prose_model, sci.CRF)[sci.CRF]
+        sci.write_features(prose_model, prose, None);
+        sci.write_features(nonprose_model, nonprose, None)
+
+        sci.predict(prose_model, mtype)
+        sci.predict(nonprose_model, mtype)
+
         
 
         # Nonprose (predict, and read predictions)
-        nonprose = [map(feat_lu, x) for x in nonprose]
-        nonprose_model = self.filename + '2'
+        #nonprose = [map(feat_lu, x) for x in nonprose]
 
-        sci.write_features(nonprose_model, nonprose, None, sci.CRF);
-        sci.predict(nonprose_model, sci.CRF)
 
-        nonprose_labels_list = sci.read_labels(nonprose_model, sci.CRF)[sci.CRF]
+        prose_labels_list = sci.read_labels(prose_model, mtype)[mtype]
+        nonprose_labels_list = sci.read_labels(nonprose_model, mtype)[mtype]
+
 
         # Stitch prose and nonprose labels lists together
         labels = []
@@ -401,6 +388,7 @@ class Model:
             tmp[-1]= map(lambda l: l.strip(), tmp[-1])
             tmp[-1]= map(lambda l: Model.reverse_IOBs_labels[int(l)],tmp[-1])
 
+
         # list of list of IOB labels
         return tmp
 
@@ -437,13 +425,15 @@ class Model:
 
         # Purpose: Encode something like ('chunk', 'rehabilitation') as a unique
         #          number, as determined by the self.concept_vocab hash table
-        feat_lu = lambda f: {self.concept_vocab[item]: f[item] for item in f if item in self.concept_vocab}
-        rows = [map(feat_lu, x) for x in rows]
+        #feat_lu = lambda f: {self.concept_vocab[item]: f[item] for item in f if item in self.concept_vocab}
+        #rows = [map(feat_lu, x) for x in rows]
+        rows = flatten(rows)
+
 
         # Predict using model
         second_pass_model = self.filename + '3'
         mtype = sci.LIN
-        sci.write_features(second_pass_model, rows, None, mtype);
+        sci.write_features(second_pass_model, rows, None)
         sci.predict(second_pass_model, mtype)
         second_pass_labels_list = sci.read_labels(second_pass_model, mtype)
 
