@@ -3,7 +3,7 @@ from __future__ import with_statement
 import os
 import cPickle as pickle
 import helper
-import libml
+import sci
 import sys
 
 from features import clicon_features
@@ -39,7 +39,7 @@ class Model:
 
 
     # Constructor
-    def __init__(self, filename='awesome.model', type=libml.ALL):
+    def __init__(self, filename='awesome.model', type=sci.ALL):
         model_directory = os.path.dirname(filename)
 
         if model_directory != "":
@@ -136,9 +136,9 @@ class Model:
         chunks = [map(label_lu, x) for x in chunks]
 
         # list of a list of hash tables (all keys & values now numbers)
-        feat_lu = lambda f: {self.IOB_vocab[item]:f[item] for item in f}
-        prose = [map(feat_lu, x) for x in prose]
-        nonprose = [map(feat_lu, x) for x in nonprose]
+        #feat_lu = lambda f: {self.IOB_vocab[item]:f[item] for item in f}
+        #prose = [map(feat_lu, x) for x in prose]
+        #nonprose = [map(feat_lu, x) for x in nonprose]
 
         print '\tsegregate "chunks" list into prose and nonprose'
 
@@ -166,20 +166,43 @@ class Model:
         prose_model    = self.filename + '1'
         nonprose_model = self.filename + '2'
 
-        print '\twriting features to libml'
+
+        # Flatten feature & label lists
+        prose    = flatten(prose)
+        nonprose = flatten(nonprose)
+        pchunks  = flatten(pchunks)
+        nchunks  = flatten(nchunks)
+
+
+
+        print 'prose'
+        print prose
+        print '\n'
+
+        print 'pchunks'
+        print pchunks
+        print '\n'
+
+        print 'nchunks'
+        print prose
+        print '\n'
+
+        print 'nonprose'
+        print nonprose
+        print '\n'
+
+
+        print '\twriting features to sci'
+
+
 
         # Use CRF
-        libml.write_features(   prose_model,    prose, pchunks, libml.CRF)
-        libml.write_features(nonprose_model, nonprose, nchunks, libml.CRF)
+        sci.write_features(   prose_model,    prose, pchunks)
+        sci.write_features(nonprose_model, nonprose, nchunks)
 
-        libml.train(   prose_model, libml.CRF)
-        libml.train(nonprose_model, libml.CRF)
+        sci.train(   prose_model)
+        sci.train(nonprose_model)
 
-        #libml.write_features(   prose_model,    prose, pchunks, self.type)
-        #libml.write_features(nonprose_model, nonprose, nchunks, self.type)
-
-        #libml.train(   prose_model, self.type)
-        #libml.train(nonprose_model, self.type)
 
         # Pickle dump - Done during train(), not first_train() 
         #with open(self.filename, "w") as model:
@@ -251,14 +274,14 @@ class Model:
 
         # Write second pass model to file
         second_pass_model = self.filename + '3'
-        mtype = libml.LIN
-        libml.write_features(second_pass_model, rows, concept_matches, mtype)
-        #libml.write_features(second_pass_model, rows, concept_matches, self.type)
+        mtype = sci.LIN
+        sci.write_features(second_pass_model, rows, concept_matches, mtype)
+        #sci.write_features(second_pass_model, rows, concept_matches, self.type)
 
 
         # Train the model
-        libml.train(second_pass_model, mtype)      # Use LIN
-        #libml.train(second_pass_model, self.type)
+        sci.train(second_pass_model, mtype)      # Use LIN
+        #sci.train(second_pass_model, self.type)
 
 
         
@@ -322,20 +345,20 @@ class Model:
         prose = [map(feat_lu, x) for x in prose]
         prose_model = self.filename + '1'
 
-        libml.write_features(prose_model, prose, None, libml.CRF);
-        libml.predict(prose_model, libml.CRF)
+        sci.write_features(prose_model, prose, None, sci.CRF);
+        sci.predict(prose_model, sci.CRF)
 
-        prose_labels_list = libml.read_labels(prose_model, libml.CRF)[libml.CRF]
+        prose_labels_list = sci.read_labels(prose_model, sci.CRF)[sci.CRF]
         
 
         # Nonprose (predict, and read predictions)
         nonprose = [map(feat_lu, x) for x in nonprose]
         nonprose_model = self.filename + '2'
 
-        libml.write_features(nonprose_model, nonprose, None, libml.CRF);
-        libml.predict(nonprose_model, libml.CRF)
+        sci.write_features(nonprose_model, nonprose, None, sci.CRF);
+        sci.predict(nonprose_model, sci.CRF)
 
-        nonprose_labels_list = libml.read_labels(nonprose_model, libml.CRF)[libml.CRF]
+        nonprose_labels_list = sci.read_labels(nonprose_model, sci.CRF)[sci.CRF]
 
         # Stitch prose and nonprose labels lists together
         labels = []
@@ -419,10 +442,10 @@ class Model:
 
         # Predict using model
         second_pass_model = self.filename + '3'
-        mtype = libml.LIN
-        libml.write_features(second_pass_model, rows, None, mtype);
-        libml.predict(second_pass_model, self.type)
-        second_pass_labels_list = libml.read_labels(second_pass_model, mtype)
+        mtype = sci.LIN
+        sci.write_features(second_pass_model, rows, None, mtype);
+        sci.predict(second_pass_model, mtype)
+        second_pass_labels_list = sci.read_labels(second_pass_model, mtype)
 
 
         # Put predictions into format for Note class to read
@@ -452,3 +475,24 @@ class Model:
         # Return values
         return retVal
 
+
+
+
+def flatten(ll):
+
+    """
+    flatten()
+
+    Purpose: Flatten a list
+
+    @param  ll.   List of lists
+    @return       flattened list
+    """
+
+    
+    retVal = []
+
+    for line in ll:
+        retVal += line
+
+    return retVal
