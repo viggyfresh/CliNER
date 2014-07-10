@@ -46,9 +46,9 @@ class Model:
             helper.mkpath(model_directory)
 
         self.filename = os.path.realpath(filename)
-        self.type = type
-        self.IOB_vocab = {}
-        self.concept_vocab = {}
+
+        # FIXME: Only using scikit's SVM
+        self.type = sci.LIN
         
 
 
@@ -58,18 +58,23 @@ class Model:
     # @param notes. A list of Note objects that has data for training the model
     def train(self, notes):
 
-        # Get the data and annotations from the Note object
+        # Get the data and annotations from the Note objects
+        data   = [  note.txtlist()    for  note  in  notes  ]
+        labels = [  note.conlist()    for  note  in  notes  ]
+        bounds = [  note.boundlist()  for  note  in  notes  ]
 
-        # data   - A list of list of the medical text's words
-        # labels - A list of list of concepts (1:1 with data)
-        data   = []
-        labels = []
-        bounds = []
-        for note in notes:
-            data   += note.txtlist()
-            labels += note.conlist()
-            bounds += note.boundlist()
+        # Merge data from all files (flatten() only flattens one level deep)
+        data   = flatten( data )
+        labels = flatten(labels)
+        bounds = flatten(bounds)
 
+
+        # At this point:
+        #
+        #     data   - A list of list of words straight from the text files
+        #     labels - A list of list of concept   labels (1:1 with data)
+        #     bounds - A list of list of IOB chunk labels (1:1 with data)
+        #
 
         # Create object that is a wrapper for the features
         feat_obj = clicon_features.FeatureWrapper(data)
@@ -97,14 +102,14 @@ class Model:
 
         print '\tbegin first_train()'
 
-        # If not given
+        # (in case not doing both passes) Create feat_obj
         if not feat_obj: 
-            # Create object that is a wrapper for the features
             feat_obj = clicon_features.FeatureWrapper(data)
 
         print '\tfeat_obj created'
 
         # IOB tagging
+        # FIXME - Partition and then batch features
         prose    = []
         nonprose = []
         prose_line_numbers    = []
@@ -120,29 +125,14 @@ class Model:
 
         print '\tfeatures assigned'
 
-        # Encode each feature as a unique number
-        for row in prose + nonprose:
-            for features in row:
-                for feature in features:
-                    if feature not in self.IOB_vocab:
-                        self.IOB_vocab[feature] = len(self.IOB_vocab) + 1
-
-        print '\tfeature dict encoding'
-
-        # IOB labels
-        # A list of a list encodings of concept labels (ex. 'B' => 1)
-        # [ [0, 0, 0], [0], [0, 0, 0], [0], [0, 0, 0, 0, 0, 1, 2, 0, 1] ]
+        # Vectorize IOB labels
         label_lu = lambda l: Model.IOBs_labels[l]
         chunks = [map(label_lu, x) for x in chunks]
-
-        # list of a list of hash tables (all keys & values now numbers)
-        #feat_lu = lambda f: {self.IOB_vocab[item]:f[item] for item in f}
-        #prose = [map(feat_lu, x) for x in prose]
-        #nonprose = [map(feat_lu, x) for x in nonprose]
 
         print '\tsegregate "chunks" list into prose and nonprose'
 
         # Segregate chunks into 'Prose CHUNKS' and 'Nonprose CHUNKS'
+        # FIXME - very unclear what this is
         prose_ind    = 0
         nonprose_ind = 0
         pchunks = []
@@ -163,22 +153,23 @@ class Model:
                 print 'Line #%d is neither prose nor nonprose!' % i
                 print line, '\n'
 
+
+        # Machine Learning file names
         prose_model    = self.filename + '1'
         nonprose_model = self.filename + '2'
 
 
         # Flatten feature & label lists
-        prose    = flatten(prose)
+        prose    = flatten(   prose)
         nonprose = flatten(nonprose)
-        pchunks  = flatten(pchunks)
-        nchunks  = flatten(nchunks)
+        pchunks  = flatten( pchunks)
+        nchunks  = flatten( nchunks)
 
         sci.write_features(   prose_model,    prose, pchunks)
         sci.write_features(nonprose_model, nonprose, nchunks)
 
-        mtype = sci.LIN
-        sci.train(   prose_model, mtype)
-        sci.train(nonprose_model, mtype)
+        sci.train(   prose_model, self.type)
+        sci.train(nonprose_model, self.type)
 
 
         # Pickle dump - Done during train(), not first_train() 
@@ -235,33 +226,19 @@ class Model:
 
 
 
-        # Encode each feature as a unique number
-        for row in rows:
-            for features in row:
-                for feature in features:
-                    if feature not in self.concept_vocab:
-                        self.concept_vocab[feature] = len(self.concept_vocab) + 1
-
-
         # Purpose: Encode something like ('chunk', 'rehabilitation') as a unique
         #          number, as determined by the self.concept_vocab hash table
-        #feat_lu = lambda f: {self.concept_vocab[item]: f[item] for item in f}
-        #rows = [map(feat_lu, x) for x in rows]
         rows            = flatten(rows)
         concept_matches = flatten(concept_matches)
 
 
-        print concept_matches
-
-
         # Write second pass model to file
         second_pass_model = self.filename + '3'
-        mtype = sci.LIN
         sci.write_features(second_pass_model, rows, concept_matches)
 
 
         # Train the model
-        sci.train(second_pass_model, mtype)      # Use LIN
+        sci.train(second_pass_model, self.type)      # Use LIN
 
 
         
@@ -317,34 +294,26 @@ class Model:
                 nonprose_line_numbers.append(i)
 
 
-        # For applying the (key,value) mapping
-        #feat_lu = lambda f: {self.IOB_vocab[item]:f[item] for item in f if item in self.IOB_vocab}
-
-
         # Prose (predict, and read predictions)
-        #prose = [map(feat_lu, x) for x in prose]
         prose = flatten(prose)
         nonprose = flatten(nonprose)
 
         prose_model = self.filename + '1'
         nonprose_model = self.filename + '2'
 
-        mtype = sci.LIN
+        self.type = sci.LIN
 
         sci.write_features(prose_model, prose, None);
         sci.write_features(nonprose_model, nonprose, None)
 
-        sci.predict(prose_model, mtype)
-        sci.predict(nonprose_model, mtype)
+        sci.predict(prose_model, self.type)
+        sci.predict(nonprose_model, self.type)
 
         
 
         # Nonprose (predict, and read predictions)
-        #nonprose = [map(feat_lu, x) for x in nonprose]
-
-
-        prose_labels_list = sci.read_labels(prose_model, mtype)[mtype]
-        nonprose_labels_list = sci.read_labels(nonprose_model, mtype)[mtype]
+        prose_labels_list    = sci.read_labels(   prose_model, self.type)[self.type]
+        nonprose_labels_list = sci.read_labels(nonprose_model, self.type)[self.type]
 
 
         # Stitch prose and nonprose labels lists together
@@ -423,19 +392,15 @@ class Model:
 
 
 
-        # Purpose: Encode something like ('chunk', 'rehabilitation') as a unique
-        #          number, as determined by the self.concept_vocab hash table
-        #feat_lu = lambda f: {self.concept_vocab[item]: f[item] for item in f if item in self.concept_vocab}
-        #rows = [map(feat_lu, x) for x in rows]
+        # Flatten list of lists
         rows = flatten(rows)
 
 
         # Predict using model
         second_pass_model = self.filename + '3'
-        mtype = sci.LIN
         sci.write_features(second_pass_model, rows, None)
-        sci.predict(second_pass_model, mtype)
-        second_pass_labels_list = sci.read_labels(second_pass_model, mtype)
+        sci.predict(second_pass_model, self.type)
+        second_pass_labels_list = sci.read_labels(second_pass_model, self.type)
 
 
         # Put predictions into format for Note class to read
@@ -473,16 +438,12 @@ def flatten(ll):
     """
     flatten()
 
-    Purpose: Flatten a list
-
+    Purpose: Flatten a list (by one level of depth)
+    
+    Note: List of list of lists --> list of lists
+ 
     @param  ll.   List of lists
     @return       flattened list
     """
 
-    
-    retVal = []
-
-    for line in ll:
-        retVal += line
-
-    return retVal
+    return reduce( lambda a,b: a+b, ll )
