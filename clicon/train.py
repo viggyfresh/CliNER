@@ -102,6 +102,9 @@ def main():
 
     # file names
     print training_list
+    if not training_list:
+        print 'Error: Cannot train on 0 files. Terminating train.'
+        return 1
 
 
     # Read the data into a Note object
