@@ -20,7 +20,6 @@ class Model:
     reverse_labels = {v:k for k, v in labels.items()}
     
 
-
     # IOBs labels
     IOBs_labels = {
         'O':0,
@@ -38,10 +37,9 @@ class Model:
         return model
 
 
-    # Constructor
     def __init__(self, filename='awesome.model', type=sci.ALL):
-        model_directory = os.path.dirname(filename)
 
+        model_directory = os.path.dirname(filename)
         if model_directory != "":
             helper.mkpath(model_directory)
 
@@ -52,11 +50,16 @@ class Model:
         
 
 
-
-    # Model::train()
-    #
-    # @param notes. A list of Note objects that has data for training the model
     def train(self, notes):
+
+        """
+        Model::train()
+
+        Purpose: Train a ML model on annotated data
+
+        @param notes. A list of Note objects (containing text and annotations)
+        @return       None
+        """
 
         # Get the data and annotations from the Note objects
         data   = [  note.txtlist()    for  note  in  notes  ]
@@ -69,14 +72,8 @@ class Model:
         bounds = flatten(bounds)
 
 
-        # At this point:
-        #
-        #     data   - A list of list of words straight from the text files
-        #     labels - A list of list of concept   labels (1:1 with data)
-        #     bounds - A list of list of IOB chunk labels (1:1 with data)
-        #
-
         # Create object that is a wrapper for the features
+        # FIXME - Is this necesarry?
         feat_obj = clicon_features.FeatureWrapper(data)
 
         # First pass
