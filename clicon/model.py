@@ -46,8 +46,15 @@ class Model:
 
         self.filename = os.path.realpath(filename)
 
+        # DictVectorizers
+        self.first_prose_vec    = DictVectorizer()
+        self.first_nonprose_vec = DictVectorizer()
+        self.second_vec         = DictVectorizer()
+
         # Classifiers
-        self.clfs = {}
+        self.second_clfs         = {}
+        self.first_prose_clfs    = {}
+        self.first_nonprose_clfs = {}
 
         # FIXME: Only using scikit's SVM
         self.type = sci.LIN
@@ -65,9 +72,6 @@ class Model:
         @return       None
         """
 
-        # Useful for formatting data for both first & second pass
-        concat = lambda a,b: a+b
-
 
         ##############
         # First pass #
@@ -77,17 +81,13 @@ class Model:
         text    = [  note.txtlist()        for  note  in  notes  ]
         ioblist = [  note.iob_labels()     for  note  in  notes  ]
 
-        X1 = reduce( concat,    text )
-        Y1 = reduce( concat, ioblist )
+        data1 = reduce( concat,    text )
+        Y1    = reduce( concat, ioblist )
 
 
-        # Create object that is a wrapper for the features
-        # FIXME - Will likely remove in favor of calling in first/second_train()
-        feat_obj = clicon_features.FeatureWrapper(X1)
-
-
+        # Train classifier (side effect - saved as object's member variable)
         print 'first'
-        #self.first_train( X1, Y1, feat_obj)
+        self.first_train(data1, Y1)
 
 
 
@@ -96,21 +96,18 @@ class Model:
         ###############
 
         # Get the data and annotations from the Note objects
-        chunks  = [  note.text_chunks()    for  note  in  notes  ] 
-        conlist = [  note.concept_labels() for  note  in  notes  ]
-        X2 = reduce( concat, chunks  )
-        Y2 = reduce( concat, conlist )
+        chunks  = [  note.chunked_text()    for  note  in  notes  ] 
+        indices = [  note.concept_indices() for  note  in  notes  ]
+        conlist = [  note.concept_labels()  for  note  in  notes  ]
+        data2 = reduce( concat, chunks  )
+        inds  = reduce( concat, indices )
+        Y2    = reduce( concat, conlist )
 
 
-        for x,y in zip(X2,Y2):
-            print x,y
-
-        return
-
-
-        # Second pass
+        # Train classifier (side effect - saved as object's member variable)
         print 'second'
-        self.second_train(X, Y2, feat_obj)
+        self.second_train(data2, inds, Y2)
+
 
 
         # Pickle dump
@@ -121,14 +118,14 @@ class Model:
 
 
 
-    def first_train(self, X, Y, feat_obj=None):
+    def first_train(self, data, Y):
 
         """
         Model::first_train()
 
         Purpose: Train the first pass classifiers (for IOB chunking)
 
-        @param X.        A list of split sentences    (1 sent = 1 line from file)
+        @param data.     A list of split sentences    (1 sent = 1 line from file)
         @param Y.        A list of list of IOB labels (1:1 mapping with X)
         @param feat_obj  A wrapper for the feature module
 
@@ -138,9 +135,8 @@ class Model:
         print '\tbegin first_train()'
 
 
-        # (in case not doing both passes) Create feat_obj
-        if not feat_obj: 
-            feat_obj = clicon_features.FeatureWrapper(X)
+        # Create object that is a wrapper for the features
+        feat_obj = clicon_features.FeatureWrapper(data)
 
 
         print '\tfeat_obj created'
@@ -152,7 +148,7 @@ class Model:
         nonprose = []
         prose_line_numbers    = []
         nonprose_line_numbers = []
-        for i,line in enumerate(X):
+        for i,line in enumerate(data):
             isProse,feats = feat_obj.IOB_features(line)
             if isProse:
                 prose += feats 
@@ -195,9 +191,6 @@ class Model:
 
 
         # Vectorize features
-        self.first_prose_vec    = DictVectorizer()
-        self.first_nonprose_vec = DictVectorizer()
-
         X_prose    =    self.first_prose_vec.fit_transform(   prose)
         X_nonprose = self.first_nonprose_vec.fit_transform(nonprose)
 
@@ -211,65 +204,46 @@ class Model:
     # Model::second_train()
     #
     #
-    def second_train(self, X, Y, feat_obj=None):
+    def second_train(self, data, inds_list, Y):
+
+        """
+        Model::first_train()
+
+        Purpose: Train the first pass classifiers (for IOB chunking)
+
+        @param data.      A list of list of strings.
+                            - A string is a chunked phrase
+                            - An inner list corresponds to one line from the file
+        @param inds_list. A list of list of integer indices
+                            - assertion: len(data) == len(inds_list)
+                            - one line of 'inds_list' contains a list of indices
+                                into the corresponding line for 'data'
+        @param Y.         A list of concept labels
+                            - assertion: there are sum(len(inds_list)) labels
+                               AKA each index from inds_list maps to a label
+        @return          None
+        """
+
 
         # Create object that is a wrapper for the features
-        if not feat_obj: 
-            feat_obj = clicon_features.FeatureWrapper()
-
-        # Merge 'B' words with its 'I's (and account for minor change in indices)
-        tmp = clicon_features.generate_chunks(data,bounds,labels)
-
-        # text_chunks    - a merged text (highly similiar to data, except merged)
-        # concept_chunks - one-to-one concept classification with text_chunks
-        # hits           - one-to-one concept token indices  with text_chunks
-        text_chunks, concept_chunks, hits = tmp
+        feat_o = clicon_features.FeatureWrapper()
 
 
-        # Collect 'hits' to model 'text_chunks' layout
-        row_hits   = [ [] for _ in text_chunks ]
-        for (i,j) in hits: 
-            row_hits[i].append(j)
+        # Extract features
+        X = [ feat_o.concept_features(s,inds) for s,inds in zip(data,inds_list) ]
+        X = reduce(concat, X)
 
 
-        # rows            - list of list of h-tables (all non-'none' in 2d order)
-        # concept_matches - 1-1 correspondence with rows. Numeric labels (1,2,3)
-        rows = []
-        concept_matches = []
-        for i,chunk_inds in enumerate(row_hits):
+        # Vectorize labels
+        Y = [  Model.labels[y]  for  y  in  Y  ]
 
-            # Ignore uninteresting rows
-            if not chunk_inds: continue
-
-            # Features for each chunk in the sentence
-            row = feat_obj.concept_features(text_chunks[i], chunk_inds)
-
-            # Could probably be condensed with some lambda stuff
-            row_concepts = []
-            for con in concept_chunks[i]:
-                if con != 'none':
-                    row_concepts.append( Model.labels[con] )
-
-            rows.append(row)
-            concept_matches.append( row_concepts )
-
-
-        exit()
-
-
-        # Purpose: Encode something like ('chunk', 'rehabilitation') as a unique
-        #          number, as determined by the self.concept_vocab hash table
-        rows            = flatten(rows)
-        concept_matches = flatten(concept_matches)
-
-
-        # Write second pass model to file
-        second_pass_model = self.filename + '3'
-        sci.write_features(second_pass_model, rows, concept_matches)
+        # Vectorize features
+        X = self.second_vec.fit_transform(X)
 
 
         # Train the model
-        sci.train(second_pass_model, self.type)
+        self.second_clfs = sci.train(X, Y, self.type)
+
 
 
         
@@ -459,3 +433,12 @@ class Model:
         # Return values
         return retVal
 
+
+
+
+
+def concat(a,b):
+    """
+    list concatenation function (for reduce() purpose)
+    """
+    return a+b
