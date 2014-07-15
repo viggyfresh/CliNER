@@ -44,19 +44,24 @@ def main():
         help = "File to output data",
     )
 
+    parser.add_argument("-f",
+        dest = "format",
+        help = "Output format (i2b2 or xml?)",
+    )
+
     # Parse the command line arguments
     args = parser.parse_args()
 
 
-    print 'CALLING FORMAT.PY'
-    return
+    #print 'CALLING FORMAT.PY'
+    #return
 
 
     # A list of text    file paths
     # A list of concept file paths
-    txt_files = glob.glob(args.txt)
-    con_files = glob.glob(args.con)
-    xml_files = glob.glob(args.xml)
+    if args.txt: txt_files = glob.glob(args.txt)
+    if args.con: con_files = glob.glob(args.con)
+    if args.xml: xml_files = glob.glob(args.xml)
 
     # ex. {'record-13': 'record-13.txt'}
     # ex. {'record-13': 'record-13.con'}
@@ -71,11 +76,14 @@ def main():
             file_list.append((txt_files_map[k], con_files_map[k]))
 
 
+    # FIXME - use the "format" argument
+
     # i2b2 -> xml
     for txt_f,con_f in file_list:
         out = i2b2_to_xml(txt_f, con_f)
-        #print out
+        print out
 
+    return
 
     # xml -> i2b2
     for xml_f in xml_files:
