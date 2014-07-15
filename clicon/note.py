@@ -362,31 +362,85 @@ class Note:
 
 
 
-    def text_chunks(self):
+    def chunked_text(self):
 
         """
         Note::generate_chunks()
 
-        Purpose: A list of non-'none' labeled phrases 
+        Purpose: Combine all 'I's into 'B' chunks
 
-        @return A list of phrases.
+        @return A list of list of phrases.
         """
 
-        retVal = []
 
-        # Get phrase from each classification tuple (AKA each non-'none' concept)
-        for c in self.classifications:
-
-            # Extract data
-            lineno = c[1] - 1
-            start  = c[2]
-            end    = c[3]
-
-            # Add phrase to list
-            line = self.data[lineno].split()
-            phrase_list = line[start:end+1]
-            phrase = ' '.join(phrase_list)
-            retVal.append( phrase )
+        # List of list of phrases
+        text          = self.txtlist()
+        text_chunks   = []
 
 
-        return retVal
+        # Line-by-line chunking
+        for sent,iobs in zip(self.txtlist(),self.iob_labels()):
+
+            # One line of chunked phrases
+            line = []
+
+            # Chunk phrase (or single word if 'O' iob tag)
+            phrase = None
+
+            # Word-by-word grouping
+            for word,iob in zip(sent,iobs):
+
+                if iob == 'O':
+                    if phrase: line.append(phrase)
+                    phrase = word
+
+                if iob == 'B':
+                    if phrase: line.append(phrase)
+                    phrase = word
+
+                if iob == 'I':
+                    phrase += ' ' + word
+
+            # Add last phrase
+            if phrase: line.append(phrase)
+            
+            # Add line from file 
+            text_chunks.append(line)
+
+
+        return text_chunks
+
+
+
+
+    def concept_indices(self):
+
+        # Return value
+        inds_list = []
+
+
+        # Line-by-line chunking
+        for iobs in self.iob_labels():
+
+            # One line of chunked phrases
+            line = []
+            seen_chunks = 0
+
+            # Word-by-word grouping
+            for iob in iobs:
+
+                if iob == 'O':
+                    seen_chunks += 1
+
+                if iob == 'B':
+                    line.append(seen_chunks)
+                    seen_chunks += 1
+
+            # Add line from file
+            inds_list.append(line)
+
+
+        return inds_list
+
+
+
