@@ -340,54 +340,53 @@ class Note:
 
 
 
-    # conlist()
-    #
-    # @return a list of lists of the concepts associated with each word from data
-    def conlist( self ):
+    def concept_labels(self):
 
-        # Cached for later calls
-        if self.concepts: return self.concepts
+        """
+        concept_labels()
 
-        # For each word, store a corresponding concept label
-        # Initially, all labels will be stored as 'none'
-        for line in self.data:
-            tmp = []
-            for word in line.split():
-                tmp.append('none')
-            self.concepts.append(tmp)
+        Purpose: Training labels for a concept classifier on phrases
 
-        #for i, elem in enumerate(self.data):
-        #    print i, ": ", elem
+        @ return A list of concept labels (1:1 mapping with text_chunks() output)
+        """
 
-        # Use the classifications to correct all mislabled 'none's
-        for classification in self.classifications:
-
-            #print "classification:    ", classification
-            #print "classification[0]: ", classification[0]
-            #print "classification[1]: ", classification[1]
-            #print "classification[2]: ", classification[2]
-            #print "classification[3]: ", classification[3]
-
-            concept = classification[0]
-            lineno  = classification[1] - 1
-            start   = classification[2]
-            end     = classification[3]            
-
-            self.concepts[lineno][start] = concept
-            for i in range(start, end):
-                self.concepts[lineno][i+1] = concept
-
-        return self.concepts
+        return [  c[0]  for  c  in  self.classifications  ]
 
 
 
     # boundaries()
     #
     # @return a list of lists of the BIO vals associated with each word from data
-    def boundlist( self ):
+    def iob_labels( self ):
         return self.boundaries
 
 
-    # For iterating
-    def __iter__(self):
-        return iter(self.data)
+
+    def text_chunks(self):
+
+        """
+        Note::generate_chunks()
+
+        Purpose: A list of non-'none' labeled phrases 
+
+        @return A list of phrases.
+        """
+
+        retVal = []
+
+        # Get phrase from each classification tuple (AKA each non-'none' concept)
+        for c in self.classifications:
+
+            # Extract data
+            lineno = c[1] - 1
+            start  = c[2]
+            end    = c[3]
+
+            # Add phrase to list
+            line = self.data[lineno].split()
+            phrase_list = line[start:end+1]
+            phrase = ' '.join(phrase_list)
+            retVal.append( phrase )
+
+
+        return retVal
