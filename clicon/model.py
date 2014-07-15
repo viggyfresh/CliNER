@@ -6,6 +6,7 @@ import helper
 import sci
 import sys
 
+from sklearn.feature_extraction  import DictVectorizer
 from features import clicon_features
 
 
@@ -45,6 +46,9 @@ class Model:
 
         self.filename = os.path.realpath(filename)
 
+        # Classifiers
+        self.clfs = {}
+
         # FIXME: Only using scikit's SVM
         self.type = sci.LIN
         
@@ -61,28 +65,53 @@ class Model:
         @return       None
         """
 
-        # Get the data and annotations from the Note objects
-        data   = [  note.txtlist()    for  note  in  notes  ]
-        labels = [  note.conlist()    for  note  in  notes  ]
-        bounds = [  note.boundlist()  for  note  in  notes  ]
+        # Useful for formatting data for both first & second pass
+        concat = lambda a,b: a+b
 
-        # Merge data from all files (flatten() only flattens one level deep)
-        data   = flatten( data )
-        labels = flatten(labels)
-        bounds = flatten(bounds)
+
+        ##############
+        # First pass #
+        ##############
+
+        # Get the data and annotations from the Note objects
+        text    = [  note.txtlist()        for  note  in  notes  ]
+        ioblist = [  note.iob_labels()     for  note  in  notes  ]
+
+        X1 = reduce( concat,    text )
+        Y1 = reduce( concat, ioblist )
 
 
         # Create object that is a wrapper for the features
-        # FIXME - Is this necesarry?
-        feat_obj = clicon_features.FeatureWrapper(data)
+        # FIXME - Will likely remove in favor of calling in first/second_train()
+        feat_obj = clicon_features.FeatureWrapper(X1)
 
-        # First pass
+
         print 'first'
-        self.first_train(data, labels, bounds, feat_obj)
+        #self.first_train( X1, Y1, feat_obj)
+
+
+
+        ###############
+        # Second pass #
+        ###############
+
+        # Get the data and annotations from the Note objects
+        chunks  = [  note.text_chunks()    for  note  in  notes  ] 
+        conlist = [  note.concept_labels() for  note  in  notes  ]
+        X2 = reduce( concat, chunks  )
+        Y2 = reduce( concat, conlist )
+
+
+        for x,y in zip(X2,Y2):
+            print x,y
+
+        return
+
 
         # Second pass
         print 'second'
-        self.second_train(data, labels, bounds, feat_obj)
+        self.second_train(X, Y2, feat_obj)
+
 
         # Pickle dump
         print 'pickle dump'
@@ -92,18 +121,30 @@ class Model:
 
 
 
-    # Model::train_first()
-    #
-    # @param notes. A list of Note objects that has data for training the model
-    def first_train(self, data, labels, chunks, feat_obj=None):
+    def first_train(self, X, Y, feat_obj=None):
+
+        """
+        Model::first_train()
+
+        Purpose: Train the first pass classifiers (for IOB chunking)
+
+        @param X.        A list of split sentences    (1 sent = 1 line from file)
+        @param Y.        A list of list of IOB labels (1:1 mapping with X)
+        @param feat_obj  A wrapper for the feature module
+
+        @return          None
+        """
 
         print '\tbegin first_train()'
 
+
         # (in case not doing both passes) Create feat_obj
         if not feat_obj: 
-            feat_obj = clicon_features.FeatureWrapper(data)
+            feat_obj = clicon_features.FeatureWrapper(X)
+
 
         print '\tfeat_obj created'
+
 
         # IOB tagging
         # FIXME - Partition and then batch features
@@ -111,38 +152,35 @@ class Model:
         nonprose = []
         prose_line_numbers    = []
         nonprose_line_numbers = []
-        for i,line in enumerate(data):
+        for i,line in enumerate(X):
             isProse,feats = feat_obj.IOB_features(line)
             if isProse:
-                prose.append( feats )
+                prose += feats 
                 prose_line_numbers.append(i)
             else:
-                nonprose.append( feats )
+                nonprose += feats 
                 nonprose_line_numbers.append(i)
 
+
         print '\tfeatures assigned'
-
-        # Vectorize IOB labels
-        label_lu = lambda l: Model.IOBs_labels[l]
-        chunks = [map(label_lu, x) for x in chunks]
-
         print '\tsegregate "chunks" list into prose and nonprose'
 
-        # Segregate chunks into 'Prose CHUNKS' and 'Nonprose CHUNKS'
+
         # FIXME - very unclear what this is
+        # Description: Separate labels by same division as text
         prose_ind    = 0
         nonprose_ind = 0
         pchunks = []
         nchunks = []
         p_end_flag = False
         n_end_flag = False
-        for i,line in enumerate(chunks):
+        for i,line in enumerate(Y):
             if   (not p_end_flag) and (i == prose_line_numbers[prose_ind]):
-                pchunks.append(line)
+                pchunks += line
                 prose_ind += 1
                 if prose_ind == len(prose_line_numbers): p_end_flag = True
             elif (not n_end_flag) and (i == nonprose_line_numbers[nonprose_ind]):
-                nchunks.append(line)
+                nchunks += line
                 nonprose_ind += 1
                 if nonprose_ind == len(nonprose_line_numbers): n_end_flag = True
             else:
@@ -151,38 +189,32 @@ class Model:
                 print line, '\n'
 
 
-        # Machine Learning file names
-        prose_model    = self.filename + '1'
-        nonprose_model = self.filename + '2'
+        # Vectorize IOB labels
+        Y_prose    = [  Model.IOBs_labels[y]  for  y  in  pchunks  ]
+        Y_nonprose = [  Model.IOBs_labels[y]  for  y  in  nchunks  ]
 
 
-        # Flatten feature & label lists
-        prose    = flatten(   prose)
-        nonprose = flatten(nonprose)
-        pchunks  = flatten( pchunks)
-        nchunks  = flatten( nchunks)
+        # Vectorize features
+        self.first_prose_vec    = DictVectorizer()
+        self.first_nonprose_vec = DictVectorizer()
 
-        sci.write_features(   prose_model,    prose, pchunks)
-        sci.write_features(nonprose_model, nonprose, nchunks)
-
-        sci.train(   prose_model, self.type)
-        sci.train(nonprose_model, self.type)
+        X_prose    =    self.first_prose_vec.fit_transform(   prose)
+        X_nonprose = self.first_nonprose_vec.fit_transform(nonprose)
 
 
-        # Pickle dump - Done during train(), not first_train() 
-        #with open(self.filename, "w") as model:
-        #    pickle.dump(self, model)
+        # Train classifiers
+        self.first_prose_clfs    = sci.train(X_prose   , Y_prose   , self.type)
+        self.first_nonprose_clfs = sci.train(X_nonprose, Y_nonprose, self.type)
 
 
 
     # Model::second_train()
     #
     #
-    def second_train(self, data, labels, bounds, feat_obj=None):
+    def second_train(self, X, Y, feat_obj=None):
 
-        # If not given
+        # Create object that is a wrapper for the features
         if not feat_obj: 
-            # Create object that is a wrapper for the features
             feat_obj = clicon_features.FeatureWrapper()
 
         # Merge 'B' words with its 'I's (and account for minor change in indices)
@@ -222,6 +254,8 @@ class Model:
             concept_matches.append( row_concepts )
 
 
+        exit()
+
 
         # Purpose: Encode something like ('chunk', 'rehabilitation') as a unique
         #          number, as determined by the self.concept_vocab hash table
@@ -235,7 +269,7 @@ class Model:
 
 
         # Train the model
-        sci.train(second_pass_model, self.type)      # Use LIN
+        sci.train(second_pass_model, self.type)
 
 
         
@@ -297,8 +331,6 @@ class Model:
 
         prose_model = self.filename + '1'
         nonprose_model = self.filename + '2'
-
-        self.type = sci.LIN
 
         sci.write_features(prose_model, prose, None);
         sci.write_features(nonprose_model, nonprose, None)
@@ -427,20 +459,3 @@ class Model:
         # Return values
         return retVal
 
-
-
-
-def flatten(ll):
-
-    """
-    flatten()
-
-    Purpose: Flatten a list (by one level of depth)
-    
-    Note: List of list of lists --> list of lists
- 
-    @param  ll.   List of lists
-    @return       flattened list
-    """
-
-    return reduce( lambda a,b: a+b, ll )
