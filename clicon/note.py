@@ -330,13 +330,52 @@ class Note:
     # txtlist()
     #
     # @return the data from the medical text broken into line-word format
-    def txtlist( self ):
+    def txtlist(self):
         # Goal: Break self.data sentences into lists of words
         ans = []
         for sent in self.data:
             ans.append(sent.split())
 
         return ans
+
+
+
+    def conlist(self):
+        """
+        Useful during evaluation
+        """
+        # Cached for later calls
+        if self.concepts: return self.concepts
+
+
+        # For each word, store a corresponding concept label
+        # Initially, all labels will be stored as 'none'
+        for line in self.data:
+            tmp = []
+            for word in line.split():
+                tmp.append('none')
+            self.concepts.append(tmp)
+
+
+       # Use the classifications to correct all mislabled 'none's
+        for classification in self.classifications:
+
+            #print "classification:    ", classification
+            #print "classification[0]: ", classification[0]
+            #print "classification[1]: ", classification[1]
+            #print "classification[2]: ", classification[2]
+            #print "classification[3]: ", classification[3]
+
+            concept = classification[0]
+            lineno  = classification[1] - 1
+            start   = classification[2]
+            end     = classification[3]            
+
+            self.concepts[lineno][start] = concept
+            for i in range(start, end):
+                self.concepts[lineno][i+1] = concept
+
+        return self.concepts
 
 
 
@@ -354,11 +393,26 @@ class Note:
 
 
 
-    # boundaries()
-    #
-    # @return a list of lists of the BIO vals associated with each word from data
-    def iob_labels( self ):
+    def iob_labels(self):
+        """
+        return a list of list of IOB labels
+        """
         return self.boundaries
+
+
+
+    def set_iob_labels(self, iobs):
+        """
+        return a list of list of IOB labels
+        """
+
+        # Must be proper form
+        for iob in iobs:
+            for label in iob:
+                assert (label == 'O') or (label == 'B') or (label == 'I'),  \
+                       "All labels must be I, O, or B. Given: " + label
+
+        self.boundaries = iobs
 
 
 
