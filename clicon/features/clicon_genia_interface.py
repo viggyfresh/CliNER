@@ -49,13 +49,13 @@ def genia( data ):
     '''
 
     # FIXME - crashes when the is an empty line in the file
+    #if not data: return []
 
 
     # FIXME - write list to file and then feed it to GENIA
     # FIXME - hard coded directory!!
-    ftmp = open('/home/wboag/geniatagger-3.0.1/DELETE-THIS.txt', 'w')
-    for line in data: ftmp.write(' '.join(line) + '\n')
-    ftmp.close()
+    with open('/home/wboag/geniatagger-3.0.1/DELETE-THIS.txt', 'w') as f:
+        for line in data: f.write(' '.join(line) + '\n')
 
 
     # FIXME - hard coded directory!!

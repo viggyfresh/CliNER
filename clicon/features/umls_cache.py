@@ -5,7 +5,7 @@ class UmlsCache:
     def __init__(self):
         try:
             prefix = os.environ['CLICON_DIR']
-            self.filename = os.path.join( prefix, 'umls_cache' )
+            self.filename = os.path.join( prefix, 'umls_tables/umls_cache' )
             self.cache = pickle.load( open( self.filename , "rb" ) ) ;
         except IOError:
             self.cache = {} 
