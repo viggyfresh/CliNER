@@ -344,6 +344,7 @@ class Note:
         """
         Useful during evaluation
         """
+
         # Cached for later calls
         if self.concepts: return self.concepts
 
@@ -388,6 +389,12 @@ class Note:
 
         @ return A list of concept labels (1:1 mapping with text_chunks() output)
         """
+
+        # FIXME - I have no idea why this gets shuffled around
+        self.classifications = sorted(self.classifications, key=lambda t:t[1])
+
+        #print self.classifications
+        #print '\n\n\n'
 
         return [  c[0]  for  c  in  self.classifications  ]
 
@@ -439,7 +446,7 @@ class Note:
             line = []
 
             # Chunk phrase (or single word if 'O' iob tag)
-            phrase = None
+            phrase = ''
 
             # Word-by-word grouping
             for word,iob in zip(sent,iobs):
