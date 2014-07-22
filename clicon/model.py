@@ -87,7 +87,7 @@ class Model:
 
         # Train classifier (side effect - saved as object's member variable)
         print 'first'
-        self.first_train(data1, Y1)
+        self.first_train(data1, Y1, do_grid=False)
 
 
 
@@ -127,7 +127,7 @@ class Model:
         Purpose: Train the first pass classifiers (for IOB chunking)
 
         @param data      A list of split sentences    (1 sent = 1 line from file)
-        @param Y         A list of list of IOB labels (1:1 mapping with X)
+        @param Y         A list of list of IOB labels (1:1 mapping with data)
         @param feat_obj  A wrapper for the feature module
         @param do_grid   A boolean indicating whether to perform a grid search
 
@@ -266,6 +266,7 @@ class Model:
         note.set_iob_labels(iobs)
 
 
+
         ###############
         # Second pass #
         ###############
@@ -291,7 +292,8 @@ class Model:
 
         # Create object that is a wrapper for the features
         feat_obj = clicon_features.FeatureWrapper(data)
-
+ 
+        # FIXME - partition and batch
         # prose and nonprose - each store a list of sentence feature dicts
         prose    = []
         nonprose = []
@@ -299,7 +301,6 @@ class Model:
         nonprose_line_numbers = []
         for i,line in enumerate(data):
             # returns both the feature dict AND whether the sentence was prose
-            print line
             isProse,feats = feat_obj.IOB_features(line)
             if isProse:
                 prose    += feats 
@@ -397,6 +398,7 @@ class Model:
             o = list(out[t])
             classifications = []
 
+
             # Line-by-line processing
             for lineno,inds in enumerate(inds_list):
 
@@ -406,8 +408,9 @@ class Model:
 
                 # For each concept
                 for ind in inds:
-                    concept = Model.reverse_labels[o.pop(0)]
 
+                    # Get next concept
+                    concept = Model.reverse_labels[o.pop(0)]
 
                     # Get start position (ex. 7th word of line)
                     start = 0
