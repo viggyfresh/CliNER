@@ -86,7 +86,7 @@ class Model:
 
 
         # Train classifier (side effect - saved as object's member variable)
-        print 'first'
+        print '\tfirst pass'
         self.first_train(data1, Y1, do_grid=False)
 
 
@@ -106,13 +106,13 @@ class Model:
 
 
         # Train classifier (side effect - saved as object's member variable)
-        print 'second'
+        print '\tsecond pass'
         self.second_train(data2, inds, Y2, do_grid=False)
 
 
 
         # Pickle dump
-        print 'pickle dump'
+        print '\tpickle dump'
         with open(self.filename, "wb") as model:
             pickle.dump(self, model)
     
@@ -134,13 +134,10 @@ class Model:
         @return          None
         """
 
-        print '\tbegin first_train()'
-
-
         # Create object that is a wrapper for the features
         feat_obj = clicon_features.FeatureWrapper(data)
 
-
+        print '\t\tfeature extraction (pass one)'
 
         # IOB tagging
         # FIXME - Partition and then batch features
@@ -156,10 +153,6 @@ class Model:
             else:
                 nonprose += feats 
                 nonprose_line_numbers.append(i)
-
-
-        print '\tfeatures assigned'
-        print '\tsegregate labels list into prose and nonprose'
 
 
         # FIXME - very unclear what this is
@@ -185,6 +178,9 @@ class Model:
                 print line, '\n'
 
 
+        print '\t\tvectorizing features (pass one)'
+
+
         # Vectorize IOB labels
         Y_prose    = [  Model.IOBs_labels[y]  for  y  in  pchunks  ]
         Y_nonprose = [  Model.IOBs_labels[y]  for  y  in  nchunks  ]
@@ -193,6 +189,9 @@ class Model:
         # Vectorize features
         X_prose    =    self.first_prose_vec.fit_transform(   prose)
         X_nonprose = self.first_nonprose_vec.fit_transform(nonprose)
+
+
+        print '\t\ttrain classifier (pass one)'
 
 
         # Train classifiers
@@ -230,9 +229,16 @@ class Model:
         # Create object that is a wrapper for the features
         feat_o = clicon_features.FeatureWrapper()
 
+
+        print '\t\textract features (pass two)'
+
+
         # Extract features
         X = [ feat_o.concept_features(s,inds) for s,inds in zip(data,inds_list) ]
         X = reduce(concat, X)
+
+
+        print '\t\tvectorize features (pass two)'
 
 
         # Vectorize labels
@@ -240,6 +246,9 @@ class Model:
 
         # Vectorize features
         X = self.second_vec.fit_transform(X)
+
+
+        print '\t\ttrain the classifier (pass two)'
 
 
         # Train the model
@@ -258,6 +267,10 @@ class Model:
         # First pass #
         ##############
 
+
+        print '\tfirst pass'
+
+
         # Get the data and annotations from the Note objects
         data   = note.txtlist()
 
@@ -270,6 +283,10 @@ class Model:
         ###############
         # Second pass #
         ###############
+
+
+        print '\tsecond pass'
+
 
         # Get the data and annotations from the Note objects
         chunks = note.chunked_text()
@@ -293,6 +310,10 @@ class Model:
         # Create object that is a wrapper for the features
         feat_obj = clicon_features.FeatureWrapper(data)
  
+
+        print '\t\textract features (pass one)'
+
+
         # FIXME - partition and batch
         # prose and nonprose - each store a list of sentence feature dicts
         prose    = []
@@ -310,9 +331,15 @@ class Model:
                 nonprose_line_numbers.append(i)
 
 
+        print '\t\tvectorize features (pass one)'
+
+
         # Vectorize features
         X_prose    =    self.first_prose_vec.transform(   prose)
         X_nonprose = self.first_nonprose_vec.transform(nonprose)
+
+
+        print '\t\tpredict labels (pass one)'
 
 
         # Predict
@@ -373,13 +400,23 @@ class Model:
         # Create object that is a wrapper for the features
         feat_o = clicon_features.FeatureWrapper()
 
+
+        print '\t\textract features (pass two)'
+
+
         # Extract features
         X = [ feat_o.concept_features(s,inds) for s,inds in zip(data,inds_list) ]
         X = reduce(concat, X)
 
 
+        print '\t\tvectorize features (pass two)'
+
+
         # Vectorize features
         X = self.second_vec.transform(X)
+
+
+        print '\t\tpredict labels (pass two)'
 
 
         # Predict concept labels
