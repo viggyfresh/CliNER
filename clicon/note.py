@@ -41,6 +41,9 @@ class Note:
             with open(con) as f:
                 for line in f:
 
+                    # Empty line
+                    if line == '\n': continue
+
                     # concept
                     prefix, suffix = line.split('||')
                     text = prefix.split()
@@ -103,17 +106,18 @@ class Note:
 
 
 
-    def write_i2b2_con(self, labels=None):
+    def write_i2b2(self, labels=None):
 
         """
-        Note::write_i2b2_con()
+        Note::write_i2b2()
         
-        Purpose: Write the concept predictions to a given file in i2b2 format
+        Purpose: Return the given concept label predictions in i2b2 format
         
         @param  labels. A list of classifications
-        @return         A string of i2b2 concept file data
+        @return         A string of i2b2-concept-file-formatted data
         """
 
+        # Return value
         retStr = ''
 
         # List of list of words (line-by-line)
