@@ -9,6 +9,7 @@ from sets import Set
 from model import Model
 from note import *
 
+import cProfile
 
 def main():
     parser = argparse.ArgumentParser()
@@ -102,6 +103,9 @@ def main():
 
     # file names
     print training_list
+    if not training_list:
+        print 'Error: Cannot train on 0 files. Terminating train.'
+        return 1
 
 
     # Read the data into a Note object
@@ -131,4 +135,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cProfile.run('main()')
+    #main()

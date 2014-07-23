@@ -147,6 +147,7 @@ class WordFeatures:
                 else:
                     features.update( {('uncased_prev_word',sentence[ind-1].lower()) : 1} )
 
+
             # Feature: Metric Unit
             if feature == "metric_unit":
                 tests = 3
@@ -157,21 +158,20 @@ class WordFeatures:
                     unit = 2 / tests
                 elif self.is_volume(word):
                     unit = 3 / tests
-                features[(feature, None)] = unit
+                features[(feature, unit)] = 1
+
 
             # Feature: Date
             if feature == 'date':
                 if self.is_date(word):
-                    features[(feature,None)] = 1
-                else:
-                    features[(feature,None)] = 0
+                    features[feature] = 1
+
 
             # Feature: Directive
             if feature == 'directive':
                 if self.is_directive(word):
-                    features[(feature,None)] = 1
-                else:
-                    features[(feature,None)] = 0
+                    features[feature] = 1
+
 
             # Feature: Mitre
             if feature == "mitre":
@@ -179,11 +179,13 @@ class WordFeatures:
                     if re.search(self.mitre_features[f], word):
                         features[(feature, f)] = 1
 
+
             # Feature: Word Shape
             if feature == "word_shape":
                 wordShapes = getWordShapes(word)
                 for j, shape in enumerate(wordShapes):
                     features[('word_shape', shape)] = 1
+
 
             # Feature: UMLS Word Features (only use nonprose ones)
             if (feature == "UMLS") and enabled_modules.UMLS:

@@ -6,6 +6,7 @@ import helper
 import sci
 import sys
 
+from sklearn.feature_extraction  import DictVectorizer
 from features import clicon_features
 
 
@@ -20,7 +21,6 @@ class Model:
     reverse_labels = {v:k for k, v in labels.items()}
     
 
-
     # IOBs labels
     IOBs_labels = {
         'O':0,
@@ -32,79 +32,118 @@ class Model:
 
     @staticmethod
     def load(filename='awesome.model'):
-        with open(filename) as model:
+        with open(filename, 'rb') as model:
             model = pickle.load(model)
         model.filename = filename
         return model
 
 
-    # Constructor
-    def __init__(self, filename='awesome.model', type=sci.ALL):
-        model_directory = os.path.dirname(filename)
+    def __init__(self, filename='awesome.model', type=sci.LIN):
 
+        model_directory = os.path.dirname(filename)
         if model_directory != "":
             helper.mkpath(model_directory)
 
         self.filename = os.path.realpath(filename)
-        self.type = type
-        self.IOB_vocab = {}
-        self.concept_vocab = {}
+
+        # DictVectorizers
+        self.first_prose_vec    = DictVectorizer()
+        self.first_nonprose_vec = DictVectorizer()
+        self.second_vec         = DictVectorizer()
+
+        # Classifiers
+        self.first_prose_clfs    = {}
+        self.first_nonprose_clfs = {}
+        self.second_clfs         = {}
+
+        # FIXME: Only using scikit's SVM
+        self.type = sci.LIN
         
 
 
-
-    # Model::train()
-    #
-    # @param notes. A list of Note objects that has data for training the model
     def train(self, notes):
 
-        # Get the data and annotations from the Note object
+        """
+        Model::train()
 
-        # data   - A list of list of the medical text's words
-        # labels - A list of list of concepts (1:1 with data)
-        data   = []
-        labels = []
-        bounds = []
-        for note in notes:
-            data   += note.txtlist()
-            labels += note.conlist()
-            bounds += note.boundlist()
+        Purpose: Train a ML model on annotated data
+
+        @param notes. A list of Note objects (containing text and annotations)
+        @return       None
+        """
 
 
-        # Create object that is a wrapper for the features
-        feat_obj = clicon_features.FeatureWrapper(data)
+        ##############
+        # First pass #
+        ##############
 
-        # First pass
+        # Get the data and annotations from the Note objects
+        text    = [  note.txtlist()        for  note  in  notes  ]
+        ioblist = [  note.iob_labels()     for  note  in  notes  ]
+
+        data1 = reduce( concat,    text )
+        Y1    = reduce( concat, ioblist )
+
+
+        # Train classifier (side effect - saved as object's member variable)
         print 'first'
-        self.first_train(data, labels, bounds, feat_obj)
+        self.first_train(data1, Y1, do_grid=False)
 
-        # Second pass
+
+
+        ###############
+        # Second pass #
+        ###############
+
+        # Get the data and annotations from the Note objects
+        chunks  = [  note.chunked_text()    for  note  in  notes  ] 
+        indices = [  note.concept_indices() for  note  in  notes  ]
+        conlist = [  note.concept_labels()  for  note  in  notes  ]
+
+        data2 = reduce( concat, chunks  )
+        inds  = reduce( concat, indices )
+        Y2    = reduce( concat, conlist )
+
+
+        # Train classifier (side effect - saved as object's member variable)
         print 'second'
-        self.second_train(data, labels, bounds, feat_obj)
+        self.second_train(data2, inds, Y2, do_grid=False)
+
+
 
         # Pickle dump
         print 'pickle dump'
-        with open(self.filename, "w") as model:
+        with open(self.filename, "wb") as model:
             pickle.dump(self, model)
     
 
 
 
-    # Model::train_first()
-    #
-    # @param notes. A list of Note objects that has data for training the model
-    def first_train(self, data, labels, chunks, feat_obj=None):
+    def first_train(self, data, Y, do_grid=True):
+
+        """
+        Model::first_train()
+
+        Purpose: Train the first pass classifiers (for IOB chunking)
+
+        @param data      A list of split sentences    (1 sent = 1 line from file)
+        @param Y         A list of list of IOB labels (1:1 mapping with data)
+        @param feat_obj  A wrapper for the feature module
+        @param do_grid   A boolean indicating whether to perform a grid search
+
+        @return          None
+        """
 
         print '\tbegin first_train()'
 
-        # If not given
-        if not feat_obj: 
-            # Create object that is a wrapper for the features
-            feat_obj = clicon_features.FeatureWrapper(data)
 
-        print '\tfeat_obj created'
+        # Create object that is a wrapper for the features
+        feat_obj = clicon_features.FeatureWrapper(data)
+
+
 
         # IOB tagging
+        # FIXME - Partition and then batch features
         prose    = []
         nonprose = []
         prose_line_numbers    = []
@@ -112,50 +151,32 @@ class Model:
         for i,line in enumerate(data):
             isProse,feats = feat_obj.IOB_features(line)
             if isProse:
-                prose.append( feats )
+                prose += feats 
                 prose_line_numbers.append(i)
             else:
-                nonprose.append( feats )
+                nonprose += feats 
                 nonprose_line_numbers.append(i)
 
+
         print '\tfeatures assigned'
+        print '\tsegregate labels list into prose and nonprose'
 
-        # Encode each feature as a unique number
-        for row in prose + nonprose:
-            for features in row:
-                for feature in features:
-                    if feature not in self.IOB_vocab:
-                        self.IOB_vocab[feature] = len(self.IOB_vocab) + 1
 
-        print '\tfeature dict encoding'
-
-        # IOB labels
-        # A list of a list encodings of concept labels (ex. 'B' => 1)
-        # [ [0, 0, 0], [0], [0, 0, 0], [0], [0, 0, 0, 0, 0, 1, 2, 0, 1] ]
-        label_lu = lambda l: Model.IOBs_labels[l]
-        chunks = [map(label_lu, x) for x in chunks]
-
-        # list of a list of hash tables (all keys & values now numbers)
-        #feat_lu = lambda f: {self.IOB_vocab[item]:f[item] for item in f}
-        #prose = [map(feat_lu, x) for x in prose]
-        #nonprose = [map(feat_lu, x) for x in nonprose]
-
-        print '\tsegregate "chunks" list into prose and nonprose'
-
-        # Segregate chunks into 'Prose CHUNKS' and 'Nonprose CHUNKS'
+        # FIXME - very unclear what this is
+        # Description: Separate labels by same division as text
         prose_ind    = 0
         nonprose_ind = 0
         pchunks = []
         nchunks = []
         p_end_flag = False
         n_end_flag = False
-        for i,line in enumerate(chunks):
+        for i,line in enumerate(Y):
             if   (not p_end_flag) and (i == prose_line_numbers[prose_ind]):
-                pchunks.append(line)
+                pchunks += line
                 prose_ind += 1
                 if prose_ind == len(prose_line_numbers): p_end_flag = True
             elif (not n_end_flag) and (i == nonprose_line_numbers[nonprose_ind]):
-                nchunks.append(line)
+                nchunks += line
                 nonprose_ind += 1
                 if nonprose_ind == len(nonprose_line_numbers): n_end_flag = True
             else:
@@ -163,125 +184,67 @@ class Model:
                 print 'Line #%d is neither prose nor nonprose!' % i
                 print line, '\n'
 
-        prose_model    = self.filename + '1'
-        nonprose_model = self.filename + '2'
+
+        # Vectorize IOB labels
+        Y_prose    = [  Model.IOBs_labels[y]  for  y  in  pchunks  ]
+        Y_nonprose = [  Model.IOBs_labels[y]  for  y  in  nchunks  ]
 
 
-        # Flatten feature & label lists
-        prose    = flatten(prose)
-        nonprose = flatten(nonprose)
-        pchunks  = flatten(pchunks)
-        nchunks  = flatten(nchunks)
+        # Vectorize features
+        X_prose    =    self.first_prose_vec.fit_transform(   prose)
+        X_nonprose = self.first_nonprose_vec.fit_transform(nonprose)
 
 
-
-        print 'prose'
-        print prose
-        print '\n'
-
-        print 'pchunks'
-        print pchunks
-        print '\n'
-
-        print 'nchunks'
-        print prose
-        print '\n'
-
-        print 'nonprose'
-        print nonprose
-        print '\n'
-
-
-        print '\twriting features to sci'
-
-
-
-        # Use CRF
-        sci.write_features(   prose_model,    prose, pchunks)
-        sci.write_features(nonprose_model, nonprose, nchunks)
-
-        sci.train(   prose_model)
-        sci.train(nonprose_model)
-
-
-        # Pickle dump - Done during train(), not first_train() 
-        #with open(self.filename, "w") as model:
-        #    pickle.dump(self, model)
+        # Train classifiers
+        self.first_prose_clfs    = sci.train(X_prose   , Y_prose   , self.type, do_grid)
+        self.first_nonprose_clfs = sci.train(X_nonprose, Y_nonprose, self.type, do_grid)
 
 
 
     # Model::second_train()
     #
     #
-    def second_train(self, data, labels, bounds, feat_obj=None):
+    def second_train(self, data, inds_list, Y, do_grid=True):
 
-        # If not given
-        if not feat_obj: 
-            # Create object that is a wrapper for the features
-            feat_obj = clicon_features.FeatureWrapper()
+        """
+        Model::second_train()
 
-        # Merge 'B' words with its 'I's (and account for minor change in indices)
-        tmp = clicon_features.generate_chunks(data,bounds,labels)
+        Purpose: Train the first pass classifiers (for IOB chunking)
 
-        # text_chunks    - a merged text (highly similiar to data, except merged)
-        # concept_chunks - one-to-one concept classification with text_chunks
-        # hits           - one-to-one concept token indices  with text_chunks
-        text_chunks, concept_chunks, hits = tmp
+        @param data      A list of list of strings.
+                           - A string is a chunked phrase
+                           - An inner list corresponds to one line from the file
+        @param inds_list A list of list of integer indices
+                           - assertion: len(data) == len(inds_list)
+                           - one line of 'inds_list' contains a list of indices
+                               into the corresponding line for 'data'
+        @param Y         A list of concept labels
+                           - assertion: there are sum(len(inds_list)) labels
+                              AKA each index from inds_list maps to a label
+        @param do_grid   A boolean indicating whether to perform a grid search
 
-
-        # Collect 'hits' to model 'text_chunks' layout
-        row_hits   = [ [] for _ in text_chunks ]
-        for (i,j) in hits: 
-            row_hits[i].append(j)
-
-
-        # rows            - list of list of h-tables (all non-'none' in 2d order)
-        # concept_matches - 1-1 correspondence with rows. Numeric labels (1,2,3)
-        rows = []
-        concept_matches = []
-        for i,chunk_inds in enumerate(row_hits):
-
-            # Ignore uninteresting rows
-            if not chunk_inds: continue
-
-            # Features for each chunk in the sentence
-            row = feat_obj.concept_features(text_chunks[i], chunk_inds)
-
-            # Could probably be condensed with some lambda stuff
-            row_concepts = []
-            for con in concept_chunks[i]:
-                if con != 'none':
-                    row_concepts.append( Model.labels[con] )
-
-            rows.append(row)
-            concept_matches.append( row_concepts )
+        @return          None
+        """
 
 
+        # Create object that is a wrapper for the features
+        feat_o = clicon_features.FeatureWrapper()
 
-        # Encode each feature as a unique number
-        for row in rows:
-            for features in row:
-                for feature in features:
-                    if feature not in self.concept_vocab:
-                        self.concept_vocab[feature] = len(self.concept_vocab) + 1
-
-
-        # Purpose: Encode something like ('chunk', 'rehabilitation') as a unique
-        #          number, as determined by the self.concept_vocab hash table
-        feat_lu = lambda f: {self.concept_vocab[item]: f[item] for item in f}
-        rows = [map(feat_lu, x) for x in rows]
+        # Extract features
+        X = [ feat_o.concept_features(s,inds) for s,inds in zip(data,inds_list) ]
+        X = reduce(concat, X)
 
 
-        # Write second pass model to file
-        second_pass_model = self.filename + '3'
-        mtype = sci.LIN
-        sci.write_features(second_pass_model, rows, concept_matches, mtype)
-        #sci.write_features(second_pass_model, rows, concept_matches, self.type)
+        # Vectorize labels
+        Y = [  Model.labels[y]  for  y  in  Y  ]
+
+        # Vectorize features
+        X = self.second_vec.fit_transform(X)
 
 
         # Train the model
-        sci.train(second_pass_model, mtype)      # Use LIN
-        #sci.train(second_pass_model, self.type)
+        self.second_clfs = sci.train(X, Y, self.type, do_grid)
+
 
 
         
@@ -290,23 +253,34 @@ class Model:
     # @param note. A Note object that contains the data
     def predict(self, note):
 
-        # data   - A list of list of the medical text's words
+
+        ##############
+        # First pass #
+        ##############
+
+        # Get the data and annotations from the Note objects
         data   = note.txtlist()
 
-        # A wrapper for features
-        feat_obj = clicon_features.FeatureWrapper(data)
+        # Predict IOB labels
+        iobs = self.first_predict(data)
+        note.set_iob_labels(iobs)
 
-        # First Pass
-        bounds = self.first_predict(data, feat_obj)
 
-        # Merge 'B' words with its 'I's to form phrased chunks
-        text_chunks, _, hits = clicon_features.generate_chunks(data,bounds)
 
-        # Second Pass
-        retVal = self.second_predict(text_chunks,hits,feat_obj)
+        ###############
+        # Second pass #
+        ###############
+
+        # Get the data and annotations from the Note objects
+        chunks = note.chunked_text()
+        inds   = note.concept_indices()
+
+        # Predict concept labels
+        retVal = self.second_predict(chunks,inds)
 
 
         return retVal
+
 
 
 
@@ -314,13 +288,12 @@ class Model:
     #
     # @param data. A list of list of words
     # @return      A list of list of IOB tags
-    def first_predict(self, data, feat_obj=None):
+    def first_predict(self, data):
 
-        # If not given
-        if not feat_obj: 
-            # Create object that is a wrapper for the features
-            feat_obj = clicon_features.FeatureWrapper(data)
-
+        # Create object that is a wrapper for the features
+        feat_obj = clicon_features.FeatureWrapper(data)
+ 
+        # FIXME - partition and batch
         # prose and nonprose - each store a list of sentence feature dicts
         prose    = []
         nonprose = []
@@ -330,35 +303,27 @@ class Model:
             # returns both the feature dict AND whether the sentence was prose
             isProse,feats = feat_obj.IOB_features(line)
             if isProse:
-                prose.append( feats )
+                prose    += feats 
                 prose_line_numbers.append(i)
             else:
-                nonprose.append( feats )
+                nonprose += feats 
                 nonprose_line_numbers.append(i)
 
 
-        # For applying the (key,value) mapping
-        feat_lu = lambda f: {self.IOB_vocab[item]:f[item] for item in f if item in self.IOB_vocab}
+        # Vectorize features
+        X_prose    =    self.first_prose_vec.transform(   prose)
+        X_nonprose = self.first_nonprose_vec.transform(nonprose)
 
 
-        # Prose (predict, and read predictions)
-        prose = [map(feat_lu, x) for x in prose]
-        prose_model = self.filename + '1'
+        # Predict
+        out_p = sci.predict(self.first_prose_clfs   , X_prose,   sci.LIN)
+        out_n = sci.predict(self.first_nonprose_clfs, X_nonprose,sci.LIN)
 
-        sci.write_features(prose_model, prose, None, sci.CRF);
-        sci.predict(prose_model, sci.CRF)
 
-        prose_labels_list = sci.read_labels(prose_model, sci.CRF)[sci.CRF]
+        # Format labels
+        plist = [  n  for  n  in  list(out_p[sci.LIN]) ]
+        nlist = [  n  for  n  in  list(out_n[sci.LIN]) ]
         
-
-        # Nonprose (predict, and read predictions)
-        nonprose = [map(feat_lu, x) for x in nonprose]
-        nonprose_model = self.filename + '2'
-
-        sci.write_features(nonprose_model, nonprose, None, sci.CRF);
-        sci.predict(nonprose_model, sci.CRF)
-
-        nonprose_labels_list = sci.read_labels(nonprose_model, sci.CRF)[sci.CRF]
 
         # Stitch prose and nonprose labels lists together
         labels = []
@@ -367,9 +332,6 @@ class Model:
         p_end_flag = (len(   prose_line_numbers) == 0)
         n_end_flag = (len(nonprose_line_numbers) == 0)
 
-        # Pretty much renaming just for length/readability pruposes
-        plist =    prose_labels_list
-        nlist = nonprose_labels_list
 
         for i in range( len(data) ):
             if   (not p_end_flag) and (i == prose_line_numbers[prose_ind]):
@@ -392,84 +354,76 @@ class Model:
 
 
 
-        # IOB labels
-        # translate labels_list into a readable format
+        # translate IOB labels into a readable format
         # ex. change all occurences of 1 -> 'B'
-        tmp = []
+        iobs = []
         for sentence in data:
-            tmp.append([labels.pop(0) for i in range(len(sentence))])
-            tmp[-1]= map(lambda l: l.strip(), tmp[-1])
-            tmp[-1]= map(lambda l: Model.reverse_IOBs_labels[int(l)],tmp[-1])
+            iobs.append([labels.pop(0) for i in range(len(sentence))])
+            iobs[-1]= map(lambda l: Model.reverse_IOBs_labels[int(l)],iobs[-1])
+
 
         # list of list of IOB labels
-        return tmp
+        return iobs
 
 
 
 
-    def second_predict(self ,text_chunks, hits, feat_obj=None):
+    def second_predict(self, data, inds_list):
 
-        # If not given
-        if not feat_obj:
-            # Create object that is a wrapper for the features
-            feat_obj = clicon_features.FeatureWrapper()
+        # Create object that is a wrapper for the features
+        feat_o = clicon_features.FeatureWrapper()
 
-        # Collect 'hits' to model 'text_chunks' layout
-        row_hits   = [ [] for _ in text_chunks ]
-        for (i,j) in hits:
-            row_hits[i].append(j)
+        # Extract features
+        X = [ feat_o.concept_features(s,inds) for s,inds in zip(data,inds_list) ]
+        X = reduce(concat, X)
 
 
-        # rows            - list of list of h-tables (all non-'none' in 2d order)
-        # concept_matches - 1-1 correspondence with rows. Numeric labels (1,2,3)
-        rows = []
-        concept_matches = []
-        for i,chunk_inds in enumerate(row_hits):
+        # Vectorize features
+        X = self.second_vec.transform(X)
 
-            # Ignore uninteresting rows
-            if not chunk_inds: continue
 
-            # Features for each chunk in the sentence
-            row = feat_obj.concept_features(text_chunks[i], chunk_inds)
-            rows.append(row)
+        # Predict concept labels
+        out = sci.predict(self.second_clfs, X, sci.LIN)
 
 
 
-        # Purpose: Encode something like ('chunk', 'rehabilitation') as a unique
-        #          number, as determined by the self.concept_vocab hash table
-        feat_lu = lambda f: {self.concept_vocab[item]: f[item] for item in f if item in self.concept_vocab}
-        rows = [map(feat_lu, x) for x in rows]
+        # FIXME - Output prediction labels are entirely wrong
+        # ex. trained on file with 3 concepts (prob,treat,treat) and predicted
+        #        on same file. Got (test,test,test) as labels
 
-        # Predict using model
-        second_pass_model = self.filename + '3'
-        mtype = sci.LIN
-        sci.write_features(second_pass_model, rows, None, mtype);
-        sci.predict(second_pass_model, mtype)
-        second_pass_labels_list = sci.read_labels(second_pass_model, mtype)
-
-
-        # Put predictions into format for Note class to read
         retVal = {}
-        for t in [1,2,4]: 
-        
-            # Skip non-predictions
-            if t not in second_pass_labels_list: continue
-        
+        for t in sci.bits(self.type):
+
+            # Index into output dictionary
+            o = list(out[t])
             classifications = []
-            for hit,concept in zip(hits, second_pass_labels_list[t]):
-                concept = Model.reverse_labels[int(concept)]
-                i,j = hit
 
-                # Get start position (ex. 7th word of line)
-                start = 0
-                for k in range(len(text_chunks[i])):
-                    if k == j: break;
-                    start += len( text_chunks[i][k].split() )
 
-                length = len(text_chunks[i][j].split())
-                classifications.append(  (concept, i, start, start+length-1 ) )
-        
-            retVal[t] = classifications
+            # Line-by-line processing
+            for lineno,inds in enumerate(inds_list):
+
+                # Skip empty line
+                if not inds: continue
+
+
+                # For each concept
+                for ind in inds:
+
+                    # Get next concept
+                    concept = Model.reverse_labels[o.pop(0)]
+
+                    # Get start position (ex. 7th word of line)
+                    start = 0
+                    for i in range(ind):
+                        start += len( data[lineno][i].split() )
+
+                    # Length of chunk
+                    length = len(data[lineno][ind].split())
+
+                    # Classification token
+                    classifications.append(  (concept, lineno, start, start+length-1 ) )
+            
+                retVal[t] = classifications
 
 
         # Return values
@@ -478,21 +432,10 @@ class Model:
 
 
 
-def flatten(ll):
 
+
+def concat(a,b):
     """
-    flatten()
-
-    Purpose: Flatten a list
-
-    @param  ll.   List of lists
-    @return       flattened list
+    list concatenation function (for reduce() purpose)
     """
-
-    
-    retVal = []
-
-    for line in ll:
-        retVal += line
-
-    return retVal
+    return a+b

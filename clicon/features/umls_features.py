@@ -65,8 +65,6 @@ class UMLSFeatures:
                 if cuis:
                     for cui in cuis:
                         features[(feature,cui)] = 1
-                else:
-                    features[(feature,None)] = 1
 
 
             # Feature: UMLS Hypernyms
@@ -79,8 +77,6 @@ class UMLSFeatures:
                 if hyps:
                     #for hyp in hyps:
                     features[(feature,hyps[0])] = 1
-                else:
-                    features[(feature,None)] = 1
 
 
         return features
@@ -113,8 +109,6 @@ class UMLSFeatures:
                 if cuis:
                     for cui in cuis:
                         features[(feature,cui)] = 1
-                else:
-                    features[(feature,None)] = 1
 
 
             # Feature: UMLS Hypernyms
@@ -127,8 +121,6 @@ class UMLSFeatures:
                 if hyps:
                     #for hyp in hyps:
                     features[(feature,hyps[0])] = 1
-                else:
-                    features[(feature,None)] = 1
 
 
             # Feature: UMLS Semantic Type (for each word)
@@ -140,8 +132,6 @@ class UMLSFeatures:
                 if mapping:
                     for concept in mapping:
                         features[('umls_semantic_type_word', concept )] = 1
-                else:
-                    features[('umls_semantic_type_word' ,   None  )] = 1
 
 
         return features
@@ -175,8 +165,6 @@ class UMLSFeatures:
                 if cuis:
                     for cui in cuis:
                         features[(feature,cui)] = 1
-                else:
-                    features[(feature,None)] = 1
 
 
             # Feature: UMLS Semantic Type (for each word)
@@ -188,8 +176,6 @@ class UMLSFeatures:
                 if mapping:
                     for concept in mapping:
                         features[('umls_semantic_type_word', concept )] = 1
-                else:
-                    features[('umls_semantic_type_word' ,   None  )] = 1
 
 
         return features
@@ -210,14 +196,14 @@ class UMLSFeatures:
         features = {}
 
 
-        for feature in self.enabled_features_for_sentence:
+        for feature in self.enabled_concept_features_for_sentence:
 
 
             # Feature: UMLS semantic type for the sentence
             if feature == "umls_semantic_type_sentence":
 
                 # a list of the uml semantic of the largest substring(s).
-                sentence_mapping = umls.umls_semantic_type_sentence( self.umls_lookup_cache,  sentence )
+                sentence_mapping = umls.umls_semantic_type_sentence( self.umls_lookup_cache, sentence )
 
                 # if there are no mappings
                 if not sentence_mapping:
@@ -229,8 +215,6 @@ class UMLSFeatures:
                         if concept:
                             for mapping in concept:
                                 features[('umls_semantic_type_sentence' , mapping[0] ) ] = 1
-                        else:
-                            features[('umls_semantic_type_sentence' ,   None  ) ] = 1
 
 
             # Feature: UMLS semantic context
@@ -239,14 +223,11 @@ class UMLSFeatures:
                 # the umls definition of the largest string the word is in
                 umls_semantic_context_mappings = umls.umls_semantic_context_of_words( self.umls_lookup_cache , sentence )
 
-                #if there are no mappings
-                if umls_semantic_context_mappings[ind] == None:
-                    features[(feature,None)] = 1
                 # there could be multiple contexts, iterate through the sublist
-                else:
-                    for mapping in umls_semantic_context_mappings[ind]:
-                        for concept in mapping:
-                            features[(feature,concept)] = 1
+                for mapping in umls_semantic_context_mappings:
+                    if not mapping: continue
+                    for concept in mapping:
+                        features[(feature,concept)] = 1
 
 
         return features

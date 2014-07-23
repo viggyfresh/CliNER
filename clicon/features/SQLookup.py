@@ -9,15 +9,17 @@ WINDOW_SIZE = 7
 def SQLConnect():
 
     #try to connect to the sqlite database. Make one otherwise
-    if( os.path.isfile( "umls_tables/umls.db" ) ):
+    db_path = os.path.join( os.environ['CLICON_DIR'], "umls_tables/umls.db")
+    if( os.path.isfile( db_path ) ):
         print "\ndb exists" 
-        db = sqlite3.connect( "umls_tables/umls.db" ) 
     else:
         print "\ndb doesn't exist"
         create_sqliteDB.create_db() 
-        db = sqlite3.connect( "umls_tables/umls.db" )
+
+    db = sqlite3.connect( db_path )
     db.text_factory = str
     return db.cursor()
+
 
 #used in SQlookup, I made this global so SQLConnect is only called once. 
 c = SQLConnect()

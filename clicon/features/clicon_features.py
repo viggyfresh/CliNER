@@ -14,19 +14,15 @@ __date__   = 'Jan. 27, 2014'
 
 import nltk
 import re
-from sets import ImmutableSet
 from wordshape import getWordShapes
-
-
-# What modules are available
-from read_config import enabled_modules
-
 
 from sentence_features import SentenceFeatures
 
 
 
 class FeatureWrapper:
+
+    # FIXME - Make three objects - one for each classifier
 
 
     # Instantiate an FeatureWrapper object
@@ -66,6 +62,16 @@ class FeatureWrapper:
         # FIXME - move all of this work to SentenceFeatures object
 
         features_list = [ {} for _ in chunk_inds ]
+
+
+        '''
+        # VERY basic feature set for sanity check tests during development
+        for i,ind in enumerate(chunk_inds):
+            features = {('phrase',sentence[ind]) : 1} 
+            features_list[i] = features
+        return features_list
+        '''
+
 
         tags = []
 

@@ -94,7 +94,8 @@ def umls_semantic_context_of_words( umls_string_cache, sentence ):
 
     #print '\t\t', umls_context_list
 
-    #create a list of sublists each sublist represents the contexts for which the word appears in the sentence
+    #create a list of sublists 
+    #  each sublist represents the contexts for which the word appears in the sentence
 
  #   print umls_context_list 
 
@@ -107,15 +108,12 @@ def umls_semantic_context_of_words( umls_string_cache, sentence ):
             sub_mappings = []
             for j in spans:
                 sub_mappings.append( concept_span_dict[tuple(j)])
-            #print '\t\t\t', sub_mappings
-            #print ''
-            #mappings.append( list(set(sub_mappings)) )
-            mappings.append( sub_mappings )
-#    print mappings
-#    print sentence 
- #   print '\t\t\t', mappings
+
+            # FIXME - Decided to concat rather than append (not sure why)
+            mappings += sub_mappings 
 
     return mappings 
+
 
 def umls_semantic_type_sentence( cache , sentence ):
 
