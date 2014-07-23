@@ -38,7 +38,7 @@ def train(annotations, model, format, input):
 
 
     # Build command
-    cmd = ['python', runable, '-t', txt_path, '-c', con_path]
+    cmd = ['python', runable, '-t', input, '-c', annotations]
 
 
     # Optional arguments
@@ -74,7 +74,7 @@ def predict(model, out, format, input):
 
 
     # Build command
-    cmd = ['python', runable, '-i', txt_path]
+    cmd = ['python', runable, '-i', input]
 
 
     # Optional arguments

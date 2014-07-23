@@ -230,7 +230,7 @@ class Model:
         feat_o = clicon_features.FeatureWrapper()
 
 
-        print '\textracting features  (pass two)'
+        print '\textracting  features (pass two)'
 
 
         # Extract features
@@ -311,7 +311,7 @@ class Model:
         feat_obj = clicon_features.FeatureWrapper(data)
  
 
-        print '\textract features (pass one)'
+        print '\textracting  features (pass one)'
 
 
         # FIXME - partition and batch
@@ -331,7 +331,7 @@ class Model:
                 nonprose_line_numbers.append(i)
 
 
-        print '\tvectorize features (pass one)'
+        print '\tvectorizing features (pass one)'
 
 
         # Vectorize features
@@ -339,7 +339,7 @@ class Model:
         X_nonprose = self.first_nonprose_vec.transform(nonprose)
 
 
-        print '\tpredict labels (pass one)'
+        print '\tpredicting    labels (pass one)'
 
 
         # Predict
@@ -401,7 +401,7 @@ class Model:
         feat_o = clicon_features.FeatureWrapper()
 
 
-        print '\textract features (pass two)'
+        print '\textracting  features (pass two)'
 
 
         # Extract features
@@ -409,14 +409,14 @@ class Model:
         X = reduce(concat, X)
 
 
-        print '\tvectorize features (pass two)'
+        print '\tvectorizing features (pass two)'
 
 
         # Vectorize features
         X = self.second_vec.transform(X)
 
 
-        print '\tpredict labels (pass two)'
+        print '\tpredicting    labels (pass two)'
 
 
         # Predict concept labels
