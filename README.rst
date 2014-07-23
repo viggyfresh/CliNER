@@ -28,6 +28,7 @@ Features
 Installation
 --------
 
+
 1. virtualenv
 
 
@@ -35,22 +36,13 @@ Setup a virtual environent:
 
     example:
         willie@text-machine:~$ virtualenv venv_clicon
+
         willie@text-machine:~$ source venv_clicon/bin/activate
 
 
 
-2. Get data
 
-    FIXME: Something Something i2b2 agreement.
-
-
-    OR, if you are Anna Rumshisky, then you know the password to text-machine
-    example:
-        willie@text-machine:~/CliCon$ scp -r wboag@text-machine:~/clicon_data/* data
-
-
-
-3. environment variable
+2. environment variable
 
     In order to run CliCon, you must define the CLICON_DIR environment variable.
     **This variable must be the path of the directory creatied by git.**
@@ -69,67 +61,73 @@ Setup a virtual environent:
 
 
 
+
+3. Get data
+
+    FIXME: Something Something i2b2 agreement.
+    **I'll need to ask Kevin how to get data from i2b2**
+
+
+    OR, if you are Anna Rumshisky, then you know the password to text-machine
+
+    example:
+        willie@text-machine:~/CliCon$ scp -r wboag@text-machine:~/CliCon/data/* $CLICON_DIR/data
+
+
+
+
 3. Get UMLS tables (optional)
 
-    Optional:
+    **Do-able but I'd need to talk to Kevin about where to get them**
 
-
-    Note: If you get an error that looks like
-
-        Traceback (most recent call last):
-           ...
-            import SQLookup
-          File "/home/willie/CliCon/clicon/features/SQLookup.py", line 25, in <module>
-            c = SQLConnect()
-          File "/home/willie/CliCon/clicon/features/SQLookup.py", line 17, in SQLConnect
-            create_sqliteDB.create_db()
-          File "/home/willie/CliCon/clicon/features/create_sqliteDB.py", line 11, in create_db
-            conn = sqlite3.connect( db_path )
-        sqlite3.OperationalError: unable to open database file
-
-    Then the system thinks you have UMLS databases when you actually do not.
-    To solve this, you need to change the file $CLICON_DIR/clicon/features/features.config to look like:
-
-        GENIA False
-        UMLS  False
-
-    If that does not work, then check to make sure your CLICON_DIR variable is correct.
 
 
 
 4. Install GENIA tagger (optional)
 
+    **Would take some effort to make this possible. Do-able, but not pretty**
 
 
-
-5. Switch to working branch (TEMPORARY)
-
-    example:
-        willie@text-machine:~/CliCon$ git checkout parameterization
 
 
 
 6. Install CliCon
 
-    example:
-        (venv_clicon)willie@text-machine:~/CliCon$ python setup.py install
+    This project has dependencies on scientific computation libraries.
 
-
-    I had to pip install:
+    Ensure the following python modules are installed:
         - numpy
         - scikit-learn
         - scipy
         - nltk  (AND run the NLTK downloader)
 
-    I had to apt-get install:
-        - g++
-        - gfortran
-        - libopenblas-dev
-        - liblapack-dev
+        **Note, if you are on Ubuntu, then you have to to apt-get the following:
+            - g++
+            - gfortran
+            - libopenblas-dev
+            - liblapack-dev
+        ***
 
 
-7. Give it a test run
+    example:
+        (venv_clicon)willie@text-machine:~/CliCon$ sudo apt-get install g++ gfortran libopenblas-dev liblapack-dev -Y
+        (venv_clicon)willie@text-machine:~/CliCon$ pip install numpy scikit-learn scipy nltk
+        (venv_clicon)willie@text-machine:~/CliCon$ python setup.py install
 
-    example 1:
-        (venv_clicon)willie@text-machine:~/CliCon$ clicon train
+
+
+
+7. Demos
+
+
+    example 1: Training the classifier
+    (venv_clicon)willie@text-machine:~/clicon/CliCon$ clicon train data/concept_assertion_relation_training_data/partners/txt/837898389.txt --annotations data/concept_assertion_relation_training_data/partners/concept/837898389.con
+
+
+    example 2: Predicting concept labels
+    (venv_clicon)willie@text-machine:~/clicon/CliCon$ clicon predict data/concept_assertion_relation_training_data/partners/txt/837898389.txt --out data/test_predictions/
+
+
+    example 3: Converting i2b2 concept file into xml format
+    (venv_clicon)willie@text-machine:~/clicon/CliCon$ clicon format data/concept_assertion_relation_training_data/partners/txt/837898389.txt --annotations lin/837898389.con  --format xml
 
