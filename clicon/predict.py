@@ -80,6 +80,8 @@ def main():
         note.read_i2b2(txt)
 
 
+        print '\tfile: ', txt
+
         # Use the model to predict the concept labels
         # Returns a hash table with:
         #     keys as 1,2,4

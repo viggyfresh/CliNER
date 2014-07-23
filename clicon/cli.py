@@ -1,6 +1,8 @@
 import click
 import os
 import commands
+import sys
+import subprocess
 
 
 @click.group()
@@ -12,45 +14,58 @@ def clicon():
 # Train
 @clicon.command()
 @click.option('--annotations', 
-              default='data/concept_assertion_relation_training_data/beth/concept/record-13.con',
               help='Concept files for training.')
 @click.option('--model', 
-              default='models/run_models/run.model',
               help='Model output by train.')
 @click.option('--format', 
-              default='i2b2',
               help='Data format (i2b2 or xml).')
 @click.argument('input')
 def train(annotations, model, format, input):
+
+    # Command line arguments
+    if not annotations:
+        print >>sys.stderr, '\n\tError: Must provide annotations for text files'
+        print >>sys.stderr,  ''
+        exit(1)
+
 
     # Base directory
     BASE_DIR = os.environ.get('CLICON_DIR')
     if not BASE_DIR:
         raise Exception('Environment variable CLICON_DIR must be defined')
 
+
     # Executable
     runable = os.path.join(BASE_DIR,'clicon/train.py')
 
-    # Command line arguments
+
+    # Data paths
     txt_path   = os.path.join(BASE_DIR,       input)
     con_path   = os.path.join(BASE_DIR, annotations)
-    model_path = os.path.join(BASE_DIR,       model)
+
 
     print 'training'
 
+
     # Build command
-    cmd = 'python ' + runable                         \
-                    + ' -f   '  + format              \
-                    + ' -t \"'  + txt_path    + '\"'  \
-                    + ' -c \"'  + con_path    + '\"'  \
-                    + ' -m '    + model_path
+    cmd = ['python', runable, '-t', txt_path, '-c', con_path]
+
+    # Optional arguments
+    if model:
+        model_path = os.path.join(BASE_DIR, model)
+        cmd += ['-m', model_path]
+    if format:
+        cmd += ['-f'   , format]
+
 
     # Execute train.py
-    errnum, output = commands.getstatusoutput(cmd)
+    print cmd
+    subprocess.call(cmd)
+    #errnum, output = commands.getstatusoutput(cmd)
 
     # Display output
-    for line in output.split('\n'):
-        print line
+    #for line in output.split('\n'):
+    #    print line
 
 
 

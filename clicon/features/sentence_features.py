@@ -47,7 +47,7 @@ class SentenceFeatures:
 
     enabled_IOB_nonprose_sentence_features = ImmutableSet( ['prev_pos', 'pos', 'next_pos', 'test_result', 'prev', 'next','prev_3_pos'])
 
-    enabled_concept_features = ImmutableSet( ['pos','stem_wordnet', 'test_result', 'word_shape','prev','next, "UMLS"'])
+    enabled_concept_features = ImmutableSet( ['pos','stem_wordnet', 'test_result', 'word_shape','prev','next', "UMLS"])
 
 
 
@@ -58,7 +58,7 @@ class SentenceFeatures:
         self.feat_word = WordFeatures()
 
         # Only run GENIA tagger if module is available
-        if enabled_modules.GENIA:
+        if data and enabled_modules.GENIA:
             print 'GENIA module enabled'
             self.feat_genia = GeniaFeatures(data)
 
@@ -86,7 +86,7 @@ class SentenceFeatures:
 
 
         # Only POS tag once
-        pos_tagged = []
+        pos_tagged = nltk.pos_tag(sentence)
 
         # Used for 'prev' and 'next' features
         ngram_features = [{} for i in range(len(features_list))]
@@ -97,27 +97,30 @@ class SentenceFeatures:
 
             # Feature: Part of Speech
             if feature == 'pos':
-                pos_tagged = pos_tagged or nltk.pos_tag(sentence)
                 for (i,(_,pos)) in enumerate(pos_tagged):
                     features_list[i].update( { ('pos',pos) : 1} )
 
+
             # Feature: Previous 3 POSs
             if feature == 'prev_3_pos':
-                pos_tagged = pos_tagged or nltk.pos_tag(sentence)
                 for i in range(len(sentence)):
-                    if i == 0:
-                        prev_pos = ('*','*','*')
-                        features_list[0].update({(feature,prev_pos)       :1})
-                    elif i == 1:
-                        prev_pos = ('*','*',pos_tagged[0][1])
-                        features_list[1].update({(feature,prev_pos)       :1})
-                    elif i == 2:
-                        prev_pos = ('*',pos_tagged[0][1],pos_tagged[1][1])
-                        features_list[2].update({(feature,prev_pos)       :1})
+
+                    # Where to begin
+                    if i-3 < 0:
+                        begin = 0
                     else:
-                        prev_pos = (pos_tagged[i-3][1],pos_tagged[i-2][1],pos_tagged[i-1][1])
-                        features_list[i].update({(feature,pos_tagged[i-1]):1})
-            
+                        begin = i-3
+
+                    # Go as far back as 3 tokens
+                    pos_features = {}
+                    for p in pos_tagged[begin:i]:
+                        pos = p[1]
+                        pos_features.update( {('prev_3_pos',pos) : 1} )
+                    
+                    # Update feature dict
+                    features_list[i].update(pos_features)
+
+
             # GENIA features
             if enabled_modules.GENIA and (feature == 'GENIA'):
 
@@ -166,6 +169,7 @@ class SentenceFeatures:
 
         # Get the GENIA features of the current sentence
         #    (not used for nonprose, but it keeps things aligned for the prose)
+        # FIXME - Making seperate classes will fix this
         if enabled_modules.GENIA and 'GENIA' in self.enabled_IOB_prose_sentence_features:
             _ = self.feat_genia.features(sentence, False)
 
@@ -179,35 +183,35 @@ class SentenceFeatures:
         for i,word in enumerate(sentence):
             features_list.append( self.feat_word.IOB_nonprose_features(sentence,i) )
 
-        # Only POS tag once
-        pos_tagged = []
+        pos_tagged = nltk.pos_tag(sentence)
+
 
         # Allow for particular features to be enabled
         for feature in self.enabled_IOB_nonprose_sentence_features:
 
             # Feature: Previous POS
             if feature == 'prev_pos':
-                pos_tagged = pos_tagged or nltk.pos_tag(sentence)
                 for i in range(len(sentence)):
                     if i == 0:
                         features_list[0].update({('prev_POS','<START>')      :1})
                     else:
                         features_list[i].update({('prev_POS',pos_tagged[i-1]):1})
 
+
             # Feature: Part of Speech
             if feature == 'pos':
-                pos_tagged = pos_tagged or nltk.pos_tag(sentence)
                 for (i,(_,pos)) in enumerate(pos_tagged):
                     features_list[i].update( { ('pos',pos) : 1} )
 
+
             # Feature: Previous POS
             if feature == 'next_pos':
-                pos_tagged = pos_tagged or nltk.pos_tag(sentence)
                 for i in range(len(sentence)):
                     if i == len(sentence)-1:
                         features_list[-1].update({('prev_POS','<START>')     :1})
                     else:
                         features_list[i].update({('prev_POS',pos_tagged[i-1]):1})
+
 
             # Feature: Test Result (for each chunk)
             if feature == "test_result":
@@ -217,24 +221,24 @@ class SentenceFeatures:
                         features[(feature, None)] = 1
 
 
-            # FIXME - should order matter?
             # Feature: Previous 3 POSs
             if feature == 'prev_3_pos':
-                pos_tagged = pos_tagged or nltk.pos_tag(sentence)
                 for i in range(len(sentence)):
-                    if i == 0:
-                        prev_pos = ('*','*','*')
-                        features_list[0].update({(feature,prev_pos)       :1})
-                    elif i == 1:
-                        prev_pos = ('*','*',pos_tagged[0][1])
-                        features_list[1].update({(feature,prev_pos)       :1})
-                    elif i == 2:
-                        prev_pos = ('*',pos_tagged[0][1],pos_tagged[1][1])
-                        features_list[2].update({(feature,prev_pos)       :1})
+
+                    # Where to begin
+                    if i-3 < 0:
+                        begin = 0
                     else:
-                        prev_pos = (pos_tagged[i-3][1],pos_tagged[i-2][1],pos_tagged[i-1][1])
-                        features_list[i].update({(feature,pos_tagged[i-1]):1})
-            
+                        begin = i-3
+
+                    # Go as far back as 3 tokens
+                    pos_features = {}
+                    for p in pos_tagged[begin:i]:
+                        pos = p[1]
+                        pos_features.update( {('prev_3_pos',pos) : 1} )
+                    
+                    # Update feature dict
+                    features_list[i].update(pos_features)
 
 
         ngram_features = [{} for i in range(len(features_list))]
@@ -303,7 +307,7 @@ class SentenceFeatures:
 
              # Features: UMLS features
             if (feature == "UMLS") and enabled_modules.UMLS:
-                umls_features = self.feat_umls.concept_features(split_sentence)
+                umls_features = self.feat_umls.concept_features_for_sentence(split_sentence)
                 features.update(umls_features)
 
 
@@ -311,7 +315,7 @@ class SentenceFeatures:
             if feature == "pos":
                 tags = tags or nltk.pos_tag(split_sentence)
                 for j,pos_tag in enumerate(tags[ind:ind+len(sentence[ind].split())]):
-                    featname = 'pos-%d' % j
+                    featname = 'pos' 
                     features[(featname, pos_tag[1])] = 1
 
             # Feature: Wordnet Stem (for each chunk)

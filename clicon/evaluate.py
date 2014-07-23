@@ -90,12 +90,10 @@ def main():
             # A note that represents the model's predictions
             cnote = Note()
             cnote.read_i2b2( txt, con )
-            #cnote.read_plain( txt, con )    # in case in plain format
 
             # A note that is the actual concept labels
             rnote = Note()
             rnote.read_i2b2( txt, ref )
-            #rnote.read_plain(txt, ref )    # in case in plain format
 
             # Get corresponding concept labels (prediction vs. actual)
             for c, r in zip( cnote.conlist(), rnote.conlist() ):

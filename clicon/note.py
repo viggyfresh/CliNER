@@ -36,6 +36,7 @@ class Note:
 
         # If an accompanying concept file was specified, read it
         if con:
+            classifications = []
             with open(con) as f:
                 for line in f:
 
@@ -58,7 +59,7 @@ class Note:
                     end   = int(  end[1])
 
                     # Add the classification to the Note object
-                    self.classifications.append( (conc,l,start,end) )
+                    classifications.append( (conc,l,start,end) )
 
                     #print "txt:   ", txt
                     #print "l:     ", l
@@ -78,6 +79,9 @@ class Note:
                         self.boundaries[l-1][i+1] = 'I'
 
                     #print "\n" + "-" * 80
+
+            # Concept file does not guarantee ordering by line number
+            self.classifications = sorted(classifications, key=lambda t:t[1])
 
 
 
@@ -328,7 +332,7 @@ class Note:
     # txtlist()
     #
     # @return the data from the medical text broken into line-word format
-    def txtlist( self ):
+    def txtlist(self):
         # Goal: Break self.data sentences into lists of words
         ans = []
         for sent in self.data:
@@ -338,13 +342,14 @@ class Note:
 
 
 
-    # conlist()
-    #
-    # @return a list of lists of the concepts associated with each word from data
-    def conlist( self ):
+    def conlist(self):
+        """
+        Useful during evaluation
+        """
 
         # Cached for later calls
         if self.concepts: return self.concepts
+
 
         # For each word, store a corresponding concept label
         # Initially, all labels will be stored as 'none'
@@ -354,10 +359,8 @@ class Note:
                 tmp.append('none')
             self.concepts.append(tmp)
 
-        #for i, elem in enumerate(self.data):
-        #    print i, ": ", elem
 
-        # Use the classifications to correct all mislabled 'none's
+       # Use the classifications to correct all mislabled 'none's
         for classification in self.classifications:
 
             #print "classification:    ", classification
@@ -379,13 +382,122 @@ class Note:
 
 
 
-    # boundaries()
-    #
-    # @return a list of lists of the BIO vals associated with each word from data
-    def boundlist( self ):
+    def concept_labels(self):
+
+        """
+        concept_labels()
+
+        Purpose: Training labels for a concept classifier on phrases
+
+        @ return A list of concept labels (1:1 mapping with text_chunks() output)
+        """
+
+        return [  c[0]  for  c  in  self.classifications  ]
+
+
+
+    def iob_labels(self):
+        """
+        return a list of list of IOB labels
+        """
         return self.boundaries
 
 
-    # For iterating
-    def __iter__(self):
-        return iter(self.data)
+
+    def set_iob_labels(self, iobs):
+        """
+        return a list of list of IOB labels
+        """
+
+        # Must be proper form
+        for iob in iobs:
+            for label in iob:
+                assert (label == 'O') or (label == 'B') or (label == 'I'),  \
+                       "All labels must be I, O, or B. Given: " + label
+
+        self.boundaries = iobs
+
+
+
+    def chunked_text(self):
+
+        """
+        Note::generate_chunks()
+
+        Purpose: Combine all 'I's into 'B' chunks
+
+        @return A list of list of phrases.
+        """
+
+
+        # List of list of phrases
+        text          = self.txtlist()
+        text_chunks   = []
+
+
+        # Line-by-line chunking
+        for sent,iobs in zip(self.txtlist(),self.iob_labels()):
+
+            # One line of chunked phrases
+            line = []
+
+            # Chunk phrase (or single word if 'O' iob tag)
+            phrase = ''
+
+            # Word-by-word grouping
+            for word,iob in zip(sent,iobs):
+
+                if iob == 'O':
+                    if phrase: line.append(phrase)
+                    phrase = word
+
+                if iob == 'B':
+                    if phrase: line.append(phrase)
+                    phrase = word
+
+                if iob == 'I':
+                    phrase += ' ' + word
+
+            # Add last phrase
+            if phrase: line.append(phrase)
+            
+            # Add line from file 
+            text_chunks.append(line)
+
+
+        return text_chunks
+
+
+
+
+    def concept_indices(self):
+
+        # Return value
+        inds_list = []
+
+
+        # Line-by-line chunking
+        for iobs in self.iob_labels():
+
+            # One line of chunked phrases
+            line = []
+            seen_chunks = 0
+
+            # Word-by-word grouping
+            for iob in iobs:
+
+                if iob == 'O':
+                    seen_chunks += 1
+
+                if iob == 'B':
+                    line.append(seen_chunks)
+                    seen_chunks += 1
+
+            # Add line from file
+            inds_list.append(line)
+
+
+        return inds_list
+
+
+

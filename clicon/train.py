@@ -9,6 +9,7 @@ from sets import Set
 from model import Model
 from note import *
 
+import cProfile
 
 def main():
     parser = argparse.ArgumentParser()
@@ -125,6 +126,12 @@ def main():
             notes.append(note_tmp)        # Add the Note to the list
 
 
+    # file names
+    if not notes:
+        print 'Error: Cannot train on 0 files. Terminating train.'
+        return 1
+
+
     # Create a Machine Learning model
     model = Model(filename = args.model, type = libml.LIN)
 
@@ -135,4 +142,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cProfile.run('main()')
+    #main()

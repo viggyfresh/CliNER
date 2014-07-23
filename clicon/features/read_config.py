@@ -32,8 +32,8 @@ class enabled_modules:
 def available_services():
 
     # Open config file
-    prefix = os.path.abspath('')
-    filename = os.path.join( prefix, 'clicon/features/features.config' )
+    prefix = os.path.dirname(__file__)
+    filename = os.path.join( prefix, 'features.config' )
     f = open(filename, 'r')
 
     specs = {}
