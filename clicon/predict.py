@@ -58,7 +58,7 @@ def main():
 
 
         print '-' * 30
-        print '\n\n\tfile: ', txt, '\n'
+        print '\n\n\t', txt, '\n'
 
 
         # Predict concept labels
@@ -86,6 +86,7 @@ def main():
                 output = ''
 
             # Output the concept predictions
+            print '\n\nwriting to: ', con_path
             with open(con_path, 'w') as f:
                 print >>f, output
 
