@@ -28,7 +28,6 @@ def main():
     parser.add_argument("-m",
     dest = "model",
     help = "Path to the model that should be generated",
-    #default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../models/awesome.model')
     default = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../models/run_models/run.model')
     )
 
@@ -104,7 +103,7 @@ def main():
                 training_list.append((txt_files_map[k], con_files_map[k]))
 
         # file names
-        print training_list
+        print '\n', training_list, '\n'
 
         # Read the data into a Note object
         notes = []
@@ -117,7 +116,7 @@ def main():
     elif format == 'xml':
 
         # file names
-        print txt_files
+        print '\n', txt_files, '\n'
 
         # Read the data into a Note object
         notes = []

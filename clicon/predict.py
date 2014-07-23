@@ -1,11 +1,10 @@
 import os
-import os.path
 import sys
 import glob
 import argparse
 import helper
 
-import libml
+import sci
 from model import Model
 from note import *
 
@@ -14,15 +13,15 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-i", 
-    dest = "input", 
-    help = "The input files to predict", 
-    default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/test_data/*')
+        dest = "input", 
+        help = "The input files to predict", 
+        default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/test_data/*')
     )
 
     parser.add_argument("-o", 
-    dest = "output", 
-    help = "The directory to write the output", 
-    default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/test_predictions')
+        dest = "output", 
+        help = "The directory to write the output", 
+        default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/test_predictions')
     )
 
     parser.add_argument("-m",
@@ -37,42 +36,20 @@ def main():
         default = 'i2b2'
     )
 
-    parser.add_argument("--no-svm",
-        dest = "no_svm",
-        action = "store_true",
-        help = "Disable SVM model generation",
-    )
-
-    parser.add_argument("--no-lin",
-        dest = "no_lin",
-        action = "store_true",
-        help = "Disable LIN model generation",
-    )
-
-    parser.add_argument("--no-crf",
-        dest = "no_crf",
-        action = "store_true",
-        help = "Disable CRF model generation",
-    )
-
     args = parser.parse_args()
 
-    # Locate the test files
+
+    # Parse arguments
     files = glob.glob(args.input)
+    helper.mkpath(args.output)
     format = args.format
 
-    # Load a model and make a prediction for each file
-    path = args.output
-    helper.mkpath(args.output)
 
     # Load model
     model = Model.load(args.model)
 
 
-    # file names
-    print files
-
-
+    # For each file, predict concept labels
     for txt in files:
 
         # Read the data into a Note object
@@ -80,39 +57,40 @@ def main():
         note.read_i2b2(txt)
 
 
-        print '\tfile: ', txt
+        print '-' * 30
+        print '\n\n\tfile: ', txt, '\n'
 
-        # Use the model to predict the concept labels
-        # Returns a hash table with:
-        #     keys as 1,2,4
-        #     values as list of list of concept tokens (one-to-one with dat_list)
+
+        # Predict concept labels
         labels = model.predict(note)
 
+
+        # Output directory
         con = os.path.split(txt)[-1]
         con = con[:-3] + 'con'
 
-        for t in libml.bits(model.type):
 
-            # FIXME - workaround. I'm not sure why it doesnt make some 
-            if t not in labels: 
-                continue
+        for t in sci.bits(model.type):
 
-            if t == libml.SVM:
-                helper.mkpath(os.path.join(args.output, "svm"))
-                con_path = os.path.join(path, "svm", con)
-            if t == libml.LIN:
+            if t == sci.LIN:
                 helper.mkpath(os.path.join(args.output, "lin"))
-                con_path = os.path.join(path, "lin", con)
+                con_path = os.path.join(args.output, "lin", con)
 
 
-            # Output the concept predictions
+            # Get predictions in proper format
             if format == 'i2b2':
                 output = note.write_i2b2(labels[t])
             elif format == 'xml':
                 output =  note.write_xml(labels[t])
             else:
                 output = ''
-            print output
+
+            # Output the concept predictions
+            with open(con_path, 'w') as f:
+                print >>f, output
+
+
+        print ''
 
 
 

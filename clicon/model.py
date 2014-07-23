@@ -86,7 +86,7 @@ class Model:
 
 
         # Train classifier (side effect - saved as object's member variable)
-        print '\tfirst pass'
+        print 'first pass'
         self.first_train(data1, Y1, do_grid=False)
 
 
@@ -106,13 +106,13 @@ class Model:
 
 
         # Train classifier (side effect - saved as object's member variable)
-        print '\tsecond pass'
+        print 'second pass'
         self.second_train(data2, inds, Y2, do_grid=False)
 
 
 
         # Pickle dump
-        print '\tpickle dump'
+        print 'pickle dump\n'
         with open(self.filename, "wb") as model:
             pickle.dump(self, model)
     
@@ -137,7 +137,7 @@ class Model:
         # Create object that is a wrapper for the features
         feat_obj = clicon_features.FeatureWrapper(data)
 
-        print '\t\textracting features (pass one)'
+        print '\textracting  features (pass one)'
 
         # IOB tagging
         # FIXME - Partition and then batch features
@@ -178,7 +178,7 @@ class Model:
                 print line, '\n'
 
 
-        print '\t\tvectorizing features (pass one)'
+        print '\tvectorizing features (pass one)'
 
 
         # Vectorize IOB labels
@@ -191,7 +191,7 @@ class Model:
         X_nonprose = self.first_nonprose_vec.fit_transform(nonprose)
 
 
-        print '\t\ttraining classifier (pass one)'
+        print '\ttraining  classifier (pass one)'
 
 
         # Train classifiers
@@ -230,7 +230,7 @@ class Model:
         feat_o = clicon_features.FeatureWrapper()
 
 
-        print '\t\textracting features (pass two)'
+        print '\textracting features  (pass two)'
 
 
         # Extract features
@@ -238,7 +238,7 @@ class Model:
         X = reduce(concat, X)
 
 
-        print '\t\tvectorizing features (pass two)'
+        print '\tvectorizing features (pass two)'
 
 
         # Vectorize labels
@@ -248,7 +248,7 @@ class Model:
         X = self.second_vec.fit_transform(X)
 
 
-        print '\t\ttraining classifier (pass two)'
+        print '\ttraining  classifier (pass two)'
 
 
         # Train the model
@@ -268,7 +268,7 @@ class Model:
         ##############
 
 
-        print '\tfirst pass'
+        print 'first pass'
 
 
         # Get the data and annotations from the Note objects
@@ -285,7 +285,7 @@ class Model:
         ###############
 
 
-        print '\tsecond pass'
+        print 'second pass'
 
 
         # Get the data and annotations from the Note objects
@@ -311,7 +311,7 @@ class Model:
         feat_obj = clicon_features.FeatureWrapper(data)
  
 
-        print '\t\textract features (pass one)'
+        print '\textract features (pass one)'
 
 
         # FIXME - partition and batch
@@ -331,7 +331,7 @@ class Model:
                 nonprose_line_numbers.append(i)
 
 
-        print '\t\tvectorize features (pass one)'
+        print '\tvectorize features (pass one)'
 
 
         # Vectorize features
@@ -339,7 +339,7 @@ class Model:
         X_nonprose = self.first_nonprose_vec.transform(nonprose)
 
 
-        print '\t\tpredict labels (pass one)'
+        print '\tpredict labels (pass one)'
 
 
         # Predict
@@ -401,7 +401,7 @@ class Model:
         feat_o = clicon_features.FeatureWrapper()
 
 
-        print '\t\textract features (pass two)'
+        print '\textract features (pass two)'
 
 
         # Extract features
@@ -409,14 +409,14 @@ class Model:
         X = reduce(concat, X)
 
 
-        print '\t\tvectorize features (pass two)'
+        print '\tvectorize features (pass two)'
 
 
         # Vectorize features
         X = self.second_vec.transform(X)
 
 
-        print '\t\tpredict labels (pass two)'
+        print '\tpredict labels (pass two)'
 
 
         # Predict concept labels
