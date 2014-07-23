@@ -13,6 +13,8 @@ __date__   = 'Jul. 3, 2014'
 
 
 import argparse
+import sys
+import os
 import glob
 
 import helper
@@ -22,6 +24,7 @@ import note
 
 def main():
 
+    # Argument Parser
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-t",
@@ -40,8 +43,9 @@ def main():
     )
 
     parser.add_argument("-o",
-        dest = "out_file",
-        help = "File to output data",
+        dest = "out",
+        default = '.',
+        help = "Directory to output data",
     )
 
     parser.add_argument("-f",
@@ -53,47 +57,84 @@ def main():
     args = parser.parse_args()
 
 
-    #print 'CALLING FORMAT.PY'
-    #return
-
-
-    # A list of text    file paths
-    # A list of concept file paths
+    # Parse arguments
     if args.txt: txt_files = glob.glob(args.txt)
     if args.con: con_files = glob.glob(args.con)
     if args.xml: xml_files = glob.glob(args.xml)
-
-    # ex. {'record-13': 'record-13.txt'}
-    # ex. {'record-13': 'record-13.con'}
-    txt_files_map = helper.map_files(txt_files)
-    con_files_map = helper.map_files(con_files)
+    if args.out: out_dir   =           args.out
+    format = args.format
 
 
-    # ex. training_list =  [ ('record-13.txt', 'record-13.con') ]
-    file_list = []
-    for k in txt_files_map:
-        if k in con_files_map:
-            file_list.append((txt_files_map[k], con_files_map[k]))
+    # Ensure format is specified
+    if (not format) or ((format != 'xml') and (format != 'i2b2')):
+        print >>sys.stderr, '\n\tError: Must specify output format (i2b2 or xml)'
+        print >>sys.stderr, ''
+        exit(1)
 
 
-    # FIXME - use the "format" argument
+    # Ensure proper data is available
+    if not ((args.txt and args.con) or (args.xml)):
+        print >>sys.stderr, '\n\tError: Must supply either:'
+        print >>sys.stderr,   '\t         1) i2b2 txt & con files'
+        print >>sys.stderr,   '\t         2) xml file\n'
+        exit(2)
 
-    # i2b2 -> xml
-    for txt_f,con_f in file_list:
-        out = i2b2_to_xml(txt_f, con_f)
-        print out
 
-    return
+    if format == 'xml':
 
-    # xml -> i2b2
-    for xml_f in xml_files:
-        print xml_f
-        txt_out, con_out = xml_to_i2b2(xml_f)
-        print ''
-        print txt_out
-        print '\n--------\n'
-        print con_out
-        print ''
+        # Group input i2b2 txt/con files together
+        txt_files_map = helper.map_files(txt_files)
+        con_files_map = helper.map_files(con_files)
+        file_list = []
+        for k in txt_files_map:
+            if k in con_files_map:
+                file_list.append((txt_files_map[k], con_files_map[k]))
+
+
+        # For each matching txt/con pair
+        for txt_f,con_f in file_list:
+
+            # i2b2 -> xml
+            output = i2b2_to_xml(txt_f, con_f)
+
+
+            # output file name
+            xml_name = os.path.basename(txt_f)[:-4] + '.xml'
+            xml_file = os.path.join(out_dir, xml_name)
+
+            # print output xml file
+            print 'outputting: ', xml_file
+            with open(xml_file, 'w') as f:
+                print >>f, output
+
+
+    else:
+
+        # For each xml file
+        for xml_f in xml_files:
+
+            # i2b2 -> xml
+            txt_out, con_out = xml_to_i2b2(xml_f)
+
+
+            # output txt file
+            txt_name = os.path.basename(xml_f)[:-4] + '.txt'
+            txt_file = os.path.join(out_dir, txt_name)
+
+            print 'outputting: ', txt_file
+            with open(txt_file, 'w') as f:
+                print >>f, txt_out
+
+
+            # output con file
+            con_name = os.path.basename(xml_f)[:-4] + '.con'
+            con_file = os.path.join(out_dir, con_name)
+
+            print 'outputting: ', con_file
+            with open(con_file, 'w') as f:
+                print >>f, con_out
+
+
 
 
 
@@ -119,6 +160,7 @@ def i2b2_to_xml(txt, con):
 
 
 
+
 def xml_to_i2b2(xml):
 
     """
@@ -131,11 +173,11 @@ def xml_to_i2b2(xml):
     """
 
 
-    # Read note from i2b2 format
+    # Read note from xml format
     N = note.Note()
     N.read_xml(xml)
 
-    # Output note into xml format
+    # Output note into i2b2 format
     txt_out = N.write_txt()
     con_out = N.write_i2b2_con()
     return txt_out, con_out
