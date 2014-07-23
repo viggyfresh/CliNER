@@ -1,6 +1,5 @@
 import click
 import os
-import commands
 import sys
 import subprocess
 
@@ -21,6 +20,7 @@ def clicon():
               help='Data format (i2b2 or xml).')
 @click.argument('input')
 def train(annotations, model, format, input):
+
 
     # Command line arguments
     if not annotations:
@@ -44,28 +44,20 @@ def train(annotations, model, format, input):
     con_path   = os.path.join(BASE_DIR, annotations)
 
 
-    print 'training'
-
-
     # Build command
     cmd = ['python', runable, '-t', txt_path, '-c', con_path]
+
 
     # Optional arguments
     if model:
         model_path = os.path.join(BASE_DIR, model)
         cmd += ['-m', model_path]
     if format:
-        cmd += ['-f'   , format]
+        cmd += ['-f',     format]
 
 
     # Execute train.py
-    print cmd
     subprocess.call(cmd)
-    #errnum, output = commands.getstatusoutput(cmd)
-
-    # Display output
-    #for line in output.split('\n'):
-    #    print line
 
 
 
@@ -83,36 +75,39 @@ def train(annotations, model, format, input):
 @click.argument('input')
 def predict(model, out, format, input):
 
+
     # Base directory
     BASE_DIR = os.environ.get('CLICON_DIR')
     if not BASE_DIR:
         raise Exception('Environment variable CLICON_DIR must be defined')
 
-    print 'BASE_DIR: ', BASE_DIR
 
     # Executable
     runable = os.path.join(BASE_DIR,'clicon/predict.py')
 
-    # Command line arguments
-    txt_path   = os.path.join(BASE_DIR, input)
-    out_path   = os.path.join(BASE_DIR,   out)
-    model_path = os.path.join(BASE_DIR, model)
 
-    print 'predicting'
+    # Data paths
+    txt_path   = os.path.join(BASE_DIR, input)
+
 
     # Build command
-    cmd = 'python ' + runable                         \
-                    + ' -f   '  + format              \
-                    + ' -i \"'  + txt_path    + '\"'  \
-                    + ' -o '    + out_path            \
-                    + ' -m '    + model_path
+    cmd = ['python', runable, '-i', txt_path]
 
-    # Execute predict.py
-    errnum, output = commands.getstatusoutput(cmd)
 
-    # Display output
-    for line in output.split('\n'):
-        print line
+    # Optional arguments
+    if out:
+        out_path   = os.path.join(BASE_DIR,   out)
+        cmd += ['-o',   out_path]
+    if model:
+        model_path = os.path.join(BASE_DIR, model)
+        cmd += ['-m', model_path]
+    if format:
+        cmd += ['-f',     format]
+
+
+    # Execute train.py
+    subprocess.call(cmd)
+
 
 
 
