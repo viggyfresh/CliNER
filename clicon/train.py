@@ -9,7 +9,6 @@ from sets import Set
 from model import Model
 from note import *
 
-import cProfile
 
 def main():
     parser = argparse.ArgumentParser()
@@ -85,10 +84,12 @@ def main():
     # i2b2 or xml
     format = args.format
 
+
     print '\n\n\n'
     print 'txt_files: ', txt_files
     print 'con_files: ', con_files
     print 'format:    ', format
+
 
     if format == 'i2b2':
 
@@ -113,10 +114,19 @@ def main():
             notes.append(note_tmp)        # Add the Note to the list
 
 
+<<<<<<< HEAD
     elif format == 'xml':
 
         # file names
         print txt_files
+=======
+    # Read the data into a Note object
+    notes = []
+    for txt, con in training_list:
+        note_tmp = Note()                # Create Note
+        note_tmp.read_i2b2(txt, con)     # Read data into Note
+        notes.append(note_tmp)           # Add the Note to the list
+>>>>>>> 98e81720d2218e9ec83240fb0a2ad1cbdd8a185e
 
         # Read the data into a Note object
         notes = []
@@ -142,5 +152,4 @@ def main():
 
 
 if __name__ == '__main__':
-    cProfile.run('main()')
-    #main()
+    main()
