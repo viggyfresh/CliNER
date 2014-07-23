@@ -9,7 +9,6 @@ from sets import Set
 from model import Model
 from note import *
 
-import cProfile
 
 def main():
     parser = argparse.ArgumentParser()
@@ -75,9 +74,6 @@ def main():
     txt_files = glob.glob(args.txt)
     con_files = glob.glob(args.con)
 
-
-    # ex. {'record-13': 'record-13.txt'}
-    # ex. {'record-13': 'record-13.con'}
     txt_files_map = helper.map_files(txt_files)
     con_files_map = helper.map_files(con_files)
 
@@ -88,8 +84,6 @@ def main():
         if k in con_files_map:
             training_list.append((txt_files_map[k], con_files_map[k]))
 
-        # TEMP - useful for when I was reading in XML files
-        #training_list.append(txt_files_map[k])
 
     # What kind of model should be used? (ex. SVM vs. CRF)
     type = 0
@@ -111,14 +105,9 @@ def main():
     # Read the data into a Note object
     notes = []
     for txt, con in training_list:
-    #for txt in training_list:
-        # Alternative data formats
-        #note_tmp.read_plain(txt, con)    # plain
-        #note_tmp.read_xml(txt)           # xml
-
         note_tmp = Note()                # Create Note
         note_tmp.read_i2b2(txt, con)     # Read data into Note
-        notes.append(note_tmp)         # Add the Note to the list
+        notes.append(note_tmp)           # Add the Note to the list
 
 
     # Create a Machine Learning model
@@ -135,5 +124,4 @@ def main():
 
 
 if __name__ == '__main__':
-    cProfile.run('main()')
-    #main()
+    main()
