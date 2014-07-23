@@ -47,7 +47,7 @@ class SentenceFeatures:
 
     enabled_IOB_nonprose_sentence_features = ImmutableSet( ['prev_pos', 'pos', 'next_pos', 'test_result', 'prev', 'next','prev_3_pos'])
 
-    enabled_concept_features = ImmutableSet( ['pos','stem_wordnet', 'test_result', 'word_shape','prev','next, "UMLS"'])
+    enabled_concept_features = ImmutableSet( ['pos','stem_wordnet', 'test_result', 'word_shape','prev','next', "UMLS"])
 
 
 
@@ -307,7 +307,7 @@ class SentenceFeatures:
 
              # Features: UMLS features
             if (feature == "UMLS") and enabled_modules.UMLS:
-                umls_features = self.feat_umls.concept_features(split_sentence)
+                umls_features = self.feat_umls.concept_features_for_sentence(split_sentence)
                 features.update(umls_features)
 
 

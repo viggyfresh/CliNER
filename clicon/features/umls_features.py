@@ -196,14 +196,14 @@ class UMLSFeatures:
         features = {}
 
 
-        for feature in self.enabled_features_for_sentence:
+        for feature in self.enabled_concept_features_for_sentence:
 
 
             # Feature: UMLS semantic type for the sentence
             if feature == "umls_semantic_type_sentence":
 
                 # a list of the uml semantic of the largest substring(s).
-                sentence_mapping = umls.umls_semantic_type_sentence( self.umls_lookup_cache,  sentence )
+                sentence_mapping = umls.umls_semantic_type_sentence( self.umls_lookup_cache, sentence )
 
                 # if there are no mappings
                 if not sentence_mapping:
@@ -224,7 +224,8 @@ class UMLSFeatures:
                 umls_semantic_context_mappings = umls.umls_semantic_context_of_words( self.umls_lookup_cache , sentence )
 
                 # there could be multiple contexts, iterate through the sublist
-                for mapping in umls_semantic_context_mappings[ind]:
+                for mapping in umls_semantic_context_mappings:
+                    if not mapping: continue
                     for concept in mapping:
                         features[(feature,concept)] = 1
 
