@@ -30,6 +30,12 @@ def main():
         default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/reference_standard_for_test_data/concepts/')
     )
 
+    parser.add_argument("-f",
+        dest = "format",
+        help = "Data format (i2b2 or xml).",
+        default = 'i2b2'
+    )
+
     parser.add_argument("-o",
         help = "Write the evaluation to a file rather than STDOUT",
         dest = "output",
@@ -38,6 +44,12 @@ def main():
 
     # Parse command line arguments
     args = parser.parse_args()
+
+
+
+    if args.format != 'i2b2':
+        print >>sys.stderr, 'Evaluation for xml not supported yet'
+        exit(1)
 
 
     # Is output destination specified
