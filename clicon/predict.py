@@ -79,7 +79,7 @@ def main():
 
             # Get predictions in proper format
             if format == 'i2b2':
-                output = note.write_i2b2(labels[t])
+                output = note.write_i2b2_con(labels[t])
             elif format == 'xml':
                 output =  note.write_xml(labels[t])
             else:
