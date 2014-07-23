@@ -8,5 +8,6 @@ test_dummy
 Dummy test that always passes.
 """
 
+
 def test():
     pass
