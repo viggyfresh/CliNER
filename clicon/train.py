@@ -9,6 +9,7 @@ from sets import Set
 from model import Model
 from note import *
 
+import cProfile
 
 def main():
     parser = argparse.ArgumentParser()
@@ -134,4 +135,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cProfile.run('main()')
+    #main()
