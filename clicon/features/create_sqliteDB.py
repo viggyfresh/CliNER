@@ -2,6 +2,7 @@
 import sqlite3  
 import os
 import sys
+import os
 
 def create_db(): 
     
@@ -9,7 +10,6 @@ def create_db():
     #connect to the .db file we are creating. 
     db_path = os.path.join(os.environ['CLICON_DIR'],'umls_tables/umls.db')
     conn = sqlite3.connect( db_path ) 
-    
     conn.text_factory = str 
 
     print "opening files" 

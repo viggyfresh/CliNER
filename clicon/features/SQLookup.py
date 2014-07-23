@@ -17,7 +17,6 @@ def SQLConnect():
         create_sqliteDB.create_db() 
 
     db = sqlite3.connect( db_path )
-    db.text_factory = str
     return db.cursor()
 
 
