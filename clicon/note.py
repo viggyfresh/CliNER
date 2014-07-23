@@ -85,63 +85,66 @@ class Note:
 
 
 
-    # Note::write_i2b2()
-    #
-    # @param  con.    A path to the file of where to write the prediction.
-    # @param  labels. A list of classifications
-    #
-    # Write the concept predictions to a given file in i2b2 format
-    def write_i2b2(self, con, labels):
+
+    def write_i2b2(self, labels):
+
+        """
+        Note::write_i2b2()
+       
+        Purpose: Write the concept predictions to a given file in i2b2 format
+        
+        @param  labels. A list of classifications
+        @return         A string in i2b2 concept format to be written to a file
+        """
+
+        retStr = ''
 
         # List of list of words (line-by-line)
         tlist = self.txtlist()
 
-        #for i, elem in enumerate(self.data):
-        #    print i, ": ", elem
+        for classification in labels:
 
+            # Ensure 'none' classifications are skipped
+            if classification[0] == 'none':
+                continue
 
-        with open(con, 'w') as f:
+            concept = classification[0]
+            lineno  = classification[1] + 1
+            start   = classification[2]
+            end     = classification[3]
 
-            for classification in labels:
+            # A list of words (corresponding line from the text file)
+            text = tlist[lineno-1]
 
-                    # Ensure 'none' classifications are skipped
-                    if classification[0] == 'none':
-                        continue
+            #print "\n" + "-" * 80
+            #print "start:       ", start
+            #print "end          ", end
+            #print "text:        ", text
+            #print "text[start]: ", text[start]
+            #print "concept:     ", concept
 
-                    concept = classification[0]
-                    lineno  = classification[1] + 1
-                    start   = classification[2]
-                    end     = classification[3]
+            # The text string of words that has been classified
+            datum = text[start]
+            for j in range(start, end):
+                datum += " " + text[j+1] 
 
-                    # A list of words (corresponding line from the text file)
-                    text = tlist[lineno-1]
+            # Line:TokenNumber of where the concept starts and ends
+            idx1 = "%d:%d" % (lineno, start)
+            idx2 = "%d:%d" % (lineno, end  )
 
-                    #print "\n" + "-" * 80
-                    #print "start:       ", start
-                    #print "end          ", end
-                    #print "text:        ", text
-                    #print "text[start]: ", text[start]
-                    #print "concept:     ", concept
+            # Classification
+            label = concept
 
-                    # The text string of words that has been classified
-                    datum = text[start]
-                    for j in range(start, end):
-                        datum += " " + text[j+1] 
+            # Fixing issue involving i2b2 format (remove capitalization)
+            lowercased = [w.lower() for w in datum.split()]
+            datum = ' '.join(lowercased)
 
-                    # Line:TokenNumber of where the concept starts and ends
-                    idx1 = "%d:%d" % (lineno, start)
-                    idx2 = "%d:%d" % (lineno, end  )
+            # Print format
+            retStr +=  "c=\"%s\" %s %s||t=\"%s\"\n" % (datum, idx1, idx2, label)
 
-                    # Classification
-                    label = concept
+        # return formatted data
+        return retStr
 
-                    # Fixing issue involving i2b2 format (remove capitalization)
-                    lowercased = [w.lower() for w in datum.split()]
-                    datum = ' '.join(lowercased)
-
-                    # Print format
-                    print >>f, "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx1, idx2, label)
-                    #print "c=\"%s\" %s %s||t=\"%s\"" % (datum, idx1, idx2, label)
 
 
 
