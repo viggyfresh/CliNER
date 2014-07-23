@@ -137,7 +137,7 @@ class Model:
         # Create object that is a wrapper for the features
         feat_obj = clicon_features.FeatureWrapper(data)
 
-        print '\t\tfeature extraction (pass one)'
+        print '\t\textracting features (pass one)'
 
         # IOB tagging
         # FIXME - Partition and then batch features
@@ -191,7 +191,7 @@ class Model:
         X_nonprose = self.first_nonprose_vec.fit_transform(nonprose)
 
 
-        print '\t\ttrain classifier (pass one)'
+        print '\t\ttraining classifier (pass one)'
 
 
         # Train classifiers
@@ -230,7 +230,7 @@ class Model:
         feat_o = clicon_features.FeatureWrapper()
 
 
-        print '\t\textract features (pass two)'
+        print '\t\textracting features (pass two)'
 
 
         # Extract features
@@ -238,7 +238,7 @@ class Model:
         X = reduce(concat, X)
 
 
-        print '\t\tvectorize features (pass two)'
+        print '\t\tvectorizing features (pass two)'
 
 
         # Vectorize labels
@@ -248,7 +248,7 @@ class Model:
         X = self.second_vec.fit_transform(X)
 
 
-        print '\t\ttrain the classifier (pass two)'
+        print '\t\ttraining classifier (pass two)'
 
 
         # Train the model

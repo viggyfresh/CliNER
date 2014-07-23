@@ -57,6 +57,6 @@ def available_services():
 
 
 # Read from config file when module is imported
-print available_services()
+#print available_services()
 
 

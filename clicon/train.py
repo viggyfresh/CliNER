@@ -85,10 +85,10 @@ def main():
     format = args.format
 
 
-    print '\n\n\n'
-    print 'txt_files: ', txt_files
-    print 'con_files: ', con_files
-    print 'format:    ', format
+    #print '\n\n\n'
+    #print 'txt_files: ', txt_files
+    #print 'con_files: ', con_files
+    #print 'format:    ', format
 
 
     if format == 'i2b2':
