@@ -87,6 +87,8 @@ class Note:
             # Concept file does not guarantee ordering by line number
             self.classifications = sorted(classifications, key=lambda t:t[1])
 
+
+
     def write_txt(self):
 
         """
@@ -106,10 +108,10 @@ class Note:
 
 
 
-    def write_i2b2(self, labels=None):
+    def write_i2b2_con(self, labels=None):
 
         """
-        Note::write_i2b2()
+        Note::write_i2b2_con()
         
         Purpose: Return the given concept label predictions in i2b2 format
         
@@ -134,7 +136,7 @@ class Note:
 
 
         # For each classification
-        for classification in labels:
+        for classification in classifications:
 
             # Ensure 'none' classifications are skipped
             if classification[0] == 'none':
@@ -369,7 +371,7 @@ class Note:
                         i += 1
 
 
-    def write_xml(self, labels):
+    def write_xml(self, labels=None):
 
         """
         Note::write_xml()
@@ -380,16 +382,23 @@ class Note:
         @return         A string for the xml-annotated file
         """
 
-        # xml formats do not have associated concept files
-        return "FIXME: write_xml() not implemented"
+
+        # If given labels to write, use them. Default to self.classifications
+        if labels:
+            classifications = labels
+        elif self.classifications:
+            classifications = self.classifications
+        else:
+            raise Exception('Cannot write concept file: must specify labels')
+
 
         # Intermediate copy
         toks = copy(self.data)
 
         # Order classification tuples so they are accessed right to left
         # Assumption: sorted() is a stable sort
-        tags = sorted(self.classifications, key=lambda x:x[2], reverse=True)
-        tags = sorted(tags                , key=lambda x:x[1]              )
+        tags = sorted(classifications, key=lambda x:x[2], reverse=True)
+        tags = sorted(tags           , key=lambda x:x[1]              )
 
         #print toks
         #print ''
