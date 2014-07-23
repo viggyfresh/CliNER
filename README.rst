@@ -29,10 +29,11 @@ Installation
 --------
 
 
+
 1. virtualenv
 
+    Setup a virtual environent:
 
-Setup a virtual environent:
 
     example:
         willie@text-machine:~$ virtualenv venv_clicon
@@ -45,6 +46,7 @@ Setup a virtual environent:
 2. environment variable
 
     In order to run CliCon, you must define the CLICON_DIR environment variable.
+
     **This variable must be the path of the directory creatied by git.**
 
     example:
@@ -65,6 +67,7 @@ Setup a virtual environent:
 3. Get data
 
     FIXME: Something Something i2b2 agreement.
+
     **I'll need to ask Kevin how to get data from i2b2**
 
 
@@ -111,23 +114,27 @@ Setup a virtual environent:
 
     example:
         (venv_clicon)willie@text-machine:~/CliCon$ sudo apt-get install g++ gfortran libopenblas-dev liblapack-dev -Y
+
         (venv_clicon)willie@text-machine:~/CliCon$ pip install numpy scikit-learn scipy nltk
+
         (venv_clicon)willie@text-machine:~/CliCon$ python setup.py install
 
 
 
+7. Run unit tests
 
-7. Demos
-
-
-    example 1: Training the classifier
-    (venv_clicon)willie@text-machine:~/clicon/CliCon$ clicon train data/concept_assertion_relation_training_data/partners/txt/837898389.txt --annotations data/concept_assertion_relation_training_data/partners/concept/837898389.con
+    **We haven't done any unit tests yet**
 
 
-    example 2: Predicting concept labels
-    (venv_clicon)willie@text-machine:~/clicon/CliCon$ clicon predict data/concept_assertion_relation_training_data/partners/txt/837898389.txt --out data/test_predictions/
 
 
-    example 3: Converting i2b2 concept file into xml format
-    (venv_clicon)willie@text-machine:~/clicon/CliCon$ clicon format data/concept_assertion_relation_training_data/partners/txt/837898389.txt --annotations lin/837898389.con  --format xml
+Usage Examples
+--------
+
+    example 1: Sanity Check - Train/Predict on the same file
+        (venv_clicon)willie@text-machine:~/CliCon$ clicon train data/concept_assertion_relation_training_data/partners/txt/837898389.txt --annotations data/concept_assertion_relation_training_data/partners/concept/837898389.con
+
+        (venv_clicon)willie@text-machine:~/CliCon$ clicon predict data/concept_assertion_relation_training_data/partners/txt/837898389.txt --out data/test_predictions/
+
+        (venv_clicon)willie@text-machine:~/CliCon$ clicon format data/concept_assertion_relation_training_data/partners/txt/837898389.txt --annotations data/test_predictions/lin/837898389.con  --format xml
 
