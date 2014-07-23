@@ -36,6 +36,7 @@ class Note:
 
         # If an accompanying concept file was specified, read it
         if con:
+            classifications = []
             with open(con) as f:
                 for line in f:
 
@@ -58,7 +59,7 @@ class Note:
                     end   = int(  end[1])
 
                     # Add the classification to the Note object
-                    self.classifications.append( (conc,l,start,end) )
+                    classifications.append( (conc,l,start,end) )
 
                     #print "txt:   ", txt
                     #print "l:     ", l
@@ -78,6 +79,9 @@ class Note:
                         self.boundaries[l-1][i+1] = 'I'
 
                     #print "\n" + "-" * 80
+
+            # Concept file does not guarantee ordering by line number
+            self.classifications = sorted(classifications, key=lambda t:t[1])
 
 
 
@@ -389,12 +393,6 @@ class Note:
 
         @ return A list of concept labels (1:1 mapping with text_chunks() output)
         """
-
-        # FIXME - I have no idea why this gets shuffled around
-        self.classifications = sorted(self.classifications, key=lambda t:t[1])
-
-        #print self.classifications
-        #print '\n\n\n'
 
         return [  c[0]  for  c  in  self.classifications  ]
 
