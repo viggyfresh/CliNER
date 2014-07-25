@@ -4,6 +4,7 @@ import os
 import cPickle as pickle
 import helper
 import sci
+import libml
 import sys
 
 from sklearn.feature_extraction  import DictVectorizer
@@ -38,7 +39,7 @@ class Model:
         return model
 
 
-    def __init__(self, filename='awesome.model', type=sci.LIN):
+    def __init__(self, filename='awesome.model', type=sci.LIN, crf=False):
 
         model_directory = os.path.dirname(filename)
         if model_directory != "":
@@ -57,7 +58,8 @@ class Model:
         self.second_clfs         = {}
 
         # FIXME: Only using scikit's SVM
-        self.type = sci.LIN
+        self.type     = sci.LIN
+        self.crf = crf
         
 
 
@@ -195,8 +197,16 @@ class Model:
 
 
         # Train classifiers
-        self.first_prose_clfs    = sci.train(X_prose   , Y_prose   , self.type, do_grid)
-        self.first_nonprose_clfs = sci.train(X_nonprose, Y_nonprose, self.type, do_grid)
+        if self.crf:
+            prose_f    = self.filename + '.prose'
+            nonprose_f = self.filename + '.nonprose'
+
+            libml.train(self.crf, prose_f   , X_prose   , Y_prose   )
+            libml.train(self.crf, nonprose_f, X_nonprose, Y_nonprose)
+
+        else:
+            self.first_prose_clfs    = sci.train(X_prose   , Y_prose   , self.type, do_grid)
+            self.first_nonprose_clfs = sci.train(X_nonprose, Y_nonprose, self.type, do_grid)
 
 
 
@@ -343,8 +353,17 @@ class Model:
 
 
         # Predict
-        out_p = sci.predict(self.first_prose_clfs   , X_prose,   sci.LIN)
-        out_n = sci.predict(self.first_nonprose_clfs, X_nonprose,sci.LIN)
+        if self.crf:
+            prose_f    = self.filename + '.prose'
+            nonprose_f = self.filename + '.nonprose'
+
+            out_p = libml.predict(self.crf, prose_f   , X_prose   )
+            out_n = libml.predict(self.crf, nonprose_f, X_nonprose)
+
+            exit()
+        else:
+            out_p = sci.predict(self.first_prose_clfs   , X_prose,   sci.LIN)
+            out_n = sci.predict(self.first_nonprose_clfs, X_nonprose,sci.LIN)
 
 
         # Format labels
