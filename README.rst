@@ -52,7 +52,7 @@ Installation
     example:
         willie@text-machine:~$ pwd
             /home/willie
-        wboag@cs1:~$ git clone https://github.com/mitmedg/CliCon.git
+        willie@text-machine:~$ git clone https://github.com/mitmedg/CliCon.git
             Cloning into 'CliCon'...
             remote: Counting objects: 1296, done.
             remote: Compressing objects: 100% (503/503), done.
