@@ -64,37 +64,7 @@ Installation
 
 
 
-3. Get data
-
-    FIXME: Something Something i2b2 agreement.
-
-    **I'll need to ask Kevin how to get data from i2b2**
-
-
-    OR, if you are Anna Rumshisky, then you know the password to text-machine
-
-    example:
-        willie@text-machine:~/CliCon$ scp -r wboag@text-machine:~/CliCon/data/* $CLICON_DIR/data
-
-
-
-
-3. Get UMLS tables (optional)
-
-    **Do-able but I'd need to talk to Kevin about where to get them**
-
-
-
-
-4. Install GENIA tagger (optional)
-
-    **Would take some effort to make this possible. Do-able, but not pretty**
-
-
-
-
-
-6. Install CliCon
+3. Install CliCon
 
     This project has dependencies on scientific computation libraries.
 
@@ -118,6 +88,35 @@ Installation
         (venv_clicon)willie@text-machine:~/CliCon$ pip install numpy scikit-learn scipy nltk
 
         (venv_clicon)willie@text-machine:~/CliCon$ python setup.py install
+
+
+
+4. Get data
+
+    FIXME: Something Something i2b2 agreement.
+
+    **I'll need to ask Kevin how to get data from i2b2**
+
+
+    OR, if you are Anna Rumshisky, then you know the password to text-machine
+
+    example:
+        willie@text-machine:~/CliCon$ scp -r wboag@text-machine:~/CliCon/data/* $CLICON_DIR/data
+
+
+
+
+5. Get UMLS tables (optional)
+
+    **Do-able but I'd need to talk to Kevin about where to get them**
+
+
+
+
+6. Install GENIA tagger (optional)
+
+    **Would take some effort to make this possible. Do-able, but not pretty**
+
 
 
 
