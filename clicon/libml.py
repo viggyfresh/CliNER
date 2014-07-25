@@ -254,47 +254,10 @@ CRF = 2**1
 SVM = 2**2
 ALL = sum(2**i for i in range(3))
 
-def train(model_filename, type=ALL):
-    for t in bits(type):
-        if t == SVM:
-            filename = model_filename + ".svm"
-            command = [svm_train, "-c", "50", "-g", "0.03", "-w0", "0.5", filename, filename + ".trained"]
+def write_features(model_filename, rows, labels, mtype=ALL):
 
-        if t == LIN:
-            filename = model_filename + ".lin"
-            command = [lin_train, "-c", "50", "-w0", "0.5", filename, filename + ".trained"]
-
-        if t == CRF:
-            filename = model_filename + ".crf"
-            command = [crf_suite, "learn", "-m", filename + ".trained", filename]
-
-        output, error = Popen(command, stdout = PIPE, stderr = PIPE).communicate()
-        #print output
-        #print error
-
-def predict(model_filename, type=ALL):
-    for t in bits(type):
-        if t == SVM:
-            filename = model_filename + ".svm"
-            command = [svm_predict, filename + ".test.in", filename + ".trained", filename + ".test.out"]
-
-        if t == LIN:
-            filename = model_filename + ".lin"
-            command = [lin_predict, filename + ".test.in", filename + ".trained", filename + ".test.out"]
-
-        if t == CRF:
-            filename = model_filename + ".crf"
-            command = [crf_suite, "tag", "-m", filename + ".trained" , filename + ".test.in"]   # NEEDS OUTPUT
-
-        output, error = Popen(command, stdout = PIPE, stderr = PIPE).communicate()
-
-        if t == CRF:
-            with open(filename + ".test.out", "w") as f:
-                for line in output.split():
-                    f.write(line + "\n")
-
-def write_features(model_filename, rows, labels, type=ALL):
-    for t in bits(type):
+    # FIXME - keep around for now (but I wanna get rid of it)
+    for t in bits(mtype):
         if t == SVM:
             file_suffix = ".svm" + (".test.in" if not labels else "")
             null_label, feature_sep, sentence_sep = "-1", ":", ""
@@ -307,26 +270,27 @@ def write_features(model_filename, rows, labels, type=ALL):
             file_suffix = ".crf" + (".test.in" if not labels else "")
             null_label, feature_sep, sentence_sep = "", "=", "\n"
 
+
         filename = model_filename + file_suffix
         with open(filename, "w") as f:
-            for sentence_index, sentence in enumerate(rows):
-                if labels:
-                    sentence_labels = labels[sentence_index]
-                    assert "Dimension mismatch", len(sentence) == len(sentence_labels)
 
-                for word_index, features in enumerate(sentence):
-                    if labels:
-                        label = sentence_labels[word_index]
-                        line = [str(label)]
-                    else:
-                        line = [null_label]
+            # FIXME - Stopping 7/24 for now
+            # Should 'rows' be in list of list format for sentence structure?
+            for i,features in enumerate(rows):
 
-                    for k,v in sorted(features.items()):
-                        line.append(str(k) + feature_sep + str(v))
+                # Nonzero dimensions
+                inds  = features.nonzero()[1]
 
-                    f.write("\t".join(line).strip() + "\n")
+                # Value for each dimension
+                values = [str(labels[i])]
+                for j in inds:
+                    # FIXME - Not generalized for libsvm
+                    values.append( '%d=%d' %  (j, features[0,j]) )
 
-                f.write(sentence_sep)
+                # Output into temporary file
+                f.write("\t".join(values).strip() + "\n")
+
+
 
 def read_labels(model_filename, type=ALL):
     labels = {}
@@ -345,3 +309,56 @@ def read_labels(model_filename, type=ALL):
         labels[t] = [line.strip() for line in lines]
 
     return labels
+
+
+
+
+def train(crfsuite, model_filename, X, Y):
+
+    """
+    libml::train()
+
+    Purpose: Wrapper for crfsuite
+
+    @param X. Vectorized features
+    @param Y. Labels
+    @return   None
+    """
+
+    # Write features to file
+    write_features(model_filename, X, Y, CRF)
+
+    # Shell out to crfsuite
+    filename = model_filename + ".crf"
+    command = [crfsuite, "learn", "-m", filename + ".trained", filename]
+    output, error = Popen(command, stdout = PIPE, stderr = PIPE).communicate()
+
+    # Clean up temporary file
+    command = ['rm', filename]
+    output, error = Popen(command, stdout = PIPE, stderr = PIPE).communicate()
+
+
+
+
+def predict(crfsuite, model_filename, X):
+
+    # Write features to file
+    
+    write_features(model_filename, X, None, CRF)
+
+
+    # Shell out to crfsuite
+    filename = model_filename + ".crf"
+    command = [crf_suite, "tag", "-m", 
+               filename + ".trained" , 
+               filename + ".test.in" ]
+
+    print command
+    output, error = Popen(command, stdout = PIPE, stderr = PIPE).communicate()
+
+
+    with open(filename + ".test.out", "w") as f:
+        for line in output.split():
+            print line
+            f.write(line + "\n")
+

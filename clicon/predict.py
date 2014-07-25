@@ -36,6 +36,12 @@ def main():
         default = 'i2b2'
     )
 
+    parser.add_argument("-crf",
+        dest = "with_crf",
+        help = "Specify where to find crfsuite",
+        default = None
+    )
+
     args = parser.parse_args()
 
 
@@ -43,6 +49,16 @@ def main():
     files = glob.glob(args.input)
     helper.mkpath(args.output)
     format = args.format
+
+
+    # Is crfsuite installed?
+    if args.with_crf:
+        crfsuite = args.with_crf
+    elif False:
+        'DETECT CRFSUITE FROM CONFIG FILE'
+        crfsuite = None
+    else:
+        crfsuite = None
 
 
     # Load model

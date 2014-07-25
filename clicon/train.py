@@ -14,21 +14,21 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-t", 
-    dest = "txt", 
-    help = "The files that contain the training examples",
-    default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/txt/*')
+        dest = "txt", 
+        help = "The files that contain the training examples",
+        default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/txt/*')
     )
     
     parser.add_argument("-c", 
-    dest = "con", 
-    help = "The files that contain the labels for the training examples",
-    default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/concept/*')
+        dest = "con", 
+        help = "The files that contain the labels for the training examples",
+        default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/concept/*')
     )
 
     parser.add_argument("-m",
-    dest = "model",
-    help = "Path to the model that should be generated",
-    default = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../models/run_models/run.model')
+        dest = "model",
+        help = "Path to the model that should be generated",
+        default = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../models/run_models/run.model')
     )
 
     parser.add_argument("-d",
@@ -51,22 +51,10 @@ def main():
         default = 'i2b2'
     )
 
-    parser.add_argument("--no-svm",
-        dest = "no_svm",
-        action = "store_true",
-        help = "Disable SVM model generation",
-    )
-
-    parser.add_argument("--no-lin",
-        dest = "no_lin",
-        action = "store_true",
-        help = "Disable LIN model generation",
-    )
-
-    parser.add_argument("--no-crf",
-        dest = "no_crf",
-        action = "store_true",
-        help = "Disable CRF model generation",
+    parser.add_argument("-crf",
+        dest = "with_crf",
+        help = "Specify where to find crfsuite",
+        default = None
     )
 
 
@@ -80,16 +68,17 @@ def main():
     con_files = glob.glob(args.con)
 
 
+    # Is crfsuite installed?
+    if args.with_crf:
+        crfsuite = args.with_crf
+    elif False:
+        'DETECT CRFSUITE FROM CONFIG FILE'
+        crfsuite = None
+    else:
+        crfsuite = None
+
     # i2b2 or xml
     format = args.format
-
-
-    #print '\n\n\n'
-    #print 'txt_files: ', txt_files
-    #print 'con_files: ', con_files
-    #print 'format:    ', format
-
-
     if format == 'i2b2':
 
         # ex. {'record-13': 'record-13.con'}
@@ -126,6 +115,7 @@ def main():
             notes.append(note_tmp)        # Add the Note to the list
 
 
+
     # file names
     if not notes:
         print 'Error: Cannot train on 0 files. Terminating train.'
@@ -133,7 +123,7 @@ def main():
 
 
     # Create a Machine Learning model
-    model = Model(filename = args.model, type = libml.LIN)
+    model = Model(filename = args.model, type = libml.LIN, crf=crfsuite)
 
 
     # Train the model using the Note's data
