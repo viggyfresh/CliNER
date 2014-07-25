@@ -112,16 +112,10 @@ def format(annotations, format, out, input):
     runable = os.path.join(BASE_DIR,'clicon/format.py')
 
 
-    # Must have legal input
-    files = glob.glob(input)
-    if not files:
-        print >>sys.stderr, '\n\tError: Input file could not be found\n'
-        exit(1)
-
     # Must manually check if '.txt' or 'xml'
-    if   files[0][-3:] == 'xml':
+    if   input[-3:] == 'xml':
         flag = '-x'
-    elif files[0][-3:] == 'txt':
+    elif input[-3:] == 'txt':
         flag = '-t'
     else:
         print >>sys.stderr, '\n\tError: Input file must be either "txt" or "xml"'
