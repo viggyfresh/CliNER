@@ -120,13 +120,6 @@ def main():
 
 
 
-
-
-def create_filename(out_dir, orig_f, new_extension):
-    fname = os.path.basename(orig_f)[:-4] + new_extension
-    return os.path.join(out_dir, fname)
-
-
 def output_file(fname, out):
     print 'outputting: ', fname
     with open(fname, 'w') as f:
