@@ -13,23 +13,14 @@ import os
 
 
 
-# Enabled modules
-class enabled_modules:
-
-    # Unenabled unless specified by config file
-    UMLS  = False
-    GENIA = False
-
-
-
 #
-# available_services()
+# enabled_modules
 #
-# @return dictionary of (name,on/off) pairs.
+# @return dictionary of (name,resource path) pairs.  
 #
-#                       ex. {'UMLS': False, 'GENIA': True}
+#   ex. {'UMLS': None, 'GENIA': 'genia/geniatagger-3.0.1/geniatagger'}
 #
-def available_services():
+def enabled_modules():
 
     # Open config file
     prefix = os.path.dirname(__file__)
@@ -45,18 +36,17 @@ def available_services():
         if words:
 
             # Modules
-            if words[0] ==  'UMLS': enabled_modules.UMLS  = (words[1] == 'True')
-            if words[0] == 'GENIA': enabled_modules.GENIA = (words[1] == 'True')
-
-            # retVal dict
             if words[0] in module_list:
-                specs[words[0]] = (words[1] == 'True')
+                if words[1] != 'None':
+                    specs[words[0]] = words[1]
+                else:
+                    specs[words[0]] = None
 
     return specs
 
 
 
 # Read from config file when module is imported
-#print available_services()
+print enabled_modules()
 
 
