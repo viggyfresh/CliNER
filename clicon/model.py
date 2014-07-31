@@ -7,7 +7,7 @@ import sci
 import sys
 
 from sklearn.feature_extraction  import DictVectorizer
-from features import clicon_features
+from features import features
 
 
 class Model:
@@ -134,10 +134,12 @@ class Model:
         @return          None
         """
 
-        # Create object that is a wrapper for the features
-        feat_obj = clicon_features.FeatureWrapper(data)
-
         print '\textracting  features (pass one)'
+
+
+        # Create object that is a wrapper for the features
+        feat_obj = features.FeatureWrapper(data)
+
 
         # IOB tagging
         # FIXME - Partition and then batch features
@@ -227,7 +229,7 @@ class Model:
 
 
         # Create object that is a wrapper for the features
-        feat_o = clicon_features.FeatureWrapper()
+        feat_o = features.FeatureWrapper()
 
 
         print '\textracting  features (pass two)'
@@ -308,7 +310,7 @@ class Model:
     def first_predict(self, data):
 
         # Create object that is a wrapper for the features
-        feat_obj = clicon_features.FeatureWrapper(data)
+        feat_obj = features.FeatureWrapper(data)
  
 
         print '\textracting  features (pass one)'
@@ -398,7 +400,7 @@ class Model:
     def second_predict(self, data, inds_list):
 
         # Create object that is a wrapper for the features
-        feat_o = clicon_features.FeatureWrapper()
+        feat_o = features.FeatureWrapper()
 
 
         print '\textracting  features (pass two)'
