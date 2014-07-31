@@ -65,6 +65,12 @@ def main():
     model = Model.load(args.model)
 
 
+    # Tell user if not predicting
+    if not files:
+        print >>sys.stderr, "\n\tNote: You did not supply any input files\n"
+        exit()
+
+
     # For each file, predict concept labels
     for txt in files:
 
