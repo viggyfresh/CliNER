@@ -93,7 +93,7 @@ Installation Script
         - nltk  (AND run the NLTK downloader)
 
 
-        These modules, themselves may have dependencies to install. If necessary, sudo apt-get install these packages (on Ubuntu)
+        These modules, themselves may have dependencies to install. If necessary, sudo apt-get install these packages
 
             Ubuntu:
                 - g++
@@ -107,16 +107,15 @@ Installation Script
 
 
     example:
-        (venv_clicon)user@your-machine:~/CliCon$ sudo apt-get install g++ gfortran libopenblas-dev liblapack-dev -Y
+        (venv_clicon)user@your-machine:~/CliCon$ sudo apt-get install g++ gfortran libopenblas-dev liblapack-dev -y
 
         (venv_clicon)user@your-machine:~/CliCon$ pip install numpy scikit-learn scipy nltk
 
-        (venv_clicon)user@your-machine:~/CliCon$ python setup.py install
 
 
 
 
-4. Get data
+4. Get i2b2 data
 
     The Data Use and Confidentiality Agreement with i2b2 forbids us from redistributing their data. In order to gain access, you must go to:
 
@@ -125,41 +124,27 @@ Installation Script
     to register and sign the DUA. Then you will be able to request the data through them.
 
 
-    Although we cannot provide actual i2b2 data, there is a sample to demonstrate how the data is formatted (not actual data from i2b2, though). Here is a very basic description of the data formats. It is by no means a complete tutorial.
+    Although we cannot provide i2b2 data, there is a sample to demonstrate how the data is formatted (not actual data from i2b2, though). Here is a very basic description of the data formats. It is by no means a complete tutorial.
 
     Go to the '$CLICON_DIR/examples' directory.
 
         pretend.txt
 
-            This is a text file. Discharge summaries are written out as-is, just like this. It is paired with a concept file to reveal te full picture.
+            This is a text file. Discharge summaries are written out in plaintext, just like this. It is paired with a concept file, which has its annotations.
 
         pretend.con
 
-            This is a concept file. It provides annotations for the concepts (problem, treatment, test) of the text file. The format describes the word span, the line number and token numbers of the span (delimited by white space), and the label of the concept.
+            This is a concept file. It provides annotations for the concepts (problem, treatment, test) of the text file. The format is as follows - each instance of a concept has one line. The line describes the word span, the line number and token numbers of the span (delimited by white space), and the label of the concept.
 
         pretend.xml
 
-            This is an alternative way to annotate concepts from a discharge summary. Unlike the text/concept files, this format is not in a pair - it alone provides annotations for a discharge summary. This format is easier to read.
+            This is an alternative way to annotate concepts from a discharge summary. Unlike the text/concept files, this format is not in a pair - it provides both the text and annotations for the discharge summary. This format is easier to read.
 
 
 
 
-5. Get UMLS tables (optional)
 
-    In order to use the UMLS tables, you must request a license. See:
-
-    http://www.nlm.nih.gov/databases/umls.html
-
-    You will need to get following tables: MRREL, MRCON, MRSTY
-
-    Put these tables in the $CLICON_DIR/umls_tables directory.
-
-    In order to tell CliCon that the tables are there, you must edit the file $CLICON_DIR/clicon/features and change the line saying "UMLS None" to "UMLS <path-to-your-umls_tables-dir>".
-
-
-
-
-6. Install GENIA tagger (optional)
+5. Install GENIA tagger (optional)
 
     This is an optional part of installation. Adding the GENIA tagger will improve results of the system's predictions, but it could run without it.
 
@@ -174,6 +159,26 @@ Installation Script
         4. If you do not have any errors, then the tagger has been built successfully. If there were compile errors, try to resolve them (it'd be one of those "well it works for me" scenarios).
 
         5. Set the file "$CLICON_DIR/clicon/features/features.config" so that the line that has "GENIA None" is replaced with "GENIA <path-to-tagger-you-just-built>'. This file is how CliCon is able to find and run the tagger.
+
+
+
+
+
+6. Get UMLS tables (optional)
+
+    This is an optional part of installation. Adding the UMLS tables will improve results of the system's predictions, but it could run without it.
+
+    In order to use the UMLS tables, you must request a license. See:
+
+    http://www.nlm.nih.gov/databases/umls.html
+
+    You will need to get following tables: MRREL, MRCON, MRSTY
+
+    Put these tables in the $CLICON_DIR/umls_tables directory.
+
+    In order to tell CliCon that the tables are there, you must edit the file "$CLICON_DIR/clicon/features" and change the line saying "UMLS None" to "UMLS <path-to-your-umls_tables-dir>".
+
+
 
 
 
