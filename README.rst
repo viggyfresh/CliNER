@@ -215,7 +215,7 @@ Usage Examples
     example 1: Sanity Check - Train/Predict on the same file
         (venv_clicon)user@your-machine:~/CliCon$ clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.con
 
-        (venv_clicon)user@your-machine:~/CliCon$ clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_data/
+        (venv_clicon)user@your-machine:~/CliCon$ clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_predictions/
 
-        (venv_clicon)user@your-machine:~/CliCon$ clicon format $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/data/test_data/lin/pretend.con --format xml
+        (venv_clicon)user@your-machine:~/CliCon$ clicon format $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/data/test_predictions/lin/pretend.con --format xml
 
