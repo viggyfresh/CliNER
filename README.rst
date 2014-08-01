@@ -33,7 +33,7 @@ Installation Script
 
     For Ubuntu users, there is a script that should be able to download most of the pieces of this project. Note, it cannot get priveleged tools (such as the i2b2 data and the UMLS tables) - you must get those two pieces yourself.
 
-    To run the script, copy 'install.sh' from Github and enter the directory you'd like to house this project. NOTE: The script will git clone CliCon for you, so do not do that yourself if you use the script.
+    To run the script, copy 'install.sh' from Github and enter the directory you'd like to house this project. Run the script with **source install.sh** NOTE: The script will git clone CliCon for you, so do not do that yourself if you use the script.
 
     The script will try to download CliCon's third party dependencies and will report back what tools could/couldn't be acquired. Ideally, it will get everything except for the i2b2 data and the UMLS tables.
 
