@@ -177,6 +177,7 @@ Installation Script
 
 
 
+
 7. Create 'clicon' command for CLI
 
     In order to run CliCon (as done in the usage examples), you must run setup.py.
@@ -187,7 +188,7 @@ Installation Script
 
     example:
 
-        (venv_clicon)user@your-machine:~/CliCon$ python setup.py install
+        (venv_clicon)user@your-machine:~/CliCon$ python $CLICON_DIR/setup.py install
 
         (venv_clicon)user@your-machine:~/CliCon$ clicon --help
 
@@ -207,9 +208,9 @@ Usage Examples
     CliCon is a Machine Learning interface for concept extraction. It is able to train and predict on data. It can also change formats from i2b2 <-> xml. Soon, it will also provide an evaluation metric to see how correct its predictions actually are.
 
     example 1: Sanity Check - Train/Predict on the same file
-        (venv_clicon)user@your-machine:~/CliCon$ clicon train examples/pretend.txt --annotations examples/pretend.con
+        (venv_clicon)user@your-machine:~/CliCon$ clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.con
 
-        (venv_clicon)user@your-machine:~/CliCon$ clicon predict examples/pretend.txt --out data/test_data/
+        (venv_clicon)user@your-machine:~/CliCon$ clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_data/
 
-        (venv_clicon)user@your-machine:~/CliCon$ clicon format examples/pretend.txt --annotations data/test_data/lin/pretend.con --format xml
+        (venv_clicon)user@your-machine:~/CliCon$ clicon format $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/data/test_data/lin/pretend.con --format xml
 
