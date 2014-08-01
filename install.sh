@@ -52,6 +52,7 @@ function install_clicon {
     easy_install pip
     easy_install simplejson
     pip install Flask
+    pip install nose
     pip install -U pyyaml 
 
     # Install nltk data
