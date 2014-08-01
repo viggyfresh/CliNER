@@ -126,6 +126,10 @@ def output_file(fname, out):
         print >>f, out
 
 
+def create_filename(odir, bfile, extension):
+    fname = bfile[:-4] + extension
+    return os.path.join(odir,fname)
+
 
 if __name__ == '__main__':
     main()
