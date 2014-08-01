@@ -460,7 +460,7 @@ class Model:
                     length = len(data[lineno][ind].split())
 
                     # Classification token
-                    classifications.append(  (concept, lineno, start, start+length-1 ) )
+                    classifications.append(  (concept, lineno+1, start, start+length-1 ) )
             
                 retVal[t] = classifications
 
