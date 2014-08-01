@@ -22,11 +22,9 @@ function create_clicon {
 
     virtualenv venv_clicon
     source venv_clicon/bin/activate
-    source /home/willie/clicon/venv_clicon/bin/activate
 
     git clone https://github.com/mitmedg/CliCon.git
     cd CliCon
-    git checkout documentation
 }
 
 
@@ -82,20 +80,6 @@ function install_clicon {
         fi
     fi
 
-}
-
-
-
-# Get data
-function get_i2b2 {
-    echo "get_i2b2 stub"
-}
-
-
-
-# Get UMLS
-function get_umls {
-    echo "get_umls stub"
 }
 
 
@@ -205,7 +189,6 @@ else
         echo "Install 'clicon' command for CLI -- FAILURE"
         echo -e "\tSee README for details"
     fi
-
 
 fi
 
