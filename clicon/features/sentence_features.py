@@ -20,19 +20,18 @@ from wordshape import getWordShapes
 
 
 # What modules are available
-
 from read_config import enabled_modules
 
 
 
 
 # Import feature modules
+enabled = enabled_modules()
+if enabled['GENIA']:
+    from genia.genia_features import GeniaFeatures
 
-if enabled_modules.GENIA:
-    from genia_features import GeniaFeatures
-
-if enabled_modules.UMLS:
-    from umls_features import UMLSFeatures
+if enabled['UMLS']:
+    from umls.umls_features import UMLSFeatures
 
 from word_features import WordFeatures
 
@@ -58,13 +57,12 @@ class SentenceFeatures:
         self.feat_word = WordFeatures()
 
         # Only run GENIA tagger if module is available
-        if data and enabled_modules.GENIA:
-            print 'GENIA module enabled'
-            self.feat_genia = GeniaFeatures(data)
+        if data and enabled['GENIA']:
+            tagger = enabled['GENIA']
+            self.feat_genia = GeniaFeatures(tagger,data)
 
         # Only create UMLS cache if module is available
-        if enabled_modules.UMLS:
-            print 'UMLS module enabled'
+        if enabled['UMLS']:
             self.feat_umls = UMLSFeatures()
 
 
@@ -122,7 +120,7 @@ class SentenceFeatures:
 
 
             # GENIA features
-            if enabled_modules.GENIA and (feature == 'GENIA'):
+            if enabled['GENIA'] and (feature == 'GENIA'):
 
                 genia_feat_list = self.feat_genia.features(sentence)
 
@@ -170,7 +168,7 @@ class SentenceFeatures:
         # Get the GENIA features of the current sentence
         #    (not used for nonprose, but it keeps things aligned for the prose)
         # FIXME - Making seperate classes will fix this
-        if enabled_modules.GENIA and 'GENIA' in self.enabled_IOB_prose_sentence_features:
+        if enabled['GENIA'] and 'GENIA' in self.enabled_IOB_prose_sentence_features:
             _ = self.feat_genia.features(sentence, False)
 
                 
@@ -306,7 +304,7 @@ class SentenceFeatures:
         for feature in self.enabled_concept_features:
 
              # Features: UMLS features
-            if (feature == "UMLS") and enabled_modules.UMLS:
+            if (feature == "UMLS") and enabled['UMLS']:
                 umls_features = self.feat_umls.concept_features_for_sentence(split_sentence)
                 features.update(umls_features)
 

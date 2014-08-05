@@ -16,6 +16,7 @@ __date__   = 'Jan. 27, 2014'
 
 import os
 import sys
+from commands import getstatusoutput
 
 
 def main():
@@ -28,7 +29,8 @@ def main():
     for line in txt:
         data.append(line.split())
 
-    for (line,linedict) in zip(txt,genia(data)):
+    tagger = '/home/wboag/geniatagger-3.0.1/geniatagger'
+    for (line,linedict) in zip(txt,genia(tagger,data)):
        print line.split(), '\n'
        for d in linedict:
            print d
@@ -41,34 +43,35 @@ def main():
 #
 #  Call the genia tagger and return its output in python format
 #
-def genia( data ):
+def genia(geniatagger, data):
 
     '''
-    @param data. A list of list of strings (lines of words from a file)
-    @return      A list of dcitionaries of the genia tagger's output.
+    @param geniatagger.  A path to the executable geniatagger
+    @param data.         A list of list of strings (lines of words from a file)
+    @return              A list of dcitionaries of the genia tagger's output.
     '''
 
-    # FIXME - crashes when the is an empty line in the file
-    #if not data: return []
-
-
-    # FIXME - write list to file and then feed it to GENIA
-    # FIXME - hard coded directory!!
-    with open('/home/wboag/geniatagger-3.0.1/DELETE-THIS.txt', 'w') as f:
+    # write list to file and then feed it to GENIA
+    genia_dir = os.path.dirname(geniatagger)
+    tmp_out = os.path.join(genia_dir,'clicon_genia_tmp_file.txt')
+    with open(tmp_out, 'w') as f:
         for line in data: f.write(' '.join(line) + '\n')
 
 
-    # FIXME - hard coded directory!!
-    genia_dir = '/home/wboag/geniatagger-3.0.1'
-    stream = os.popen('cd %s ; ./geniatagger -nt DELETE-THIS.txt' % genia_dir)
+    # Run genia tagger
+    print '\t\tRunning GENIA tagger'
+    genia_dir = os.path.dirname(geniatagger)
+    stream = getstatusoutput('cd %s ; ./geniatagger -nt %s' % (genia_dir,tmp_out))
+
 
     # Process each line of output
+    # NOTE: Skips the first four lines of genia tagger output ("loading...")
     retlist = []
     i = 0
     j = 0
     fline = []
     old = []
-    for line in stream.readlines():
+    for line in stream[1].split('\n')[4:]:
 
         line = line.split()
 
@@ -94,6 +97,11 @@ def genia( data ):
             j = 0
             retlist.append(fline)
             fline = []
+
+    
+    # Remove temp file
+    os.remove(tmp_out)
+
 
     return retlist
 

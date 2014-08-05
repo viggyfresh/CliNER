@@ -1,71 +1,195 @@
-#!/usr/bin/env bash
-
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-mkdir -p "$DIR/lib"
-
-# Get python dependencies
-sudo easy_install pip
-sudo easy_install simplejson
-sudo pip install Flask
-sudo pip install -U pyyaml nltk
-
-
-# Install nltk data
-python -m nltk.downloader maxent_treebank_pos_tagger
-python -m nltk.downloader wordnet
+#
+# install.sh
+#
+# Purpose: This is a demo that will install CliCon and it's package dependencies
+#
+# Usage: 'source install.sh'  (It is important to use 'source', not 'bash')
+#
+# Note: This does not download/install:
+#        1) i2b2 data
+#        2) UMLS tables
+#        3) GENIA Tagger
+#
 
 
-# Get libsvm
-cd "$DIR/lib"
-wget "http://www.csie.ntu.edu.tw/~cjlin/cgi-bin/libsvm.cgi?+http://www.csie.ntu.edu.tw/~cjlin/libsvm+zip" -O "libsvm-3.14.zip"
-unzip "libsvm-3.14.zip"
 
-ln -s "libsvm-3.14" "libsvm"
-rm "libsvm-3.14.zip"
+function create_clicon {
+    # Create wrapper directory to hold:
+    #     1) virtual environment
+    #     2) CliCon source from github
+    mkdir clicon
+    cd clicon
 
-cd "libsvm"
-make
+    virtualenv venv_clicon
+    source venv_clicon/bin/activate
 
-
-# Get liblinear
-cd "$DIR/lib"
-wget "http://www.csie.ntu.edu.tw/~cjlin/cgi-bin/liblinear.cgi?+http://www.csie.ntu.edu.tw/~cjlin/liblinear+zip" -O "liblinear-1.92.zip"
-unzip "liblinear-1.92.zip"
-
-ln -s "liblinear-1.92" "liblinear"
-rm "liblinear-1.92.zip"
-
-cd "liblinear"
-make
+    git clone https://github.com/mitmedg/CliCon.git
+    cd CliCon
+}
 
 
-# Get liblbfgs
-cd "$DIR/lib"
-wget "https://github.com/downloads/chokkan/liblbfgs/liblbfgs-1.10.tar.gz" -O "liblbfgs-1.10.tar.gz"
-tar -xvzf "liblbfgs-1.10.tar.gz"
 
-ln -s "liblbfgs-1.10" "liblbfgs"
-rm "liblbfgs-1.10.tar.gz"
+function environ_clicon {
+    # Set environment variable (check if it is defined)
+    if [[ "$CLICON_DIR" = "" ]] ; then
+        echo -e "\n\t"
+        echo -e "Appending line to ~/.bashrc to remember environment variable\n"
 
-cd "liblbfgs"
-./configure
-make
-make install
+        echo "export CLICON_DIR=\"$(pwd)/clicon/CliCon\"" >> ~/.bashrc
+        source ~/.bashrc
+        export CLICON_DIR
+
+    fi
+
+    setup_environ=0
+}
+
+
+
+function install_clicon {
+
+    # Get python dependencies
+    easy_install pip
+    easy_install simplejson
+    pip install Flask
+    pip install nose
+    pip install -U pyyaml 
+
+    # Install nltk data
+    python -m nltk.downloader maxent_treebank_pos_tagger
+    python -m nltk.downloader wordnet
+
+
+    # apt-get doesn't seem to be working at getting numpy
+    pip install numpy scikit-learn scipy
+    setup_dependencies=$?
+
+
+    # Success?
+    if ! [[ $setup_dependencies -eq 0 ]] ; then
+
+        # apt-get some packages
+        read -p "\nPython dependencies failed. Would you like to try again with apt-get (y/n)? " yn
+
+        if [[ "$yn" = "y" ]] ; then
+            # Install required packages
+            # sudo apt-get g++ gfortran libopenblas-dev liblapack-dev
+
+            # Try again
+            pip install numpy scikit-learn scipy
+            setup_dependencies=$?
+        fi
+    fi
+
+}
+
+
+
+# Get GENIA
+function get_genia {
+
+    # save current path
+    old_path=$(pwd)
+
+    # Get sources
+    cd $CLICON_DIR/clicon/features/genia
+    wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.1.tar.gz
+    tar xzvf geniatagger-3.0.1.tar.gz
+
+    # Build GENIA tagger
+    cd geniatagger-3.0.1/
+    echo "$(sed '1i#include <cstdlib>' morph.cpp)" > morph.cpp # fix build error
+    make
+
+    # Successful build ?
+    if ! [[ $? -eq 0 ]] ; then
+        echo "there was a build error in GENIA"
+        setup_genia=1
+        return
+    fi
+
+    # Set config file location of tagger
+    config_file="$CLICON_DIR/clicon/features/features.config"
+    out_tmp="out.tmp.txt"
+    echo "GENIA $(pwd)/geniatagger" > $out_tmp
+    while read line ; do
+        if ! [[ $line = GENIA* ]] ; then
+            echo $line >> $out_tmp
+        fi
+    done < "$config_file"
+    mv $out_tmp $config_file
+
+
+    # Success
+    setup_genia=0
+
+    # return to original path
+    cd $old_path
+}
+
 
 
 # Get crfsuite
-cd "$DIR/lib"
-wget "https://github.com/downloads/chokkan/crfsuite/crfsuite-0.12.tar.gz" -O "crfsuite-0.12.tar.gz"
-tar -xvzf "crfsuite-0.12.tar.gz"
-
-ln -s "crfsuite-0.12" "crfsuite"
-rm "crfsuite-0.12.tar.gz"
-
-cd "crfsuite"
-./configure
-make
-make install
+function get_crfsuite {
+    echo "crfsuite not supported by CliCon yet"
+}
 
 
 
+# Setup 'clicon' command for CLI
+function setup {
+    cd $CLICON_DIR
+    python setup.py install
+    setup_install=$?
+}
+
+
+
+# Base directory cannot exist yet
+if [[ -e clicon ]] ; then
+    echo -e "\n\tError: Cannot already have a file named 'clicon' in directory\n"
+else
+
+    # Install resources
+    create_clicon
+    environ_clicon
+    install_clicon
+    get_genia
+    setup
+        
+    echo -e "\n\n"
+
+    # Print installation successes/failures
+    if [[ $setup_environ -eq 0 ]] ; then
+        echo "Environemt variable confiuration -- SUCCESS"
+    else
+        echo "Environemt variable confiuration -- FAILURE"
+        echo -e "\tSee README for details"
+    fi
+
+
+    if [[ $setup_dependencies -eq 0 ]] ; then
+        echo "Install python dependencies      -- SUCCESS"
+    else
+        echo "Install python dependencies      -- FAILURE"
+        echo -e "\tSee README for details"
+    fi
+
+
+    if [[ $setup_genia -eq 0 ]] ; then
+        echo "Install GENIA tagger             -- SUCCESS"
+    else
+        echo "Install GENIA tagger             -- FAILURE"
+        echo -e "\tSee README for details"
+    fi
+
+
+    if [[ $setup_install -eq 0 ]] ; then
+        echo "Install 'clicon' command for CLI -- SUCCESS"
+    else
+        echo "Install 'clicon' command for CLI -- FAILURE"
+        echo -e "\tSee README for details"
+    fi
+
+fi
 

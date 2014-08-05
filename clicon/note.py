@@ -143,7 +143,7 @@ class Note:
                 raise('Classification label "none" should never happen')
 
             concept = classification[0]
-            lineno  = classification[1] + 1
+            lineno  = classification[1] 
             start   = classification[2]
             end     = classification[3]
 
@@ -151,6 +151,7 @@ class Note:
             text = tlist[lineno-1]
 
             #print "\n" + "-" * 80
+            #print "lineno:      ", lineno
             #print "start:       ", start
             #print "end          ", end
             #print "text:        ", text
@@ -358,7 +359,7 @@ class Note:
                         # begin tag
                         else:
                             # store data 
-                            tup = (concept,lineno,start_ind,i-1)
+                            tup = (concept,lineno+1,start_ind,i-1)
                             self.classifications.append(tup)
 
                             # state variable
