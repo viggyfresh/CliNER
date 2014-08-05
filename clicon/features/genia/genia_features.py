@@ -8,14 +8,14 @@
 
 
 
-import clicon_genia_interface
+import interface_genia
 
 
 
 class GeniaFeatures:
 
 
-    def __init__(self, data):
+    def __init__(self, tagger, data):
 
         """
         Constructor.
@@ -24,7 +24,7 @@ class GeniaFeatures:
         """
 
         # Process all words with GENIA tagger
-        self.GENIA_features = clicon_genia_interface.genia(data)
+        self.GENIA_features = interface_genia.genia(tagger, data)
 
         # For iterating through tagged data
         self.GENIA_counter = 0

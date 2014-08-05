@@ -58,11 +58,11 @@ def main():
 
 
     # Parse arguments
-    if args.txt: txt_files = glob.glob(args.txt)
-    if args.con: con_files = glob.glob(args.con)
-    if args.xml: xml_files = glob.glob(args.xml)
-    if args.out: out_dir   =           args.out
-    format = args.format
+    txt_f   = args.txt
+    con_f   = args.con
+    xml_f   = args.xml
+    out_dir = args.out
+    format  = args.format
 
 
     # Ensure format is specified
@@ -71,118 +71,64 @@ def main():
         print >>sys.stderr, ''
         exit(1)
 
-
-    # Ensure proper data is available
-    if not ((args.txt and args.con) or (args.xml)):
-        print >>sys.stderr, '\n\tError: Must supply either:'
-        print >>sys.stderr,   '\t         1) i2b2 txt & con files'
-        print >>sys.stderr,   '\t         2) xml file\n'
+    # Cannot have ambiguous input
+    if (txt_f and con_f) and xml_f:
+        print >>sys.stderr, '\n\tError: Input must be either (i2b2) XOR (xml)\n'
         exit(2)
 
+    # Ensure proper data is available (equal - AKA if not XOR)
+    if (not (txt_f and con_f)) and (not xml_f):
+        print >>sys.stderr, '\n\tError: Must supply either:'
+        print >>sys.stderr,   '\t         1) i2b2 txt & con file'
+        print >>sys.stderr,   '\t         2) xml file\n'
+        exit(3)
 
+
+    # Read input data into note object
+    N = note.Note()
+    if xml_f:
+        basefile = xml_f
+        N.read_xml(xml_f)
+    else:
+        basefile = txt_f
+        N.read_i2b2(txt_f, con_f)
+ 
+        
+    # Output data in desired format
     if format == 'xml':
 
-        # Group input i2b2 txt/con files together
-        txt_files_map = helper.map_files(txt_files)
-        con_files_map = helper.map_files(con_files)
-        file_list = []
-        for k in txt_files_map:
-            if k in con_files_map:
-                file_list.append((txt_files_map[k], con_files_map[k]))
+        # xml format
+        xml_out = N.write_xml()
 
-
-        # For each matching txt/con pair
-        for txt_f,con_f in file_list:
-
-            # i2b2 -> xml
-            output = i2b2_to_xml(txt_f, con_f)
-
-
-            # output file name
-            xml_name = os.path.basename(txt_f)[:-4] + '.xml'
-            xml_file = os.path.join(out_dir, xml_name)
-
-            # print output xml file
-            print 'outputting: ', xml_file
-            with open(xml_file, 'w') as f:
-                print >>f, output
-
+        # output xml file
+        xml_file = create_filename(out_dir, basefile, '.xml')
+        output_file(xml_file, xml_out)
 
     else:
 
-        # For each xml file
-        for xml_f in xml_files:
+        # i2b2 format
+        txt_out = N.write_txt()
+        con_out = N.write_i2b2_con()
 
-            # i2b2 -> xml
-            txt_out, con_out = xml_to_i2b2(xml_f)
+        # output txt file
+        txt_file = create_filename(out_dir, basefile, '.txt')
+        output_file(txt_file, txt_out)
 
-
-            # output txt file
-            txt_name = os.path.basename(xml_f)[:-4] + '.txt'
-            txt_file = os.path.join(out_dir, txt_name)
-
-            print 'outputting: ', txt_file
-            with open(txt_file, 'w') as f:
-                print >>f, txt_out
-
-
-            # output con file
-            con_name = os.path.basename(xml_f)[:-4] + '.con'
-            con_file = os.path.join(out_dir, con_name)
-
-            print 'outputting: ', con_file
-            with open(con_file, 'w') as f:
-                print >>f, con_out
+        # output con file
+        con_file = create_filename(out_dir, basefile, '.con')
+        output_file(con_file, con_out)
 
 
 
+def output_file(fname, out):
+    print 'outputting: ', fname
+    with open(fname, 'w') as f:
+        print >>f, out
 
 
-def i2b2_to_xml(txt, con):
-
-    """
-    i2b2_to_xml()
-
-    Purpose: Convert data from i2b2 format to xml format.
-
-    @param txt  A path to the text    file.
-    @param con  A path to the concept file.
-    @return     A string containing the data in xml format.
-    """
-
-    # Read note from i2b2 format
-    N = note.Note()
-    N.read_i2b2(txt, con)
-
-    # Output note into xml format
-    out = N.write_xml()
-    return out
-
-
-
-
-def xml_to_i2b2(xml):
-
-    """
-    xml_to_i2b2()
-
-    Purpose: Convert data from xml format to i2b2 format.
-
-    @param xml  A file containing xml-annotated data
-    @return     A tuple of strings (text_data,concept_data)
-    """
-
-
-    # Read note from xml format
-    N = note.Note()
-    N.read_xml(xml)
-
-    # Output note into i2b2 format
-    txt_out = N.write_txt()
-    con_out = N.write_i2b2_con()
-    return txt_out, con_out
-
-
+def create_filename(odir, bfile, extension):
+    fname = bfile[:-4] + extension
+    return os.path.join(odir,fname)
 
 
 if __name__ == '__main__':

@@ -23,9 +23,13 @@ from wordshape import getWordShapes
 from read_config import enabled_modules
 
 
-if enabled_modules.UMLS:
-    from umls_features import UMLSFeatures
+enabled = enabled_modules()
+if enabled['UMLS']:
+    from umls.umls_features import UMLSFeatures
 
+
+# MAJOR TODO - Further serialize UMLS features so that 
+#              extracting features just needs to make one function call
 
 class WordFeatures:
 
@@ -39,7 +43,7 @@ class WordFeatures:
     def __init__(self):
 
         # Only use UMLS feature module if it is available
-        if enabled_modules.UMLS:
+        if enabled['UMLS']:
             self.feat_umls = UMLSFeatures()
 
 
@@ -81,7 +85,7 @@ class WordFeatures:
                     features.update( {('prev_word', sentence[ind-1]) : 1} )
 
             # Feature: UMLS Word Features (only use prose ones)
-            if (feature == "UMLS") and enabled_modules.UMLS:
+            if (feature == "UMLS") and enabled['UMLS']:
                 umls_features = self.feat_umls.IOB_prose_features(word)
                 features.update( umls_features )
 
@@ -188,7 +192,7 @@ class WordFeatures:
 
 
             # Feature: UMLS Word Features (only use nonprose ones)
-            if (feature == "UMLS") and enabled_modules.UMLS:
+            if (feature == "UMLS") and enabled['UMLS']:
                 umls_features = self.feat_umls.IOB_nonprose_features(word)
                 features.update( umls_features )
 
@@ -246,7 +250,7 @@ class WordFeatures:
                     features[ ("word_shape" + str(j), shape) ] = 1
 
             # Features: UMLS Features
-            if (feature == "UMLS") and enabled_modules.UMLS:
+            if (feature == "UMLS") and enabled['UMLS']:
                 umls_features = self.feat_umls.concept_features_for_word(word)
                 features.update(umls_features)
 
