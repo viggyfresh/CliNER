@@ -4,7 +4,7 @@ import os
 import cPickle as pickle
 import helper
 import sci
-import libml
+import crf
 import sys
 
 from sklearn.feature_extraction  import DictVectorizer
@@ -39,7 +39,7 @@ class Model:
         return model
 
 
-    def __init__(self, filename='awesome.model', type=sci.LIN, crf=False):
+    def __init__(self, filename='awesome.model', is_crf=False):
 
         model_directory = os.path.dirname(filename)
         if model_directory != "":
@@ -53,13 +53,12 @@ class Model:
         self.second_vec         = DictVectorizer()
 
         # Classifiers
-        self.first_prose_clfs    = {}
-        self.first_nonprose_clfs = {}
-        self.second_clfs         = {}
+        self.first_prose_clfs    = None
+        self.first_nonprose_clfs = None
+        self.second_clfs         = None
 
-        # FIXME: Only using scikit's SVM
-        self.type     = sci.LIN
-        self.crf = crf
+        # Is CRF enabled?
+        self.is_crf = is_crf
         
 
 
@@ -197,16 +196,13 @@ class Model:
 
 
         # Train classifiers
-        if self.crf:
-            prose_f    = self.filename + '.prose'
-            nonprose_f = self.filename + '.nonprose'
-
-            libml.train(self.crf, prose_f   , X_prose   , Y_prose   )
-            libml.train(self.crf, nonprose_f, X_nonprose, Y_nonprose)
+        if self.is_crf:
+            self.first_prose_clfs    = crf.train(X_prose   , Y_prose   , do_grid)
+            self.first_nonprose_clfs = crf.train(X_nonprose, Y_nonprose, do_grid)
 
         else:
-            self.first_prose_clfs    = sci.train(X_prose   , Y_prose   , self.type, do_grid)
-            self.first_nonprose_clfs = sci.train(X_nonprose, Y_nonprose, self.type, do_grid)
+            self.first_prose_clfs    = sci.train(X_prose   , Y_prose   , do_grid)
+            self.first_nonprose_clfs = sci.train(X_nonprose, Y_nonprose, do_grid)
 
 
 
@@ -262,7 +258,7 @@ class Model:
 
 
         # Train the model
-        self.second_clfs = sci.train(X, Y, self.type, do_grid)
+        self.second_clfs = sci.train(X, Y, do_grid)
 
 
 
@@ -353,22 +349,19 @@ class Model:
 
 
         # Predict
-        if self.crf:
-            prose_f    = self.filename + '.prose'
-            nonprose_f = self.filename + '.nonprose'
-
-            out_p = libml.predict(self.crf, prose_f   , X_prose   )
-            out_n = libml.predict(self.crf, nonprose_f, X_nonprose)
+        if self.is_crf:
+            out_p = crf.predict(self.first_prose_clfs   , X_prose,  )
+            out_n = crf.predict(self.first_nonprose_clfs, X_nonprose)
 
             exit()
         else:
-            out_p = sci.predict(self.first_prose_clfs   , X_prose,   sci.LIN)
-            out_n = sci.predict(self.first_nonprose_clfs, X_nonprose,sci.LIN)
+            out_p = sci.predict(self.first_prose_clfs   , X_prose,  )
+            out_n = sci.predict(self.first_nonprose_clfs, X_nonprose)
 
 
         # Format labels
-        plist = [  n  for  n  in  list(out_p[sci.LIN]) ]
-        nlist = [  n  for  n  in  list(out_n[sci.LIN]) ]
+        plist = [  n  for  n  in  list(out_p) ]
+        nlist = [  n  for  n  in  list(out_n) ]
         
 
         # Stitch prose and nonprose labels lists together
@@ -439,51 +432,40 @@ class Model:
 
 
         # Predict concept labels
-        out = sci.predict(self.second_clfs, X, sci.LIN)
+        out = sci.predict(self.second_clfs, X)
 
 
-
-        # FIXME - Output prediction labels are entirely wrong
-        # ex. trained on file with 3 concepts (prob,treat,treat) and predicted
-        #        on same file. Got (test,test,test) as labels
-
-        retVal = {}
-        for t in sci.bits(self.type):
-
-            # Index into output dictionary
-            o = list(out[t])
-            classifications = []
+        # List of concept tuples to return
+        classifications = []
 
 
-            # Line-by-line processing
-            for lineno,inds in enumerate(inds_list):
+        # Line-by-line processing
+        for lineno,inds in enumerate(inds_list):
 
-                # Skip empty line
-                if not inds: continue
-
-
-                # For each concept
-                for ind in inds:
-
-                    # Get next concept
-                    concept = Model.reverse_labels[o.pop(0)]
-
-                    # Get start position (ex. 7th word of line)
-                    start = 0
-                    for i in range(ind):
-                        start += len( data[lineno][i].split() )
-
-                    # Length of chunk
-                    length = len(data[lineno][ind].split())
-
-                    # Classification token
-                    classifications.append(  (concept, lineno, start, start+length-1 ) )
-            
-                retVal[t] = classifications
+            # Skip empty line
+            if not inds: continue
 
 
-        # Return values
-        return retVal
+            # For each concept
+            for ind in inds:
+
+                # Get next concept
+                concept = Model.reverse_labels[out.pop(0)]
+
+                # Get start position (ex. 7th word of line)
+                start = 0
+                for i in range(ind):
+                    start += len( data[lineno][i].split() )
+
+                # Length of chunk
+                length = len(data[lineno][ind].split())
+
+                # Classification token
+                classifications.append(  (concept, lineno, start, start+length-1 ) )
+
+
+        # Return classifications
+        return classifications
 
 
 

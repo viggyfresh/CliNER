@@ -92,25 +92,22 @@ def main():
         con = con[:-3] + 'con'
 
 
-        for t in sci.bits(model.type):
-
-            if t == sci.LIN:
-                helper.mkpath(os.path.join(args.output, "lin"))
-                con_path = os.path.join(args.output, "lin", con)
+        helper.mkpath(os.path.join(args.output, "lin"))
+        con_path = os.path.join(args.output, "lin", con)
 
 
-            # Get predictions in proper format
-            if format == 'i2b2':
-                output = note.write_i2b2_con(labels[t])
-            elif format == 'xml':
-                output =  note.write_xml(labels[t])
-            else:
-                output = ''
+        # Get predictions in proper format
+        if format == 'i2b2':
+            output = note.write_i2b2_con(labels)
+        elif format == 'xml':
+            output =  note.write_xml(labels)
+        else:
+            output = ''
 
-            # Output the concept predictions
-            print '\n\nwriting to: ', con_path
-            with open(con_path, 'w') as f:
-                print >>f, output
+        # Output the concept predictions
+        print '\n\nwriting to: ', con_path
+        with open(con_path, 'w') as f:
+            print >>f, output
 
 
         print ''
