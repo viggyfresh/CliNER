@@ -8,7 +8,10 @@ import crf
 import sys
 
 from sklearn.feature_extraction  import DictVectorizer
-from features import features
+from features import features, read_config
+
+enabled = read_config.enabled_modules()
+
 
 
 class Model:
@@ -39,7 +42,7 @@ class Model:
         return model
 
 
-    def __init__(self, filename='awesome.model', is_crf=False):
+    def __init__(self, filename='awesome.model'):
 
         model_directory = os.path.dirname(filename)
         if model_directory != "":
@@ -57,8 +60,6 @@ class Model:
         self.first_nonprose_clfs = None
         self.second_clfs         = None
 
-        # Is CRF enabled?
-        self.is_crf = is_crf
         
 
 
@@ -198,7 +199,7 @@ class Model:
 
 
         # Train classifiers
-        if self.is_crf:
+        if enabled['CRF']:
             self.first_prose_clfs    = crf.train(X_prose   , Y_prose   , do_grid)
             self.first_nonprose_clfs = crf.train(X_nonprose, Y_nonprose, do_grid)
 
@@ -351,7 +352,7 @@ class Model:
 
 
         # Predict
-        if self.is_crf:
+        if enabled['CRF']:
             out_p = crf.predict(self.first_prose_clfs   , X_prose,  )
             out_n = crf.predict(self.first_nonprose_clfs, X_nonprose)
 

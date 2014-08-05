@@ -123,7 +123,7 @@ def main():
 
 
     # Create a Machine Learning model
-    model = Model(filename = args.model, is_crf=crfsuite)
+    model = Model(filename = args.model)
 
 
     # Train the model using the Note's data
