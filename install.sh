@@ -61,7 +61,7 @@ function install_clicon {
 
 
     # apt-get doesn't seem to be working at getting numpy
-    pip install numpy scikit-learn scipy
+    pip install numpy scikit-learn scipy python-crfsuite
     setup_dependencies=$?
 
 
