@@ -42,7 +42,6 @@ def train(X, Y, do_grid):
 
 
 def predict(clf, X):
-
     # Predict
     return list(clf.predict(X))
 
