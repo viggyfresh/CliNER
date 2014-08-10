@@ -53,7 +53,7 @@ def genia(geniatagger, data):
 
     # write list to file and then feed it to GENIA
     genia_dir = os.path.dirname(geniatagger)
-    tmp_out = os.path.join(genia_dir,'clicon_genia_tmp_file.txt')
+    tmp_out = os.path.join(genia_dir,'/tmp/clicon_genia_tmp_file.txt')
     with open(tmp_out, 'w') as f:
         for line in data: f.write(' '.join(line) + '\n')
 

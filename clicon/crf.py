@@ -1,0 +1,165 @@
+######################################################################
+#  CliCon - crf.py                                                   #
+#                                                                    #
+#  Willie Boag                                      wboag@cs.uml.edu #
+#                                                                    #
+#  Purpose: Implement CRF (using python-crfsuite)                    #
+######################################################################
+
+
+import sys
+import os
+
+import pycrfsuite
+
+
+
+def format_features(rows, labels=None):
+
+    retVal = []
+
+    # For each line
+    for i,line in enumerate(rows):
+
+        # For each word in the line
+        for j,features in enumerate(line):
+
+            # Nonzero dimensions
+            inds  = features.nonzero()[1]
+
+            # If label exists
+            values = []
+            if labels:
+                values.append( str(labels[i][j]) )
+
+            # Value for each dimension
+            for k in inds:
+                values.append( '%d=%d' %  (k, features[0,k]) )
+
+            retVal.append("\t".join(values).strip())
+
+        # Sentence boundary seperator
+        retVal.append('')
+
+    # Sanity check
+    #if labels:
+    #    out_f = 'a.txt'
+    #    start = 2 # 0 # 2
+    #else:
+    #    out_f = 'b.txt'
+    #    start = 0
+    #with open(out_f, 'w') as f:
+    #    for line in retVal:
+    #        print >>f, line[start:]
+
+    return retVal
+
+
+
+
+def pycrf_instances(fi, labeled):
+    xseq = []
+    yseq = []
+
+    # Skip first element
+    if labeled:
+        begin = 1
+    else:
+        begin = 0
+
+    for line in fi:
+        line = line.strip('\n')
+        if not line:
+            # An empty line presents an end of a sequence.
+            if labeled:
+                yield xseq, tuple(yseq)
+            else:
+                yield xseq
+
+            xseq = []
+            yseq = []
+            continue
+
+        # Split the line with TAB characters.
+        fields = line.split('\t')
+
+        # Append the item to the item sequence.
+        feats = fields[begin:]
+        xseq.append(feats)
+
+        # Append the label to the label sequence.
+        if labeled:
+            yseq.append(fields[0])
+
+
+
+
+def train(X, Y, do_grid):
+
+    # Format features fot crfsuite
+    feats = format_features(X,Y)
+
+
+    # Create a Trainer object.
+    trainer = pycrfsuite.Trainer(verbose=False)
+
+    for xseq, yseq in pycrf_instances(feats, labeled=True):
+        trainer.append(xseq, yseq)
+
+
+    # Set paramters
+    trainer.set_params({
+        'c1': 1.0,
+        'c2': 1e-3,
+        'max_iterations': 50,
+        'feature.possible_transitions': True
+    })
+
+    # Train the model
+    tmp_file = 'clicon-crf-tmp.txt'
+    trainer.train(tmp_file)
+
+
+    # Remove the temporary file
+    os.remove(tmp_file)
+
+
+    # Read the trained model into a string
+    model = ''
+    with open(tmp_file, 'rb') as f:
+        model = f.read()
+
+    return model
+
+
+
+
+def predict(clf, X):
+
+    # Format features fot crfsuite
+    feats = format_features(X)
+
+
+    # Dump the model into a temp file
+    tmp_file = 'clicon-crf-tmp.txt'
+    with open(tmp_file, 'wb') as f:
+        f.write(clf)
+
+
+    # Create the Tagger object
+    tagger = pycrfsuite.Tagger()
+    tagger.open(tmp_file)
+
+
+    # Remove the temp file
+    os.remove(tmp_file)
+
+
+    # Tag the sequence
+    retVal = []
+    for xseq in pycrf_instances(feats, labeled=False):
+        yseq = [ int(n) for n in tagger.tag(xseq) ]
+        retVal += list(yseq)
+
+
+    return retVal

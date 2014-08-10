@@ -3,12 +3,14 @@ from __future__ import with_statement
 import os
 import cPickle as pickle
 import helper
-import sci
-import crf
 import sys
 
 from sklearn.feature_extraction  import DictVectorizer
-from features import features, read_config
+
+import sci
+import crf
+from features import features
+import read_config
 
 enabled = read_config.enabled_modules()
 
@@ -56,9 +58,9 @@ class Model:
         self.second_vec         = DictVectorizer()
 
         # Classifiers
-        self.first_prose_clfs    = None
-        self.first_nonprose_clfs = None
-        self.second_clfs         = None
+        self.first_prose_clf    = None
+        self.first_nonprose_clf = None
+        self.second_clf         = None
 
         
 
@@ -147,16 +149,16 @@ class Model:
         # FIXME - Partition and then batch features
         prose    = []
         nonprose = []
-        prose_line_numbers    = []
-        nonprose_line_numbers = []
+        plinenos = []
+        nlinenos = []
         for i,line in enumerate(data):
             isProse,feats = feat_obj.IOB_features(line)
             if isProse:
-                prose += feats 
-                prose_line_numbers.append(i)
+                prose.append(feats)
+                plinenos.append(i)
             else:
-                nonprose += feats 
-                nonprose_line_numbers.append(i)
+                nonprose.append(feats)
+                nlinenos.append(i)
 
 
         # FIXME - very unclear what this is
@@ -168,14 +170,14 @@ class Model:
         p_end_flag = False
         n_end_flag = False
         for i,line in enumerate(Y):
-            if   (not p_end_flag) and (i == prose_line_numbers[prose_ind]):
+            if   (not p_end_flag) and (i == plinenos[prose_ind]):
                 pchunks += line
                 prose_ind += 1
-                if prose_ind == len(prose_line_numbers): p_end_flag = True
-            elif (not n_end_flag) and (i == nonprose_line_numbers[nonprose_ind]):
+                if prose_ind == len(plinenos): p_end_flag = True
+            elif (not n_end_flag) and (i == nlinenos[nonprose_ind]):
                 nchunks += line
                 nonprose_ind += 1
-                if nonprose_ind == len(nonprose_line_numbers): n_end_flag = True
+                if nonprose_ind == len(nlinenos): n_end_flag = True
             else:
                 # Should never really get here
                 print 'Line #%d is neither prose nor nonprose!' % i
@@ -191,21 +193,37 @@ class Model:
 
 
         # Vectorize features
-        X_prose    =    self.first_prose_vec.fit_transform(   prose)
-        X_nonprose = self.first_nonprose_vec.fit_transform(nonprose)
+        pflattened = [item for sublist in    prose for item in sublist]
+        nflattened = [item for sublist in nonprose for item in sublist]
+
+        p_offsets = [ len(sublist) for sublist in    prose ]
+        for i in range(1, len(p_offsets)):
+            p_offsets[i] += p_offsets[i-1]
+
+        n_offsets = [ len(sublist) for sublist in nonprose ]
+        for i in range(1, len(n_offsets)):
+            n_offsets[i] += n_offsets[i-1]
+
+        X_prose    =    self.first_prose_vec.fit_transform(pflattened)
+        X_nonprose = self.first_nonprose_vec.fit_transform(nflattened)
 
 
         print '\ttraining  classifier (pass one)'
 
 
-        # Train classifiers
-        if enabled['CRF']:
-            self.first_prose_clfs    = crf.train(X_prose   , Y_prose   , do_grid)
-            self.first_nonprose_clfs = crf.train(X_nonprose, Y_nonprose, do_grid)
+        # Reconstructing the list
+        X_prose    = list(X_prose   )
+        X_nonprose = list(X_nonprose)
+        p_nested = [    X_prose[i:j] for i, j in zip([0] + p_offsets, p_offsets)]
+        n_nested = [ X_nonprose[i:j] for i, j in zip([0] + n_offsets, n_offsets)]
 
-        else:
-            self.first_prose_clfs    = sci.train(X_prose   , Y_prose   , do_grid)
-            self.first_nonprose_clfs = sci.train(X_nonprose, Y_nonprose, do_grid)
+        Y_prose    =[   Y_prose[i:j] for i, j in zip([0] + p_offsets, p_offsets)]
+        Y_nonprose =[Y_nonprose[i:j] for i, j in zip([0] + n_offsets, n_offsets)]
+
+        # Train classifiers
+        self.first_prose_clf    = crf.train(p_nested, Y_prose   , do_grid)
+        self.first_nonprose_clf = crf.train(n_nested, Y_nonprose, do_grid)
+
 
 
 
@@ -261,7 +279,7 @@ class Model:
 
 
         # Train the model
-        self.second_clfs = sci.train(X, Y, do_grid)
+        self.second_clf = sci.train(X, Y, do_grid)
 
 
 
@@ -327,39 +345,55 @@ class Model:
         # prose and nonprose - each store a list of sentence feature dicts
         prose    = []
         nonprose = []
-        prose_line_numbers    = []
-        nonprose_line_numbers = []
+        plinenos = []
+        nlinenos = []
         for i,line in enumerate(data):
-            # returns both the feature dict AND whether the sentence was prose
             isProse,feats = feat_obj.IOB_features(line)
             if isProse:
-                prose    += feats 
-                prose_line_numbers.append(i)
+                prose.append(feats)
+                plinenos.append(i)
             else:
-                nonprose += feats 
-                nonprose_line_numbers.append(i)
+                nonprose.append(feats)
+                nlinenos.append(i)
+
 
 
         print '\tvectorizing features (pass one)'
 
 
+
         # Vectorize features
-        X_prose    =    self.first_prose_vec.transform(   prose)
-        X_nonprose = self.first_nonprose_vec.transform(nonprose)
+        pflattened = [item for sublist in    prose for item in sublist]
+        nflattened = [item for sublist in nonprose for item in sublist]
+
+        p_offsets = [ len(sublist) for sublist in    prose ]
+        for i in range(1, len(p_offsets)):
+            p_offsets[i] += p_offsets[i-1]
+
+        n_offsets = [ len(sublist) for sublist in nonprose ]
+        for i in range(1, len(n_offsets)):
+            n_offsets[i] += n_offsets[i-1]
+
+
+        X_prose    =    self.first_prose_vec.fit_transform(pflattened)
+        X_nonprose = self.first_nonprose_vec.fit_transform(nflattened)
+
 
 
         print '\tpredicting    labels (pass one)'
 
 
-        # Predict
-        if enabled['CRF']:
-            out_p = crf.predict(self.first_prose_clfs   , X_prose,  )
-            out_n = crf.predict(self.first_nonprose_clfs, X_nonprose)
 
-            exit()
-        else:
-            out_p = sci.predict(self.first_prose_clfs   , X_prose,  )
-            out_n = sci.predict(self.first_nonprose_clfs, X_nonprose)
+        # Reconstructing the list
+        X_prose    = list(X_prose   )
+        X_nonprose = list(X_nonprose)
+        p_nested = [   X_prose[i:j] for i, j in zip([0] + p_offsets, p_offsets)]
+        n_nested = [X_nonprose[i:j] for i, j in zip([0] + n_offsets, n_offsets)]
+
+
+        # Train classifiers
+        out_p = crf.predict(self.first_prose_clf   , p_nested)
+        out_n = crf.predict(self.first_nonprose_clf, n_nested)
 
 
         # Format labels
@@ -371,24 +405,24 @@ class Model:
         labels = []
         prose_ind    = 0
         nonprose_ind = 0
-        p_end_flag = (len(   prose_line_numbers) == 0)
-        n_end_flag = (len(nonprose_line_numbers) == 0)
+        p_end_flag = (len(plinenos) == 0)
+        n_end_flag = (len(nlinenos) == 0)
 
 
         for i in range( len(data) ):
-            if   (not p_end_flag) and (i == prose_line_numbers[prose_ind]):
+            if   (not p_end_flag) and (i == plinenos[prose_ind]):
                 line  = plist[0:len(data[i]) ] # Beginning
                 plist = plist[  len(data[i]):] # The rest
                 labels += line
                 prose_ind += 1
-                if prose_ind == len(prose_line_numbers): p_end_flag = True
+                if prose_ind == len(plinenos): p_end_flag = True
 
-            elif (not n_end_flag) and (i == nonprose_line_numbers[nonprose_ind]):
+            elif (not n_end_flag) and (i == nlinenos[nonprose_ind]):
                 line  = nlist[0:len(data[i]) ] # Beginning
                 nlist = nlist[  len(data[i]):] # The rest
                 labels += line
                 nonprose_ind += 1
-                if nonprose_ind == len(nonprose_line_numbers): n_end_flag = True
+                if nonprose_ind == len(nlinenos): n_end_flag = True
 
             else:
                 # Shouldn't really get here ever
@@ -402,7 +436,6 @@ class Model:
         for sentence in data:
             iobs.append([labels.pop(0) for i in range(len(sentence))])
             iobs[-1]= map(lambda l: Model.reverse_IOBs_labels[int(l)],iobs[-1])
-
 
         # list of list of IOB labels
         return iobs
@@ -435,7 +468,7 @@ class Model:
 
 
         # Predict concept labels
-        out = sci.predict(self.second_clfs, X)
+        out = sci.predict(self.second_clf, X)
 
 
         # List of concept tuples to return
@@ -464,8 +497,7 @@ class Model:
                 length = len(data[lineno][ind].split())
 
                 # Classification token
-                classifications.append(  (concept, lineno, start, start+length-1 ) )
-
+                classifications.append(  (concept, lineno+1, start, start+length-1 ) )
 
         # Return classifications
         return classifications
