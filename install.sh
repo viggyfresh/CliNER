@@ -8,7 +8,6 @@
 # Note: This does not download/install:
 #        1) i2b2 data
 #        2) UMLS tables
-#        3) GENIA Tagger
 #
 
 
@@ -25,6 +24,7 @@ function create_clicon {
 
     git clone https://github.com/mitmedg/CliCon.git
     cd CliCon
+    git checkout machine-learning
 }
 
 
@@ -64,23 +64,6 @@ function install_clicon {
     pip install numpy scikit-learn scipy python-crfsuite
     setup_dependencies=$?
 
-
-    # Success?
-    if ! [[ $setup_dependencies -eq 0 ]] ; then
-
-        # apt-get some packages
-        read -p "\nPython dependencies failed. Would you like to try again with apt-get (y/n)? " yn
-
-        if [[ "$yn" = "y" ]] ; then
-            # Install required packages
-            # sudo apt-get g++ gfortran libopenblas-dev liblapack-dev
-
-            # Try again
-            pip install numpy scikit-learn scipy
-            setup_dependencies=$?
-        fi
-    fi
-
 }
 
 
@@ -109,7 +92,7 @@ function get_genia {
     fi
 
     # Set config file location of tagger
-    config_file="$CLICON_DIR/clicon/features/features.config"
+    config_file="$CLICON_DIR/config.txt"
     out_tmp="out.tmp.txt"
     echo "GENIA $(pwd)/geniatagger" > $out_tmp
     while read line ; do
@@ -125,13 +108,6 @@ function get_genia {
 
     # return to original path
     cd $old_path
-}
-
-
-
-# Get crfsuite
-function get_crfsuite {
-    echo "crfsuite not supported by CliCon yet"
 }
 
 

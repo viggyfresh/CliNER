@@ -120,14 +120,15 @@ def train(X, Y, do_grid):
     trainer.train(tmp_file)
 
 
-    # Remove the temporary file
-    os.remove(tmp_file)
-
-
     # Read the trained model into a string
     model = ''
     with open(tmp_file, 'rb') as f:
         model = f.read()
+
+
+    # Remove the temporary file
+    os.remove(tmp_file)
+
 
     return model
 
