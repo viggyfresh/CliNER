@@ -102,18 +102,20 @@ def train(X, Y, do_grid):
 
     # Create a Trainer object.
     trainer = pycrfsuite.Trainer(verbose=False)
-
     for xseq, yseq in pycrf_instances(feats, labeled=True):
         trainer.append(xseq, yseq)
 
 
     # Set paramters
-    trainer.set_params({
-        'c1': 1.0,
-        'c2': 1e-3,
-        'max_iterations': 50,
-        'feature.possible_transitions': True
-    })
+    if do_grid:
+        'Grid Search not implemented yet'
+    #trainer.set_params({
+    #    'c1': 1.0,
+    #    'c2': 1e-3,
+    #    'max_iterations': 50,
+    #    'feature.possible_transitions': True
+    #})
+
 
     # Train the model
     tmp_file = 'clicon-crf-tmp.txt'
