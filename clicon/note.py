@@ -25,6 +25,31 @@ class Note:
     # @param con. A file path for the i2b2 annotated concepts associated with txt
     def read_i2b2(self, txt, con=None):
 
+
+        def concept_cmp(a,b):
+            """
+            concept_cmp()
+
+            Purpose: Compare concept classification tokens
+            """
+            a = (int(a[1]), int(a[2]))
+            b = (int(b[1]), int(b[2]))
+
+            # Sort by line number
+            if a[0] < b[0]:
+                return -1
+            if a[0] > b[0]:
+                return  1
+            else:
+                # Resolve lineno ties with indices
+                if a[1] < b[1]:
+                    return -1
+                if a[1] > b[1]:
+                    return  1
+                else:
+                    return 0
+
+
         # Read in the medical text
         with open(txt) as f:
             for line in f:
@@ -85,7 +110,7 @@ class Note:
                     #print "\n" + "-" * 80
 
             # Concept file does not guarantee ordering by line number
-            self.classifications = sorted(classifications, key=lambda t:t[1])
+            self.classifications = sorted(classifications, cmp=concept_cmp)
 
 
 

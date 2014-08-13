@@ -9,26 +9,17 @@ from sklearn.metrics import f1_score
 
 def train(X, Y, do_grid):
 
-    # Search space
-    C_range     = 10.0 ** np.arange( -5, 9 )
-    gamma_range = 10.0 ** np.arange( -5 , 9 )
-
-
     # Grid search
+    do_grid = True
     if do_grid:
 
-        if t == SVM:
-            estimates = SVC()
-            gamma_range = 10.0 ** np.arange( -5 , 9 )
-            parameters = [{'kernel':['rbf'], 'C':C_range, 'gamma':gamma_range}]    
-            
-        if t == LIN:
-            estimates = LinearSVC() 
-            parameters = [ {'C':C_range } ]
+        estimates = LinearSVC() 
+        C_range     = 10.0 ** np.arange( -5, 9 )
+        parameters = [ {'C':C_range } ]
                 
         # Find best classifier
-        clf = GridSearchCV(estimates, parameters, score_func = f1_score, n_jobs = cpu_count() )
-        clf.fit( X , Y )
+        clf = GridSearchCV(estimates, parameters, score_func = f1_score, n_jobs = cpu_count()).estimator
+        clf.fit(X , Y)
 
     else:
 
@@ -36,12 +27,13 @@ def train(X, Y, do_grid):
         clf.fit(X, Y)
 
 
-    # Return all chosen classifiers
+    # Return chosen classifier
     return clf
 
 
 
 def predict(clf, X):
     # Predict
-    return list(clf.predict(X))
+    retVal = list(clf.predict(X))
+    return retVal
 

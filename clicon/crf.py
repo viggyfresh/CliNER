@@ -13,6 +13,9 @@ import os
 import pycrfsuite
 
 
+count = 0
+
+
 
 def format_features(rows, labels=None):
 
@@ -42,15 +45,17 @@ def format_features(rows, labels=None):
         retVal.append('')
 
     # Sanity check
-    #if labels:
-    #    out_f = 'a.txt'
-    #    start = 2 # 0 # 2
-    #else:
-    #    out_f = 'b.txt'
-    #    start = 0
-    #with open(out_f, 'w') as f:
-    #    for line in retVal:
-    #        print >>f, line[start:]
+    global count
+    if labels:
+        out_f = 'a.txt' + str(count)
+        start =  0 # 2
+    else:
+        out_f = 'b.txt' + str(count)
+        start = 0
+    count += 1
+    with open(out_f, 'w') as f:
+        for line in retVal:
+            print >>f, line[start:]
 
     return retVal
 
@@ -93,8 +98,15 @@ def pycrf_instances(fi, labeled):
 
 
 
-
 def train(X, Y, do_grid):
+
+    # Sanity Check detection: features & label
+    #with open('a','w') as f:
+    #    for xline,yline in zip(X,Y):
+    #        for x,y in zip(xline,yline):
+    #            print >>f, y, '\t', x.nonzero()[1][0]
+    #        print >>f
+
 
     # Format features fot crfsuite
     feats = format_features(X,Y)
@@ -109,12 +121,6 @@ def train(X, Y, do_grid):
     # Set paramters
     if do_grid:
         'Grid Search not implemented yet'
-    #trainer.set_params({
-    #    'c1': 1.0,
-    #    'c2': 1e-3,
-    #    'max_iterations': 50,
-    #    'feature.possible_transitions': True
-    #})
 
 
     # Train the model
@@ -160,9 +166,18 @@ def predict(clf, X):
 
     # Tag the sequence
     retVal = []
+    Y = []
     for xseq in pycrf_instances(feats, labeled=False):
         yseq = [ int(n) for n in tagger.tag(xseq) ]
         retVal += list(yseq)
+        Y.append(list(yseq))
+    
+    # Sanity Check detection: feature & label predictions
+    #with open('a','w') as f:
+    #    for x,y in zip(xseq,Y):
+    #        x = x[0]
+    #        print >>f, y, '\t', x[:-2]
+    #    print >>f
 
 
     return retVal
