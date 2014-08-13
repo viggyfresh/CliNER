@@ -33,32 +33,32 @@ Installation Script
 
     For Ubuntu users, there is a script that should be able to download most of the pieces of this project. Note, it cannot get priveleged tools (such as the i2b2 data and the UMLS tables) - you must get those two pieces yourself.
 
-    To run the script, copy 'install.sh' from Github and enter the directory you'd like to house this project. Run the script with **source install.sh** NOTE: The script will git clone CliCon for you, so do not do that yourself if you use the script.
-
-    The script will try to download CliCon's third party dependencies and will report back what tools could/couldn't be acquired. Ideally, it will get everything except for the i2b2 data and the UMLS tables.
+    The script will try to download CliCon's third party dependencies and will get everything except for the i2b2 data and the UMLS tables.
 
     In the event that you run the script but encounter issues, please see the README section that corresponds to the failure's message. 
 
     It is entirely likely that there are unforseen bugs. If you experience "strange" behavior (or if this document is just unclear in general), please email me at wboag@cs.uml.edu with your installation questions.
 
     If you do not run the script, you must follow each of these steps and configure things such as virtual environments and environment variables. Not terribly difficult (we hope!).
+    
 
 
 
 
 1. virtualenv
 
-    Setup a virtual environent:
-
-
-    reference
-        https://virtualenv.pypa.io/en/latest/
+    Setup a virtual environent. You must re-enable the virtual environment every new session.
 
 
     example:
         user@your-machine:~$ virtualenv venv_clicon
 
         user@your-machine:~$ source venv_clicon/bin/activate
+
+
+    reference
+        https://virtualenv.pypa.io/en/latest/
+
 
 
 
@@ -90,6 +90,7 @@ Installation Script
         - numpy
         - scikit-learn
         - scipy
+        - python-crfsuite
         - nltk  (AND run the NLTK downloader)
 
 
@@ -109,7 +110,7 @@ Installation Script
     example:
         (venv_clicon)user@your-machine:~/CliCon$ sudo apt-get install g++ gfortran libopenblas-dev liblapack-dev -y
 
-        (venv_clicon)user@your-machine:~/CliCon$ pip install numpy scikit-learn scipy nltk
+        (venv_clicon)user@your-machine:~/CliCon$ pip install numpy scikit-learn scipy nltk python-crfsuite
 
 
 
