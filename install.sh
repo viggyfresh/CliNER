@@ -3,91 +3,16 @@
 #
 # Purpose: This is a demo that will install CliCon and it's package dependencies
 #
-# Usage: 'source install.sh'  (It is important to use 'source', not 'bash')
-#
 # Note: This does not download/install:
 #        1) i2b2 data
 #        2) UMLS tables
-#        3) GENIA Tagger
 #
 
 
 
-function create_clicon {
-    # Create wrapper directory to hold:
-    #     1) virtual environment
-    #     2) CliCon source from github
-    mkdir clicon
-    cd clicon
 
-    virtualenv venv_clicon
-    source venv_clicon/bin/activate
-
-    git clone https://github.com/mitmedg/CliCon.git
-    cd CliCon
-}
-
-
-
-function environ_clicon {
-    # Set environment variable (check if it is defined)
-    if [[ "$CLICON_DIR" = "" ]] ; then
-        echo -e "\n\t"
-        echo -e "Appending line to ~/.bashrc to remember environment variable\n"
-
-        echo "export CLICON_DIR=\"$(pwd)/clicon/CliCon\"" >> ~/.bashrc
-        source ~/.bashrc
-        export CLICON_DIR
-
-    fi
-
-    setup_environ=0
-}
-
-
-
-function install_clicon {
-
-    # Get python dependencies
-    easy_install pip
-    easy_install simplejson
-    pip install Flask
-    pip install nose
-    pip install -U pyyaml 
-
-    # Install nltk data
-    python -m nltk.downloader maxent_treebank_pos_tagger
-    python -m nltk.downloader wordnet
-
-
-    # apt-get doesn't seem to be working at getting numpy
-    pip install numpy scikit-learn scipy
-    setup_dependencies=$?
-
-
-    # Success?
-    if ! [[ $setup_dependencies -eq 0 ]] ; then
-
-        # apt-get some packages
-        read -p "\nPython dependencies failed. Would you like to try again with apt-get (y/n)? " yn
-
-        if [[ "$yn" = "y" ]] ; then
-            # Install required packages
-            # sudo apt-get g++ gfortran libopenblas-dev liblapack-dev
-
-            # Try again
-            pip install numpy scikit-learn scipy
-            setup_dependencies=$?
-        fi
-    fi
-
-}
-
-
-
-# Get GENIA
+# Function to download GENIA tagger
 function get_genia {
-
     # save current path
     old_path=$(pwd)
 
@@ -104,7 +29,6 @@ function get_genia {
     # Successful build ?
     if ! [[ $? -eq 0 ]] ; then
         echo "there was a build error in GENIA"
-        setup_genia=1
         return
     fi
 
@@ -119,77 +43,59 @@ function get_genia {
     done < "$config_file"
     mv $out_tmp $config_file
 
-
-    # Success
-    setup_genia=0
-
     # return to original path
     cd $old_path
 }
 
 
 
-# Get crfsuite
-function get_crfsuite {
-    echo "crfsuite not supported by CliCon yet"
-}
+
+
+# Create virtual environment
+virtualenv venv_clicon
+source venv_clicon/bin/activate
 
 
 
-# Setup 'clicon' command for CLI
-function setup {
-    cd $CLICON_DIR
-    python setup.py install
-    setup_install=$?
-}
 
-
-
-# Base directory cannot exist yet
-if [[ -e clicon ]] ; then
-    echo -e "\n\tError: Cannot already have a file named 'clicon' in directory\n"
-else
-
-    # Install resources
-    create_clicon
-    environ_clicon
-    install_clicon
-    get_genia
-    setup
-        
-    echo -e "\n\n"
-
-    # Print installation successes/failures
-    if [[ $setup_environ -eq 0 ]] ; then
-        echo "Environemt variable confiuration -- SUCCESS"
-    else
-        echo "Environemt variable confiuration -- FAILURE"
-        echo -e "\tSee README for details"
-    fi
-
-
-    if [[ $setup_dependencies -eq 0 ]] ; then
-        echo "Install python dependencies      -- SUCCESS"
-    else
-        echo "Install python dependencies      -- FAILURE"
-        echo -e "\tSee README for details"
-    fi
-
-
-    if [[ $setup_genia -eq 0 ]] ; then
-        echo "Install GENIA tagger             -- SUCCESS"
-    else
-        echo "Install GENIA tagger             -- FAILURE"
-        echo -e "\tSee README for details"
-    fi
-
-
-    if [[ $setup_install -eq 0 ]] ; then
-        echo "Install 'clicon' command for CLI -- SUCCESS"
-    else
-        echo "Install 'clicon' command for CLI -- FAILURE"
-        echo -e "\tSee README for details"
-    fi
-
+# CLICON_DIR must be defined before proceeding
+if [[ "$CLICON_DIR" = "" ]] ; then
+    CLICON_DIR="$( cd "$( dirname "$0" )" && pwd )"
+    echo -e "\nEnvironment variable CLICON_DIR must be defined."
+    echo -e   "Execute the following and re-run install.sh: \n"
+    echo -e "\texport CLICON_DIR=\"$CLICON_DIR\""
+    echo ""
+    exit
 fi
 
+
+
+
+# Install python dependencies
+easy_install pip simplejson
+easy_install simplejson
+pip install Flask
+pip install nose
+pip install -U pyyaml 
+python -m nltk.downloader maxent_treebank_pos_tagger
+python -m nltk.downloader wordnet
+
+# Install Scikit-Learn (SVM)
+pip install numpy 
+pip install scikit-learn
+pip install scipy
+
+# Install python-crfsuite (CRF)
+pip install python-crfsuite
+
+
+
+
+# Download & install GENIA tagger
+get_genia
+
+
+
+
+# Install 'clicon' CLI command
+python setup.py install
