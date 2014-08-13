@@ -46,7 +46,7 @@ class SentenceFeatures:
 
     enabled_IOB_nonprose_sentence_features = ImmutableSet( ['prev_pos', 'pos', 'next_pos', 'test_result', 'prev', 'next','prev_3_pos'])
 
-    enabled_concept_features = ImmutableSet( ['pos','stem_wordnet', 'test_result', 'word_shape','prev','next', "UMLS"])
+    enabled_concept_features = ImmutableSet( ['pos','prev_3_pos', 'stem_wordnet', 'test_result', 'word_shape','prev','next', "UMLS"])
 
 
 

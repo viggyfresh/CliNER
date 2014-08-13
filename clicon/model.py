@@ -224,6 +224,11 @@ class Model:
         self.first_prose_clf    = crf.train(p_nested, Y_prose   , do_grid)
         self.first_nonprose_clf = crf.train(n_nested, Y_nonprose, do_grid)
 
+        '''
+        self.first_prose_clf    = sci.train(X_prose   , Y_prose   , do_grid)
+        self.first_nonprose_clf = sci.train(X_nonprose, Y_nonprose, do_grid)
+        '''
+
 
 
 
@@ -383,17 +388,20 @@ class Model:
         print '\tpredicting    labels (pass one)'
 
 
-
         # Reconstructing the list
         X_prose    = list(X_prose   )
         X_nonprose = list(X_nonprose)
         p_nested = [   X_prose[i:j] for i, j in zip([0] + p_offsets, p_offsets)]
         n_nested = [X_nonprose[i:j] for i, j in zip([0] + n_offsets, n_offsets)]
 
-
         # Train classifiers
         out_p = crf.predict(self.first_prose_clf   , p_nested)
         out_n = crf.predict(self.first_nonprose_clf, n_nested)
+
+        '''
+        out_p = sci.predict(self.first_prose_clf   , X_prose   )
+        out_n = sci.predict(self.first_nonprose_clf, X_nonprose)
+        '''
 
 
         # Format labels
@@ -481,8 +489,11 @@ class Model:
             # Skip empty line
             if not inds: continue
 
+            print lineno
+            print inds
+            print out
+            print
 
-            # For each concept
             for ind in inds:
 
                 # Get next concept
@@ -497,7 +508,10 @@ class Model:
                 length = len(data[lineno][ind].split())
 
                 # Classification token
-                classifications.append(  (concept, lineno+1, start, start+length-1 ) )
+                classifications.append((concept,lineno+1,start,start+length-1))
+
+        for c in classifications:
+            print c
 
         # Return classifications
         return classifications

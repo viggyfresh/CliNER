@@ -47,6 +47,16 @@ class FeatureWrapper:
         else:
             features_list = self.feat_sent.IOB_nonprose_features(sentence)
 
+
+        # Sanity Check (many unique features for each data point)
+        #features_list = []
+        #for i in range(len(sentence)):
+        #    features = {}
+        #    for j in range(30):
+        #        features[(''.join(sentence),i,j)] = 1
+        #    features_list.append(features)
+
+
         # Return features as well as indication of whether it is prose or not
         return (isProse, features_list)
 
@@ -77,24 +87,25 @@ class FeatureWrapper:
 
         for i,ind in enumerate(chunk_inds):
 
+
+            features_list[i][(' '.join(sentence),ind)] = 1
+            
+            continue
+
+
             # Create a list of feature sets (one per chunk)
             features = self.feat_sent.concept_features_for_chunk(sentence,ind)
+
 
             # Feature: Previous 3 POSs
             if 'prev_3_pos' in self.feat_sent.enabled_concept_features:
                 tags = tags = nltk.pos_tag(sentence)
-                if ind == 0:
-                    prev_pos = ('*','*','*')
-                    features[('prev_3_pos',prev_pos)] = 1
-                elif ind == 1:
-                    prev_pos = ('*','*',tags[0][1])
-                    features[('prev_3_pos',prev_pos)] = 1
-                elif ind == 2:
-                    prev_pos = ('*',tags[0][1],tags[1][1])
-                    features[('prev_3_pos',prev_pos)] = 1
-                else:
-                    prev_pos = (tags[ind-3][1],tags[ind-2][1],tags[ind-1][1])
-                    features[('prev_3_pos',prev_pos)] = 1
+
+                # Previous 3 POSs
+                begin = ind-3  if  ind-3>0  else  0
+                for tag in tags[begin:ind]:
+                    pos = tag[1]
+                    features[('prev_3_pos',pos)] = 1
 
 
             # Feature: Previous Chunks's Features
