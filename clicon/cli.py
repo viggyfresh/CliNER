@@ -99,6 +99,48 @@ def predict(model, out, format, crfsuite, input):
 
 
 
+# Evaluate
+@clicon.command()
+@click.option('--predictions', help='Predicted concept files.'    )
+@click.option('--gold'       , help='Gold standard concept files.')
+@click.option('--out'        , help='Output file'                 )
+@click.option('--format'     , help='Data format (i2b2 or xml).'  )
+@click.argument('input')
+def evaluate(out, format, input):
+
+
+    # Base directory
+    BASE_DIR = os.environ.get('CLICON_DIR')
+    if not BASE_DIR:
+        raise Exception('Environment variable CLICON_DIR must be defined')
+
+
+    # Executable
+    runable = os.path.join(BASE_DIR,'clicon/evaluate.py')
+
+
+    # Build command
+    cmd = ['python', runable, '-t', input]
+
+
+    # Optional arguments
+    if predictions:
+        cmd += ['-c', predictions]
+    if gold:
+        cmd += ['-r',        gold]
+    if out:
+        cmd += ['-o',         out]
+    if format:
+        cmd += ['-f',      format]
+
+
+    # Execute train.py
+    subprocess.call(cmd)
+
+
+
+
+
 # Format
 @clicon.command()
 @click.option('--annotations', help='Concept files for training.'      )
