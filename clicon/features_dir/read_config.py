@@ -23,8 +23,7 @@ import os
 def enabled_modules():
 
     # Open config file
-    prefix = os.path.dirname(__file__)
-    filename = os.path.join( prefix, 'features.config' )
+    filename = os.path.join( os.getenv('CLICON_DIR'), 'config.txt' )
     f = open(filename, 'r')
 
     specs = {}
@@ -37,10 +36,10 @@ def enabled_modules():
 
             # Modules
             if words[0] in module_list:
-                if words[1] != 'None':
-                    specs[words[0]] = words[1]
-                else:
+                if words[1] == 'None':
                     specs[words[0]] = None
+                else:
+                    specs[words[0]] = words[1]
 
     return specs
 
@@ -48,5 +47,3 @@ def enabled_modules():
 
 # Read from config file when module is imported
 print enabled_modules()
-
-

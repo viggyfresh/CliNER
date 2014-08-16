@@ -3,11 +3,16 @@ from __future__ import with_statement
 import os
 import cPickle as pickle
 import helper
-import sci
 import sys
 
 from sklearn.feature_extraction  import DictVectorizer
-from features import features
+
+import sci
+import crf
+from features_dir import features, utilities
+
+
+import cProfile as profile
 
 
 class Model:
@@ -38,7 +43,7 @@ class Model:
         return model
 
 
-    def __init__(self, filename='awesome.model', type=sci.LIN):
+    def __init__(self, filename='awesome.model'):
 
         model_directory = os.path.dirname(filename)
         if model_directory != "":
@@ -46,18 +51,19 @@ class Model:
 
         self.filename = os.path.realpath(filename)
 
+        # Use python-crfsuite
+        self.crf_enabled = True
+
         # DictVectorizers
         self.first_prose_vec    = DictVectorizer()
         self.first_nonprose_vec = DictVectorizer()
         self.second_vec         = DictVectorizer()
 
         # Classifiers
-        self.first_prose_clfs    = {}
-        self.first_nonprose_clfs = {}
-        self.second_clfs         = {}
+        self.first_prose_clf    = None
+        self.first_nonprose_clf = None
+        self.second_clf         = None
 
-        # FIXME: Only using scikit's SVM
-        self.type = sci.LIN
         
 
 
@@ -128,7 +134,6 @@ class Model:
 
         @param data      A list of split sentences    (1 sent = 1 line from file)
         @param Y         A list of list of IOB labels (1:1 mapping with data)
-        @param feat_obj  A wrapper for the feature module
         @param do_grid   A boolean indicating whether to perform a grid search
 
         @return          None
@@ -141,64 +146,78 @@ class Model:
         feat_obj = features.FeatureWrapper(data)
 
 
-        # IOB tagging
-        # FIXME - Partition and then batch features
+        # Parition into prose v. nonprose
         prose    = []
         nonprose = []
-        prose_line_numbers    = []
-        nonprose_line_numbers = []
-        for i,line in enumerate(data):
-            isProse,feats = feat_obj.IOB_features(line)
-            if isProse:
-                prose += feats 
-                prose_line_numbers.append(i)
-            else:
-                nonprose += feats 
-                nonprose_line_numbers.append(i)
-
-
-        # FIXME - very unclear what this is
-        # Description: Separate labels by same division as text
-        prose_ind    = 0
-        nonprose_ind = 0
         pchunks = []
         nchunks = []
-        p_end_flag = False
-        n_end_flag = False
-        for i,line in enumerate(Y):
-            if   (not p_end_flag) and (i == prose_line_numbers[prose_ind]):
-                pchunks += line
-                prose_ind += 1
-                if prose_ind == len(prose_line_numbers): p_end_flag = True
-            elif (not n_end_flag) and (i == nonprose_line_numbers[nonprose_ind]):
-                nchunks += line
-                nonprose_ind += 1
-                if nonprose_ind == len(nonprose_line_numbers): n_end_flag = True
+        for line,labels in zip(data,Y):
+            isProse,feats = feat_obj.IOB_features(line)
+            if isProse:
+                prose.append(feats)
+                pchunks += labels
             else:
-                # Should never really get here
-                print 'Line #%d is neither prose nor nonprose!' % i
-                print line, '\n'
+                nonprose.append(feats)
+                nchunks += labels
 
 
-        print '\tvectorizing features (pass one)'
+        # Classify both prose & nonprose
+        flabels    = ['prose'             , 'nonprose'             ]
+        fsets      = [prose               , nonprose               ]
+        chunksets  = [pchunks             , nchunks                ]
+        dvects     = [self.first_prose_vec, self.first_nonprose_vec]
+        clfs       = [self.first_prose_clf, self.first_nonprose_clf]
+
+        vectorizers = []
+        classifiers = []
+
+        for flabel,fset,chunks,dvect,clf in zip(flabels, fsets, chunksets, dvects, clfs):
+
+            if len(fset) == 0:
+                raise Exception('Training data must have %s training examples' % flabel)
+
+            print '\tvectorizing features (pass one) ' + flabel
+
+            # Vectorize IOB labels
+            Y = [  Model.IOBs_labels[y]  for  y  in  chunks  ]
+
+            # Save list structure to reconstruct after vectorization
+            offsets = [ len(sublist) for sublist in fset ]
+            for i in range(1, len(offsets)):
+                offsets[i] += offsets[i-1]
+
+            # Vectorize features
+            flattened = [item for sublist in fset for item in sublist]
+            X = dvect.fit_transform(flattened)
+            vectorizers.append(dvect)
 
 
-        # Vectorize IOB labels
-        Y_prose    = [  Model.IOBs_labels[y]  for  y  in  pchunks  ]
-        Y_nonprose = [  Model.IOBs_labels[y]  for  y  in  nchunks  ]
+            print '\ttraining classifiers (pass one) ' + flabel
 
 
-        # Vectorize features
-        X_prose    =    self.first_prose_vec.fit_transform(   prose)
-        X_nonprose = self.first_nonprose_vec.fit_transform(nonprose)
+            
+            # CRF needs reconstructed lists
+            if self.crf_enabled:
+                X = list(X)
+                X = [ X[i:j] for i, j in zip([0] + offsets, offsets)]
+                Y = [ Y[i:j] for i, j in zip([0] + offsets, offsets)]
+                lib = crf
+            else:
+                lib = sci
+
+            # Train classifiers
+            clf  = lib.train(X, Y, do_grid)
+            classifiers.append(clf)
 
 
-        print '\ttraining  classifier (pass one)'
+        # Save vectorizers
+        self.first_prose_vec    = vectorizers[0]
+        self.first_nonprose_vec = vectorizers[1]
 
+        # Save classifiers
+        self.first_prose_clf    = classifiers[0]
+        self.first_nonprose_clf = classifiers[1]
 
-        # Train classifiers
-        self.first_prose_clfs    = sci.train(X_prose   , Y_prose   , self.type, do_grid)
-        self.first_nonprose_clfs = sci.train(X_nonprose, Y_nonprose, self.type, do_grid)
 
 
 
@@ -221,18 +240,18 @@ class Model:
                                into the corresponding line for 'data'
         @param Y         A list of concept labels
                            - assertion: there are sum(len(inds_list)) labels
-                              AKA each index from inds_list maps to a label
+v                              AKA each index from inds_list maps to a label
         @param do_grid   A boolean indicating whether to perform a grid search
 
         @return          None
         """
 
 
+        print '\textracting  features (pass two)'
+
+
         # Create object that is a wrapper for the features
         feat_o = features.FeatureWrapper()
-
-
-        print '\textracting  features (pass two)'
 
 
         # Extract features
@@ -254,7 +273,7 @@ class Model:
 
 
         # Train the model
-        self.second_clfs = sci.train(X, Y, self.type, do_grid)
+        self.second_clf = sci.train(X, Y, do_grid)
 
 
 
@@ -277,7 +296,7 @@ class Model:
         data   = note.txtlist()
 
         # Predict IOB labels
-        iobs = self.first_predict(data)
+        iobs,_,__ = self.first_predict(data)
         note.set_iob_labels(iobs)
 
 
@@ -303,101 +322,122 @@ class Model:
 
 
 
-    # Model::first_predit()
-    #
-    # @param data. A list of list of words
-    # @return      A list of list of IOB tags
     def first_predict(self, data):
+
+        """
+        Model::first_predict()
+
+        Purpose: Predict IOB chunks on data
+
+        @param data.  A list of split sentences    (1 sent = 1 line from file)
+        @return       A list of list of IOB labels (1:1 mapping with data)
+        """
+
+        print '\textracting  features (pass one)'
+
 
         # Create object that is a wrapper for the features
         feat_obj = features.FeatureWrapper(data)
  
 
-        print '\textracting  features (pass one)'
-
-
-        # FIXME - partition and batch
-        # prose and nonprose - each store a list of sentence feature dicts
+        # separate prose and nonprose data
         prose    = []
         nonprose = []
-        prose_line_numbers    = []
-        nonprose_line_numbers = []
+        plinenos = []
+        nlinenos = []
         for i,line in enumerate(data):
-            # returns both the feature dict AND whether the sentence was prose
             isProse,feats = feat_obj.IOB_features(line)
             if isProse:
-                prose    += feats 
-                prose_line_numbers.append(i)
+                prose.append(feats)
+                plinenos.append(i)
             else:
-                nonprose += feats 
-                nonprose_line_numbers.append(i)
+                nonprose.append(feats)
+                nlinenos.append(i)
 
 
-        print '\tvectorizing features (pass one)'
+        # Classify both prose & nonprose
+        flabels = ['prose'             , 'nonprose'             ]
+        fsets   = [prose               , nonprose               ]
+        dvects  = [self.first_prose_vec, self.first_nonprose_vec]
+        clfs    = [self.first_prose_clf, self.first_nonprose_clf]
+        preds   = []
+
+        for flabel,fset,dvect,clf in zip(flabels, fsets, dvects, clfs):
+
+            # If nothing to predict, skip actual prediction
+            if len(fset) == 0:
+                preds.append([])
+                continue
+
+            print '\tvectorizing features (pass one) ' + flabel
+
+            # Save list structure to reconstruct after vectorization
+            offsets = [ len(sublist) for sublist in fset ]
+            for i in range(1, len(offsets)):
+                offsets[i] += offsets[i-1]
+
+            # Vectorize features
+            flattened = [item for sublist in fset for item in sublist]
+            X = dvect.transform(flattened)
 
 
-        # Vectorize features
-        X_prose    =    self.first_prose_vec.transform(   prose)
-        X_nonprose = self.first_nonprose_vec.transform(nonprose)
+            print '\tpredicting    labels (pass one) ' + flabel
 
 
-        print '\tpredicting    labels (pass one)'
-
-
-        # Predict
-        out_p = sci.predict(self.first_prose_clfs   , X_prose,   sci.LIN)
-        out_n = sci.predict(self.first_nonprose_clfs, X_nonprose,sci.LIN)
-
-
-        # Format labels
-        plist = [  n  for  n  in  list(out_p[sci.LIN]) ]
-        nlist = [  n  for  n  in  list(out_n[sci.LIN]) ]
-        
-
-        # Stitch prose and nonprose labels lists together
-        labels = []
-        prose_ind    = 0
-        nonprose_ind = 0
-        p_end_flag = (len(   prose_line_numbers) == 0)
-        n_end_flag = (len(nonprose_line_numbers) == 0)
-
-
-        for i in range( len(data) ):
-            if   (not p_end_flag) and (i == prose_line_numbers[prose_ind]):
-                line  = plist[0:len(data[i]) ] # Beginning
-                plist = plist[  len(data[i]):] # The rest
-                labels += line
-                prose_ind += 1
-                if prose_ind == len(prose_line_numbers): p_end_flag = True
-
-            elif (not n_end_flag) and (i == nonprose_line_numbers[nonprose_ind]):
-                line  = nlist[0:len(data[i]) ] # Beginning
-                nlist = nlist[  len(data[i]):] # The rest
-                labels += line
-                nonprose_ind += 1
-                if nonprose_ind == len(nonprose_line_numbers): n_end_flag = True
-
+            # CRF requires reconstruct lists
+            if self.crf_enabled:
+                X = list(X)
+                X = [ X[i:j] for i, j in zip([0] + offsets, offsets)]
+                lib = crf
             else:
-                # Shouldn't really get here ever
-                print 'Line #%d is neither prose nor nonprose!' % i
+                lib = sci
 
 
+            # Predict IOB labels
+            out = lib.predict(clf, X)
 
+
+            # Format labels from output
+            pred = [out[i:j] for i, j in zip([0] + offsets, offsets)]
+            preds.append(pred)
+
+
+        # Recover predictions
+        plist = preds[0]
+        nlist = preds[1]
+
+
+        # Stitch prose and nonprose data back together
         # translate IOB labels into a readable format
-        # ex. change all occurences of 1 -> 'B'
-        iobs = []
+        prose_iobs    = []
+        nonprose_iobs = []
+        iobs          = []
+        trans = lambda l: Model.reverse_IOBs_labels[int(l)]
         for sentence in data:
-            iobs.append([labels.pop(0) for i in range(len(sentence))])
-            iobs[-1]= map(lambda l: Model.reverse_IOBs_labels[int(l)],iobs[-1])
+            if utilities.prose_sentence(sentence):
+                prose_iobs.append( plist.pop(0) )
+                prose_iobs[-1] = map(trans, prose_iobs[-1])
+                iobs.append( prose_iobs[-1] )
+            else:
+                nonprose_iobs.append( nlist.pop(0) )
+                nonprose_iobs[-1] = map(trans, nonprose_iobs[-1])
+                iobs.append( nonprose_iobs[-1] )
 
 
         # list of list of IOB labels
-        return iobs
+        return iobs, prose_iobs, nonprose_iobs
+
 
 
 
 
     def second_predict(self, data, inds_list):
+
+        # If first pass predicted no concepts, then skip 
+        # NOTE: Special case because SVM cannot have empty input
+        if sum([ len(inds) for inds in inds_list ]) == 0:
+            return []
+
 
         # Create object that is a wrapper for the features
         feat_o = features.FeatureWrapper()
@@ -422,52 +462,40 @@ class Model:
 
 
         # Predict concept labels
-        out = sci.predict(self.second_clfs, X, sci.LIN)
+        out = sci.predict(self.second_clf, X)
 
 
-
-        # FIXME - Output prediction labels are entirely wrong
-        # ex. trained on file with 3 concepts (prob,treat,treat) and predicted
-        #        on same file. Got (test,test,test) as labels
-
-        retVal = {}
-        for t in sci.bits(self.type):
-
-            # Index into output dictionary
-            o = list(out[t])
-            classifications = []
+        # List of concept tuples to return
+        classifications = []
 
 
-            # Line-by-line processing
-            for lineno,inds in enumerate(inds_list):
+        # Line-by-line processing
+        for lineno,inds in enumerate(inds_list):
 
-                # Skip empty line
-                if not inds: continue
+            # Skip empty line
+            if not inds: continue
 
+            for ind in inds:
 
-                # For each concept
-                for ind in inds:
+                # Get next concept
+                concept = Model.reverse_labels[out.pop(0)]
 
-                    # Get next concept
-                    concept = Model.reverse_labels[o.pop(0)]
+                # Get start position (ex. 7th word of line)
+                start = 0
+                for i in range(ind):
+                    start += len( data[lineno][i].split() )
 
-                    # Get start position (ex. 7th word of line)
-                    start = 0
-                    for i in range(ind):
-                        start += len( data[lineno][i].split() )
+                # Length of chunk
+                length = len(data[lineno][ind].split())
 
-                    # Length of chunk
-                    length = len(data[lineno][ind].split())
+                # Classification token
+                classifications.append((concept,lineno+1,start,start+length-1))
 
-                    # Classification token
-                    classifications.append(  (concept, lineno+1, start, start+length-1 ) )
-            
-                retVal[t] = classifications
+        #for c in classifications:
+        #    print c
 
-
-        # Return values
-        return retVal
-
+        # Return classifications
+        return classifications
 
 
 

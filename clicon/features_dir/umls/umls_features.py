@@ -17,9 +17,9 @@ import umls
 class UMLSFeatures:
 
 
-    enabled_prose_features = ImmutableSet( [ 'umls_cui', 'umls_hypernyms' ] )
+    enabled_prose_features    = ImmutableSet( [ 'umls_cui', 'umls_semantic_type_word', 'umls_hypernyms' ] )
 
-    enabled_prose_features = ImmutableSet( [ 'umls_cui', 'umls_hypernyms', 'umls_semantic_type_word' ] )
+    enabled_nonprose_features = ImmutableSet( [ 'umls_cui', 'umls_semantic_type_word' ] )
 
 
     enabled_concept_features_for_word = ImmutableSet( [ 'umls_semantic_type_word', 'umls_cui' ] )
@@ -79,6 +79,19 @@ class UMLSFeatures:
                     features[(feature,hyps[0])] = 1
 
 
+            # Feature: UMLS Semantic Type (for each word)
+            if feature == "umls_semantic_type_word":
+                # Get UMLS semantic type (could have multiple)
+                mapping = umls.umls_semantic_type_word(self.umls_lookup_cache , word )
+
+                print mapping
+
+                # If is at least one semantic type
+                if mapping != None:
+                    for concept in mapping:
+                        features[('umls_semantic_type_word', concept )] = 1
+
+
         return features
 
 
@@ -101,35 +114,20 @@ class UMLSFeatures:
 
             # Feature: UMLS Semantic Types
             if feature == "umls_cui":
-
                 # Get UMLS CUIs (could have multiple)
                 cuis = umls.get_cui(self.umls_lookup_cache , word)
 
                 # Add each CUI
-                if cuis:
-                    for cui in cuis:
-                        features[(feature,cui)] = 1
-
-
-            # Feature: UMLS Hypernyms
-            if feature == "umls_hypernyms":
-
-                # Get UMLS hypernyms
-                hyps = umls.umls_hypernyms(self.umls_lookup_cache,word)
-
-                # Add all hypernyms
-                if hyps:
-                    #for hyp in hyps:
-                    features[(feature,hyps[0])] = 1
+                for cui in cuis:
+                    features[(feature,cui)] = 1
 
 
             # Feature: UMLS Semantic Type (for each word)
             if feature == "umls_semantic_type_word":
-
                 # Get UMLS semantic type (could have multiple)
                 mapping = umls.umls_semantic_type_word(self.umls_lookup_cache , word )
                 # If is at least one semantic type
-                if mapping:
+                if mapping != None:
                     for concept in mapping:
                         features[('umls_semantic_type_word', concept )] = 1
 

@@ -16,6 +16,7 @@ class Note:
         self.concepts        = []
         self.classifications = []
         self.boundaries      = []
+        self.text_chunks     = []
 
 
 
@@ -24,6 +25,31 @@ class Note:
     # @param txt. A file path for the i2b2 tokenized medical record
     # @param con. A file path for the i2b2 annotated concepts associated with txt
     def read_i2b2(self, txt, con=None):
+
+
+        def concept_cmp(a,b):
+            """
+            concept_cmp()
+
+            Purpose: Compare concept classification tokens
+            """
+            a = (int(a[1]), int(a[2]))
+            b = (int(b[1]), int(b[2]))
+
+            # Sort by line number
+            if a[0] < b[0]:
+                return -1
+            if a[0] > b[0]:
+                return  1
+            else:
+                # Resolve lineno ties with indices
+                if a[1] < b[1]:
+                    return -1
+                if a[1] > b[1]:
+                    return  1
+                else:
+                    return 0
+
 
         # Read in the medical text
         with open(txt) as f:
@@ -85,7 +111,7 @@ class Note:
                     #print "\n" + "-" * 80
 
             # Concept file does not guarantee ordering by line number
-            self.classifications = sorted(classifications, key=lambda t:t[1])
+            self.classifications = sorted(classifications, cmp=concept_cmp)
 
 
 
@@ -127,9 +153,9 @@ class Note:
 
 
         # If given labels to write, use them. Default to self.classifications
-        if labels:
+        if labels != None:
             classifications = labels
-        elif self.classifications:
+        elif self.classifications != None:
             classifications = self.classifications
         else:
             raise Exception('Cannot write concept file: must specify labels')
@@ -528,7 +554,7 @@ class Note:
     def chunked_text(self):
 
         """
-        Note::generate_chunks()
+        Note::chunked_text()
 
         Purpose: Combine all 'I's into 'B' chunks
 
@@ -536,9 +562,12 @@ class Note:
         """
 
 
+        # If answer is cached
+        if self.text_chunks: return self.text_chunks()
+
+
         # List of list of phrases
         text          = self.txtlist()
-        text_chunks   = []
 
 
         # Line-by-line chunking
@@ -568,10 +597,10 @@ class Note:
             if phrase: line.append(phrase)
             
             # Add line from file 
-            text_chunks.append(line)
+            self.text_chunks.append(line)
 
 
-        return text_chunks
+        return self.text_chunks
 
 
 

@@ -9,9 +9,6 @@
 #
 
 
-
-
-# Function to download GENIA tagger
 function get_genia {
     # save current path
     old_path=$(pwd)
@@ -33,7 +30,7 @@ function get_genia {
     fi
 
     # Set config file location of tagger
-    config_file="$CLICON_DIR/clicon/features/features.config"
+    config_file="$CLICON_DIR/config.txt"
     out_tmp="out.tmp.txt"
     echo "GENIA $(pwd)/geniatagger" > $out_tmp
     while read line ; do
@@ -46,7 +43,6 @@ function get_genia {
     # return to original path
     cd $old_path
 }
-
 
 
 
