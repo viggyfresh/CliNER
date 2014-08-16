@@ -16,6 +16,7 @@ class Note:
         self.concepts        = []
         self.classifications = []
         self.boundaries      = []
+        self.text_chunks     = []
 
 
 
@@ -152,9 +153,9 @@ class Note:
 
 
         # If given labels to write, use them. Default to self.classifications
-        if labels:
+        if labels != None:
             classifications = labels
-        elif self.classifications:
+        elif self.classifications != None:
             classifications = self.classifications
         else:
             raise Exception('Cannot write concept file: must specify labels')
@@ -553,7 +554,7 @@ class Note:
     def chunked_text(self):
 
         """
-        Note::generate_chunks()
+        Note::chunked_text()
 
         Purpose: Combine all 'I's into 'B' chunks
 
@@ -561,9 +562,12 @@ class Note:
         """
 
 
+        # If answer is cached
+        if self.text_chunks: return self.text_chunks()
+
+
         # List of list of phrases
         text          = self.txtlist()
-        text_chunks   = []
 
 
         # Line-by-line chunking
@@ -593,10 +597,10 @@ class Note:
             if phrase: line.append(phrase)
             
             # Add line from file 
-            text_chunks.append(line)
+            self.text_chunks.append(line)
 
 
-        return text_chunks
+        return self.text_chunks
 
 
 
