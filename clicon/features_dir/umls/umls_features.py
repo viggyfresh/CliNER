@@ -17,7 +17,7 @@ import umls
 class UMLSFeatures:
 
 
-    enabled_prose_features    = ImmutableSet( [ 'umls_cui', 'umls_hypernyms' ] )
+    enabled_prose_features    = ImmutableSet( [ 'umls_cui', 'umls_semantic_type_word', 'umls_hypernyms' ] )
 
     enabled_nonprose_features = ImmutableSet( [ 'umls_cui', 'umls_semantic_type_word' ] )
 
@@ -83,6 +83,9 @@ class UMLSFeatures:
             if feature == "umls_semantic_type_word":
                 # Get UMLS semantic type (could have multiple)
                 mapping = umls.umls_semantic_type_word(self.umls_lookup_cache , word )
+
+                print mapping
+
                 # If is at least one semantic type
                 if mapping != None:
                     for concept in mapping:

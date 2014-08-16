@@ -51,6 +51,9 @@ class Model:
 
         self.filename = os.path.realpath(filename)
 
+        # Use python-crfsuite
+        self.crf_enabled = True
+
         # DictVectorizers
         self.first_prose_vec    = DictVectorizer()
         self.first_nonprose_vec = DictVectorizer()
@@ -139,17 +142,6 @@ class Model:
         print '\textracting  features (pass one)'
 
 
-
-#        profile.run('''                                     
-#from features.features import FeatureWrapper              
-#def tmp_func(data, Y):                                    
-#    feat_obj = FeatureWrapper(data)                       
-#    for line in data: isProse,feats = feat_obj.IOB_features(line)       
-#tmp_func(%s,%s)''' % (data,Y))
-#        exit()
-
-
-
         # Create object that is a wrapper for the features
         feat_obj = features.FeatureWrapper(data)
 
@@ -202,18 +194,19 @@ class Model:
 
             print '\ttraining classifiers (pass one) ' + flabel
 
-            '''
-            # Reconstruct lists
-            X = list(X)
-            X = [ X[i:j] for i, j in zip([0] + offsets, offsets)]
-            Y = [ Y[i:j] for i, j in zip([0] + offsets, offsets)]
+
+            
+            # CRF needs reconstructed lists
+            if self.crf_enabled:
+                X = list(X)
+                X = [ X[i:j] for i, j in zip([0] + offsets, offsets)]
+                Y = [ Y[i:j] for i, j in zip([0] + offsets, offsets)]
+                lib = crf
+            else:
+                lib = sci
 
             # Train classifiers
-            clf  = crf.train(X, Y, do_grid)
-            classifiers.append(clf)
-            '''
-
-            clf  = sci.train(X, Y, do_grid)
+            clf  = lib.train(X, Y, do_grid)
             classifiers.append(clf)
 
 
@@ -254,11 +247,11 @@ v                              AKA each index from inds_list maps to a label
         """
 
 
+        print '\textracting  features (pass two)'
+
+
         # Create object that is a wrapper for the features
         feat_o = features.FeatureWrapper()
-
-
-        print '\textracting  features (pass two)'
 
 
         # Extract features
@@ -340,11 +333,12 @@ v                              AKA each index from inds_list maps to a label
         @return       A list of list of IOB labels (1:1 mapping with data)
         """
 
+        print '\textracting  features (pass one)'
+
+
         # Create object that is a wrapper for the features
         feat_obj = features.FeatureWrapper(data)
  
-
-        print '\textracting  features (pass one)'
 
         # separate prose and nonprose data
         prose    = []
@@ -389,15 +383,19 @@ v                              AKA each index from inds_list maps to a label
 
             print '\tpredicting    labels (pass one) ' + flabel
 
-            '''
-            # Reconstruct lists
-            X = list(X)
-            X = [ X[i:j] for i, j in zip([0] + offsets, offsets)]
 
-            # Predict
-            out = crf.predict(clf, X)
-            '''
-            out = sci.predict(clf, X)
+            # CRF requires reconstruct lists
+            if self.crf_enabled:
+                X = list(X)
+                X = [ X[i:j] for i, j in zip([0] + offsets, offsets)]
+                lib = crf
+            else:
+                lib = sci
+
+
+            # Predict IOB labels
+            out = lib.predict(clf, X)
+
 
             # Format labels from output
             pred = [out[i:j] for i, j in zip([0] + offsets, offsets)]

@@ -19,33 +19,15 @@ import sys
 from commands import getstatusoutput
 
 
-def main():
-
-    f = open('/home/wboag/ConceptExtraction-master/data/concept_assertion_relation_training_data/beth/txt/record-20.txt', 'r')
-
-    txt = f.readlines()
-
-    data = []
-    for line in txt:
-        data.append(line.split())
-
-    tagger = '/home/wboag/geniatagger-3.0.1/geniatagger'
-    for (line,linedict) in zip(txt,genia(tagger,data)):
-       print line.split(), '\n'
-       for d in linedict:
-           print d
-       print '---\n\n'
 
 
-
-#
-#  genia()
-#
-#  Call the genia tagger and return its output in python format
-#
 def genia(geniatagger, data):
 
     '''
+    genia()
+
+    Purpose: Call the genia tagger and return its output in python format
+
     @param geniatagger.  A path to the executable geniatagger
     @param data.         A list of list of strings (lines of words from a file)
     @return              A list of dcitionaries of the genia tagger's output.
@@ -53,7 +35,7 @@ def genia(geniatagger, data):
 
     # write list to file and then feed it to GENIA
     genia_dir = os.path.dirname(geniatagger)
-    tmp_out = os.path.join(genia_dir,'/tmp/clicon_genia_tmp_file.txt')
+    tmp_out = os.path.join(genia_dir,'clicon_genia_tmp_file.txt')
     with open(tmp_out, 'w') as f:
         for line in data: f.write(' '.join(line) + '\n')
 
@@ -61,7 +43,7 @@ def genia(geniatagger, data):
     # Run genia tagger
     print '\t\tRunning GENIA tagger'
     genia_dir = os.path.dirname(geniatagger)
-    stream = getstatusoutput('cd %s ; ./geniatagger -nt %s' % (genia_dir,tmp_out))
+    stream= getstatusoutput('cd %s ; ./geniatagger -nt %s' % (genia_dir,tmp_out))
 
 
     # Process each line of output
@@ -90,9 +72,6 @@ def genia(geniatagger, data):
         fline.append(output)
         j += 1
         if j == len(data[i]):
-            #print data[i]
-            #print fline
-            #print '---'
             i += 1
             j = 0
             retlist.append(fline)

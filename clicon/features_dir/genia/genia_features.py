@@ -9,7 +9,6 @@
 
 
 import interface_genia
-
 from features_dir import utilities
 
 
@@ -58,23 +57,10 @@ class GeniaFeatures:
         genia_feats = next( self.GENIA_features )
 
 
+        # Feature: Current word's GENIA features
         for i,curr in enumerate(genia_feats):
-
-            # Feature: Current word's GENIA features
             keys = ['GENIA-stem','GENIA-POS','GENIA-chunktag']
             output = dict( ((k, curr[k]), 1) for k in keys if k in curr )
-            features_list[i].update(output)
-
-
-            '''
-            # Feature: Previous word's GENIA features
-            if i == 0:
-                output = dict( (('prev-'+k, '<START>'), 1) for k in keys if k in curr)
-            else:
-                output = dict( (('prev-'+k,   curr[k]), 1) for k in keys if k in curr)
-            '''
-
-
             features_list[i].update(output)
 
 

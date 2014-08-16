@@ -25,7 +25,6 @@ from wordshape import getWordShapes
 class WordFeatures:
 
     #enabled_IOB_prose_word_features = ImmutableSet( ['Generic#', 'last_two_letters', 'word', 'length', 'mitre', 'stem_porter', 'stem_lancaster', 'word_shape', 'metric_unit' ] )
-    enabled_IOB_prose_word_features = []
 
     enabled_IOB_nonprose_word_features = ImmutableSet( ['word', 'word_shape', 'metric_unit', 'mitre', 'directive', 'date' ] )
 
@@ -34,7 +33,8 @@ class WordFeatures:
 
     def __init__(self):
 
-        self.enabled_IOB_prose_word_features.append('word')
+        self.enabled_IOB_prose_word_features = []
+        #self.enabled_IOB_prose_word_features.append('word')
         self.enabled_IOB_prose_word_features.append('Generic#')
         #self.enabled_IOB_prose_word_features.append('last_two_letters')
         #self.enabled_IOB_prose_word_features.append('length')
@@ -63,8 +63,7 @@ class WordFeatures:
                 features[ (feature, st.stem(word.lower())) ] = 1
 
             if feature == "word":
-                w = word.lower()
-                features[(feature, w)] = 1
+                features[(feature, word.lower())] = 1
 
             # Feature: Generic# stemmed word
             if feature == 'Generic#':
@@ -157,6 +156,7 @@ class WordFeatures:
                     features[('word_shape', shape)] = 1
 
         return features
+
 
 
 

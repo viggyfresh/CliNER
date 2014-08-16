@@ -72,8 +72,12 @@ class SentenceFeatures:
         #self.enabled_IOB_prose_sentence_features.append('prev_3_pos')
         #self.enabled_IOB_prose_sentence_features.append('next_3_pos')
         self.enabled_IOB_prose_sentence_features.append('prev')
+        #self.enabled_IOB_prose_sentence_features.append('prev2')
+        #self.enabled_IOB_prose_sentence_features.append('prev3')
         self.enabled_IOB_prose_sentence_features.append('next')
-        #self.enabled_IOB_prose_sentence_features.append('GENIA')
+        #self.enabled_IOB_prose_sentence_features.append('next2')
+        #self.enabled_IOB_prose_sentence_features.append('next3')
+        self.enabled_IOB_prose_sentence_features.append('GENIA')
         #self.enabled_IOB_prose_sentence_features.append('UMLS')
 
 
@@ -93,7 +97,8 @@ class SentenceFeatures:
 
 
         # Only POS tag once
-        pos_tagged = nltk.pos_tag(sentence)
+        if 'pos' in self.enabled_IOB_prose_sentence_features:
+            pos_tagged = nltk.pos_tag(sentence)
 
 
         # Allow for particular features to be enabled
@@ -176,6 +181,30 @@ class SentenceFeatures:
                 else:
                     ngram_features[i].update(prev_list[i-1])
 
+        if "prev2" in self.enabled_IOB_prose_sentence_features:
+            prev2 = lambda f: {("prev2_"+k[0], k[1]): v/2.0 for k,v in f.items()}
+            prev_list = map(prev2, features_list)
+            for i in range(len(features_list)):
+                if i == 0:
+                    ngram_features[i][("prev2", "*")] = 1
+                elif i == 1:
+                    ngram_features[i][("prev2", "*")] = 1
+                else:
+                    ngram_features[i].update(prev_list[i-2])
+
+        if "prev3" in self.enabled_IOB_prose_sentence_features:
+            prev3 = lambda f: {("prev3_"+k[0], k[1]): v/4.0 for k,v in f.items()}
+            prev_list = map(prev3, features_list)
+            for i in range(len(features_list)):
+                if i < len(features_list) - 4:
+                    ngram_features[i].update(prev_list[i+3])
+                elif i == len(features_list) - 3:
+                    ngram_features[i][("prev3", "***")] = 1
+                elif i == len(features_list) - 2:
+                    ngram_features[i][("prev3", "**" )] = 1
+                else:
+                    ngram_features[i][("prev3", "*"  )] = 1
+
         if "next" in self.enabled_IOB_prose_sentence_features:
             next = lambda f: {("next_"+k[0], k[1]): v for k,v in f.items()}
             next_list = map(next, features_list)
@@ -185,15 +214,40 @@ class SentenceFeatures:
                 else:
                     ngram_features[i][("next", "*")] = 1
 
+        if "next2" in self.enabled_IOB_prose_sentence_features:
+            next2 = lambda f: {("next2_"+k[0], k[1]): v/2.0 for k,v in f.items()}
+            next_list = map(next2, features_list)
+            for i in range(len(features_list)):
+                if i < len(features_list) - 2:
+                    ngram_features[i].update(next_list[i+2])
+                elif i == len(features_list) - 2:
+                    ngram_features[i][("next2", "**")] = 1
+                else:
+                    ngram_features[i][("next2", "*")] = 1
+
+        if "next3" in self.enabled_IOB_prose_sentence_features:
+            next3 = lambda f: {("next3_"+k[0], k[1]): v/4.0 for k,v in f.items()}
+            next_list = map(next3, features_list)
+            for i in range(len(features_list)):
+                if i < len(features_list) - 4:
+                    ngram_features[i].update(next_list[i+3])
+                elif i == len(features_list) - 3:
+                    ngram_features[i][("next3", "***")] = 1
+                elif i == len(features_list) - 2:
+                    ngram_features[i][("next3", "**" )] = 1
+                else:
+                    ngram_features[i][("next3", "*"  )] = 1
+
+
         merged = lambda d1, d2: dict(d1.items() + d2.items())
         features_list = [merged(features_list[i], ngram_features[i]) 
             for i in range(len(features_list))]
 
 
-        #for f in features_list:
-        #    print sorted(f.items())
-        #    print
-        #print '\n\n\n'
+        for f in features_list:
+            print sorted(f.items())
+            print
+        print '\n\n\n'
 
         return features_list
 
@@ -213,7 +267,8 @@ class SentenceFeatures:
             features_list.append( word_feats )
 
 
-        pos_tagged = nltk.pos_tag(sentence)
+        if 'pos' in self.enabled_IOB_nonprose_sentence_features:
+            pos_tagged = nltk.pos_tag(sentence)
 
 
         # Allow for particular features to be enabled
