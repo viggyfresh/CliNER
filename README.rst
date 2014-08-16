@@ -82,7 +82,7 @@ Installation Script
 
 
 
-3. Install Pytohn Dependencies
+3. Install Python Dependencies
 
     This project has dependencies on scientific computation libraries.
 
