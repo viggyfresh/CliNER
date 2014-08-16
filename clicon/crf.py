@@ -44,6 +44,7 @@ def format_features(rows, labels=None):
         # Sentence boundary seperator
         retVal.append('')
 
+    '''
     # Sanity check
     global count
     if labels:
@@ -56,6 +57,7 @@ def format_features(rows, labels=None):
     with open(out_f, 'w') as f:
         for line in retVal:
             print >>f, line[start:]
+    '''
 
     return retVal
 
