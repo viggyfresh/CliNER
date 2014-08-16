@@ -8,13 +8,14 @@ def umls_semantic_type_word( umls_string_cache , sentence ):
         mapping = umls_string_cache.get_map( sentence )
     else:
         concept = SQLookup.string_lookup( sentence )
-        #print sentence, ' - NOT FOUND'
-        #print '\t', concept
+        umls_string_cache.add_map( sentence , concept )
+        '''
         if concept != None:
             #umls_string_cache.add_map( sentence , concept[0] )
             umls_string_cache.add_map( sentence , concept )
         else:
             umls_string_cache.add_map( sentence , None )
+        '''
         mapping = umls_string_cache.get_map(sentence)
 
     #print 'umls_semantic_type_word - returning:'
@@ -210,6 +211,9 @@ def get_cui( cache , word ):
 # Get the hypernyms of a string
 def umls_hypernyms( cache, string ):
 
+    print 'hypernym lookup is unacceptably slow'
+    #return []
+
     # If hypernyms already in cache
     if cache.has_key( string + '--hypernyms' ):
 
@@ -219,11 +223,6 @@ def umls_hypernyms( cache, string ):
 
         # Get hypernyms
         hyps = SQLookup.hypernyms_lookup(string)
-
-        # Eliminate duplicates
-        #hyps = list(set(hyps))
-        #hyps = [cui[0] for cui in hyps]
-        #hyps = hyps[0]
 
         # Store result in cache
         cache.add_map( string + '--hypernyms' , hyps )

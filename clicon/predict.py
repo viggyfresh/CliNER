@@ -36,6 +36,12 @@ def main():
         default = 'i2b2'
     )
 
+    parser.add_argument("-crf",
+        dest = "with_crf",
+        help = "Specify where to find crfsuite",
+        default = None
+    )
+
     args = parser.parse_args()
 
 
@@ -45,8 +51,24 @@ def main():
     format = args.format
 
 
+    # Is crfsuite installed?
+    if args.with_crf:
+        crfsuite = args.with_crf
+    elif False:
+        'DETECT CRFSUITE FROM CONFIG FILE'
+        crfsuite = None
+    else:
+        crfsuite = None
+
+
     # Load model
     model = Model.load(args.model)
+
+
+    # Tell user if not predicting
+    if not files:
+        print >>sys.stderr, "\n\tNote: You did not supply any input files\n"
+        exit()
 
 
     # For each file, predict concept labels
@@ -70,25 +92,22 @@ def main():
         con = con[:-3] + 'con'
 
 
-        for t in sci.bits(model.type):
-
-            if t == sci.LIN:
-                helper.mkpath(os.path.join(args.output, "lin"))
-                con_path = os.path.join(args.output, "lin", con)
+        helper.mkpath(os.path.join(args.output, "lin"))
+        con_path = os.path.join(args.output, "lin", con)
 
 
-            # Get predictions in proper format
-            if format == 'i2b2':
-                output = note.write_i2b2_con(labels[t])
-            elif format == 'xml':
-                output =  note.write_xml(labels[t])
-            else:
-                output = ''
+        # Get predictions in proper format
+        if format == 'i2b2':
+            output = note.write_i2b2_con(labels)
+        elif format == 'xml':
+            output =  note.write_xml(labels)
+        else:
+            output = ''
 
-            # Output the concept predictions
-            print '\n\nwriting to: ', con_path
-            with open(con_path, 'w') as f:
-                print >>f, output
+        # Output the concept predictions
+        print '\n\nwriting to: ', con_path
+        with open(con_path, 'w') as f:
+            print >>f, output
 
 
         print ''

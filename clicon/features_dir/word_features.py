@@ -19,80 +19,61 @@ import re
 from sets import ImmutableSet
 from wordshape import getWordShapes
     
-# What modules are available
-from read_config import enabled_modules
 
 
-enabled = enabled_modules()
-if enabled['UMLS']:
-    from umls.umls_features import UMLSFeatures
-
-
-# MAJOR TODO - Further serialize UMLS features so that 
-#              extracting features just needs to make one function call
 
 class WordFeatures:
 
-    enabled_IOB_prose_word_features = ImmutableSet( ['Generic#', 'last_two_letters', 'word', 'length', 'mitre', 'stem_porter', 'word_shape', 'metric_unit', 'UMLS' ] )
+    #enabled_IOB_prose_word_features = ImmutableSet( ['Generic#', 'last_two_letters', 'word', 'length', 'mitre', 'stem_porter', 'stem_lancaster', 'word_shape', 'metric_unit' ] )
 
-    enabled_IOB_nonprose_word_features = ImmutableSet( ['word', 'uncased_prev_word', 'word_shape', 'metric_unit', 'mitre', 'directive' ] )
+    enabled_IOB_nonprose_word_features = ImmutableSet( ['word', 'word_shape', 'metric_unit', 'mitre', 'directive', 'date' ] )
 
-    enabled_concept_word_features = ImmutableSet( ['word', 'length', 'mitre', 'stem_porter', 'stem_lancaster', 'word_shape', 'UMLS'] )
+    enabled_concept_features = ImmutableSet( ['word', 'prefix', 'stem_porter', 'stem_lancaster', 'previous_word_stem', 'next_word_stem'] )
 
 
     def __init__(self):
 
-        # Only use UMLS feature module if it is available
-        if enabled['UMLS']:
-            self.feat_umls = UMLSFeatures()
+        self.enabled_IOB_prose_word_features = []
+        #self.enabled_IOB_prose_word_features.append('word')
+        self.enabled_IOB_prose_word_features.append('Generic#')
+        #self.enabled_IOB_prose_word_features.append('last_two_letters')
+        #self.enabled_IOB_prose_word_features.append('length')
+        #self.enabled_IOB_prose_word_features.append('mitre')
+        #self.enabled_IOB_prose_word_features.append('stem_porter')
+        #self.enabled_IOB_prose_word_features.append('stem_lancaster')
+        #self.enabled_IOB_prose_word_features.append('word_shape')
 
+        pass
 
 
     # IOB_prose_features_for_word()
     #
     # input:  A single word
     # output: A dictionary of features
-    def IOB_prose_features(self, sentence, ind):
-
-        # Abbreviation for most features,
-        #    although some will require index for context
-        word = sentence[ind]
-
+    def IOB_prose_features(self, word):
 
         # Feature: <dummy>
-        features = {'dummy': 1}  # always have >0 dimensions
-
-
+        features = {('dummy', None): 1}  # always have >0 dimensions
+  
         # Allow for particular features to be enabled
         for feature in self.enabled_IOB_prose_word_features:
 
+            if feature == "stem_lancaster":
+                st = nltk.stem.LancasterStemmer()
+                features[ (feature, st.stem(word.lower())) ] = 1
+
+            if feature == "word":
+                features[(feature, word.lower())] = 1
 
             # Feature: Generic# stemmed word
             if feature == 'Generic#':
                 generic = re.sub('[0-9]','0',word)
-                features.update( { ('Generic#',generic) : 1 } )
+                features[ ('Generic#',generic) ] = 1
 
-           # Feature: Last two leters of word
+            # Feature: Last two leters of word
             if feature == 'last_two_letters':
-                features.update( { ('last_two_letters',word[-2:]) : 1 } )
+                features[ ('last_two_letters',word[-2:]) ] = 1
 
-
-            # Feature: Previous word
-            if feature == 'prev_word':
-                if i == 0:
-                    features.update( {('prev_word',    '<START>' ) : 1} )
-                else:
-                    features.update( {('prev_word', sentence[ind-1]) : 1} )
-
-            # Feature: UMLS Word Features (only use prose ones)
-            if (feature == "UMLS") and enabled['UMLS']:
-                umls_features = self.feat_umls.IOB_prose_features(word)
-                features.update( umls_features )
-
-
-            # FIXME - adding pass two features to pass 1 (good? bad?)
-            if feature == "word":
-                features[(feature, word)] = 1
 
             if feature == "length":
                 features[(feature, None)] = len(word)
@@ -106,14 +87,10 @@ class WordFeatures:
                 st = nltk.stem.PorterStemmer()
                 features[(feature, st.stem(word))] = 1
 
-            if feature == "stem_lancaster":
-                st = nltk.stem.LancasterStemmer()
-                features[(feature, st.stem(word))] = 1
-
             if feature == "word_shape":
                 wordShapes = getWordShapes(word)
-                for j, shape in enumerate(wordShapes):
-                    features[(feature + str(j), shape)] = 1
+                for shape in wordShapes:
+                    features[(feature, shape)] = 1
 
 
         return features
@@ -126,137 +103,166 @@ class WordFeatures:
     #
     # input:  A single word
     # output: A dictionary of features
-    def IOB_nonprose_features(self, sentence, ind):
-
-        # Abbreviation for most features,
-        #    although some will require index for context
-        word = sentence[ind]
-
+    def IOB_nonprose_features(self, word):
 
         # Feature: <dummy>
         features = {'dummy': 1}  # always have >0 dimensions
 
+        enabled = True
 
         # Allow for particular features to be enabled
         for feature in self.enabled_IOB_nonprose_word_features:
 
             # Feature: The word, itself
             if feature == 'word':
-                features.update( { ('word',word.lower()) : 1} )
-
-            # Feature: Uncased previous word
-            if feature == 'uncased_prev_word':
-                if ind == 0:
-                   features.update( {('uncased_prev_word','<START>'            ) : 1} )
-                else:
-                    features.update( {('uncased_prev_word',sentence[ind-1].lower()) : 1} )
+                features[('word', word.lower())] = 1
 
 
             # Feature: Metric Unit
             if feature == "metric_unit":
-                tests = 3
-                unit = 0
+                unit = None
                 if self.is_weight(word):
-                    unit = 1 / tests
+                    unit = 'weight'
                 elif self.is_size(word):
-                    unit = 2 / tests
+                    unit = 'size'
                 elif self.is_volume(word):
-                    unit = 3 / tests
-                features[(feature, unit)] = 1
+                    unit = 'volume'
+                features[('metric_unit',unit)] = 1
 
 
             # Feature: Date
             if feature == 'date':
                 if self.is_date(word):
-                    features[feature] = 1
+                    features[('date',None)] = 1
 
 
             # Feature: Directive
             if feature == 'directive':
                 if self.is_directive(word):
-                    features[feature] = 1
+                    features[('directive',None)] = 1
 
 
             # Feature: Mitre
             if feature == "mitre":
                 for f in self.mitre_features:
                     if re.search(self.mitre_features[f], word):
-                        features[(feature, f)] = 1
+                        features[('mitre', f)] = 1
 
 
             # Feature: Word Shape
             if feature == "word_shape":
                 wordShapes = getWordShapes(word)
-                for j, shape in enumerate(wordShapes):
+                for shape in wordShapes:
                     features[('word_shape', shape)] = 1
-
-
-            # Feature: UMLS Word Features (only use nonprose ones)
-            if (feature == "UMLS") and enabled['UMLS']:
-                umls_features = self.feat_umls.IOB_nonprose_features(word)
-                features.update( umls_features )
-
 
         return features
 
 
 
-    def concept_features(self, word):
+
+    def concept_features_for_word(self, word):
 
         """
         concept_features_for_word()
  
         @param  word. A word to generate features for
         @return       A dictionary of features
- 
-        NOTE: Currently does not involve context (AKA prev).
-              In order to support context, you'd need to change arg from
-               'word'  ->  'chunk' and 'ind'
         """
 
         features = {}
 
         # Allow for particular features to be enabled
-        for feature in self.enabled_concept_word_features:
+        for feature in self.enabled_concept_features:
 
-            # Feature: Word (each word)
+            # Feature: Uncased Word
             if feature == "word":
-                features[ ("word",word) ] = 1
+                features[ ("word",word.lower()) ] = 1
 
-            # Feature: Length (of each word)
+            # Feature: Porter Stem
+            if feature == "stem_porter":
+                st = nltk.stem.PorterStemmer()
+                features[ ("stem_poter", st.stem(word)) ] = 1
+
+            # Feature: Lancaster Stem
+            if feature == "stem_lancaster":
+                st = nltk.stem.LancasterStemmer()
+                features[ ("stem_lancaster", st.stem(word)) ] = 1
+
+            # Feature: First Four Letters
+            if feature == "prefix":
+                prefix = word[:4].lower()
+                features[ ("prefix",prefix) ] = 1
+
+
+
+            # Feature: Length
             if feature == "length":
                 features[ ("length",None) ] = len(word)
 
-            # Feature: Mitre (of each word)
+            # Feature: Mitre
             if feature == "mitre":
                 for f in self.mitre_features:
                     if re.search(self.mitre_features[f], word):
                         features[ ("mitre",f) ] = 1
 
-            # Feature: Porter Stem (of each word)
-            if feature == "stem_porter":
-                st = nltk.stem.PorterStemmer()
-                features[ ("stem_poter", st.stem(word)) ] = 1
-
-            # Feature: Lancaster Stem (of each word)
-            if feature == "stem_lancaster":
-                st = nltk.stem.LancasterStemmer()
-                features[ ("stem_lancaster", st.stem(word)) ] = 1
-
-            # Feature: Word Shape (of each word)
+            # Feature: Word Shape
             if feature == "word_shape":
                 wordShapes = getWordShapes(word)
-                for j, shape in enumerate(wordShapes):
-                    features[ ("word_shape" + str(j), shape) ] = 1
-
-            # Features: UMLS Features
-            if (feature == "UMLS") and enabled['UMLS']:
-                umls_features = self.feat_umls.concept_features_for_word(word)
-                features.update(umls_features)
+                for shape in wordShapes:
+                    features[ ("word_shape", shape) ] = 1
 
 
         return features
 
+
+
+
+    def concept_features_for_chunk(self, sentence, ind):
+
+        """
+        concept_features_for_chunk()
+ 
+        @param  word. A chunk from the sentence
+        @return       A dictionary of features
+        """
+
+        features = {'dummy':1}
+
+        # Word-level features for each word of the chunk
+        for w in sentence[ind].split():
+            word_features = self.concept_features_for_word(w)
+            features.update(word_features)
+
+
+        # Stemmer
+        st = nltk.stem.PorterStemmer()
+
+
+        # Context windows
+        for feature in self.enabled_concept_features:
+
+            # Feature: Previous word
+            if feature == "previous_word_stem":
+                if ind != 0:
+                    prev_ind = ind - 1
+                    prev_chunk = sentence[prev_ind].split()
+                    prev_word = st.stem( prev_chunk[-1] )
+                    features[ ('prev_word_stem',prev_word) ] = 1
+                else:
+                    features[ ('prev_word_stem',None) ] = 1
+
+            # Feature: Previous word
+            if feature == "previous_word_stem":
+                if ind != len(sentence)-1:
+                    next_ind = ind + 1
+                    next_chunk = sentence[next_ind].split()
+                    next_word = st.stem( next_chunk[-1] )
+                    features[ ('next_word_stem',next_word) ] = 1
+                else:
+                    features[ ('next_word_stem',None) ] = 1
+
+
+        return features
 
 
 
@@ -299,7 +305,7 @@ class WordFeatures:
         return re.search(regex, word)
 
     def is_date(self, word):
-        regex = r'^(\d\d\d\d-\d\d-\d|\d\d?-\d\d?-\d\d\d\d?|\d\d\d\d-\d\d?-\d\d?)$'
+        regex= r'^(\d\d\d\d-\d\d-\d|\d\d?-\d\d?-\d\d\d\d?|\d\d\d\d-\d\d?-\d\d?)$'
         return re.search(regex,word)
 
     def is_volume(self, word):

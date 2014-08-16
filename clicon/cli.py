@@ -16,8 +16,9 @@ def clicon():
 @click.option('--annotations', help='Concept files for training.')
 @click.option('--model'      , help='Model output by train.'     )
 @click.option('--format'     , help='Data format (i2b2 or xml).' )
+@click.option('--crfsuite'   , help='Path to crfsuite.'          )
 @click.argument('input')
-def train(annotations, model, format, input):
+def train(annotations, model, format, crfsuite, input):
 
 
     # Command line arguments
@@ -43,9 +44,11 @@ def train(annotations, model, format, input):
 
     # Optional arguments
     if model:
-        cmd += ['-m',  model]
+        cmd += ['-m'  ,    model]
     if format:
-        cmd += ['-f', format]
+        cmd += ['-f'  ,   format]
+    if crfsuite:
+        cmd += ['-crf', crfsuite]
 
 
     # Execute train.py
@@ -59,8 +62,9 @@ def train(annotations, model, format, input):
 @click.option('--out'   , help='The directory to write the output')
 @click.option('--model' , help='Model used to predict on files'   )
 @click.option('--format', help='Data format (i2b2 or xml).'       )
+@click.option('--crfsuite'   , help='Path to crfsuite.'          )
 @click.argument('input')
-def predict(model, out, format, input):
+def predict(model, out, format, crfsuite, input):
 
 
     # Base directory
@@ -84,6 +88,8 @@ def predict(model, out, format, input):
         cmd += ['-m',  model]
     if format:
         cmd += ['-f', format]
+    if crfsuite:
+        cmd += ['-crf', crfsuite]
 
 
     # Execute train.py
@@ -138,8 +144,6 @@ def format(annotations, format, out, input):
 
     # Execute train.py
     subprocess.call(cmd)
-
-
 
 
 
