@@ -36,20 +36,25 @@ def SQlookup( c , string ):
 #returns the semantic type of a word 
 def string_lookup( string ):
     
-    #return SQlookup( c ,  string )
-    r = SQlookup( c ,  string )
+    try:
+        return SQlookup( c ,  string )
 
-    return r
+    except sqlite3.ProgrammingError, e:
+
+        return []
+
 
 
 # get all semantic types for a given concept
 def cui_lookup( string ):
 
-    # queries database and finds semantic type match
-    c.execute( "SELECT cui FROM MRCON WHERE str = ?;" , (string,) )
+    try:
+        # Get cuis
+        c.execute( "SELECT cui FROM MRCON WHERE str = ?;" , (string,) )
+        return c.fetchall() 
 
-    #returns a tuple with the match or None if there was  no match.  
-    return c.fetchall() 
+    except sqlite3.ProgrammingError, e:
+        return []
 
 
 def hypernyms_lookup( string ):
