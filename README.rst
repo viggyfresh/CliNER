@@ -31,9 +31,13 @@ Usage Examples
     End-to-End
 
         export CLICON_DIR=.
+        
         bash install.sh
+        
         clicon train $CLICON_DIR/examples/pretend.xml --format xml
+        
         clicon predict $CLICON_DIR/examples/pretend.txt
+        
         clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --format xml
 
 
