@@ -32,6 +32,19 @@ Features
 Installation
 --------
 
+**Begin by cloning the git repository:**
+
+:: 
+
+    user@your-machine:~$ git clone https://github.com/mitmedg/CliCon.git
+        Cloning into 'CliCon'...
+        remote: Counting objects: 1296, done.
+        remote: Compressing objects: 100% (503/503), done.
+        remote: Total 1296 (delta 812), reused 1253 (delta 781)
+        Receiving objects: 100% (1296/1296), 1001.14 KiB | 759 KiB/s, done.
+        Resolving deltas: 100% (812/812), done.
+    user@your-machine:~$ export CLICON_DIR=$(pwd)/CliCon
+
 
 0. Using an installation Script
 
@@ -78,17 +91,6 @@ Please email wboag@cs.uml.edu with your installation questions.
     In order to run CliCon, you must define the CLICON_DIR environment variable.
 
     **This variable must be the path of the directory created by git.**
-
-    example:
-        user@your-machine:~$ git clone https://github.com/mitmedg/CliCon.git
-            Cloning into 'CliCon'...
-            remote: Counting objects: 1296, done.
-            remote: Compressing objects: 100% (503/503), done.
-            remote: Total 1296 (delta 812), reused 1253 (delta 781)
-            Receiving objects: 100% (1296/1296), 1001.14 KiB | 759 KiB/s, done.
-            Resolving deltas: 100% (812/812), done.
-        user@your-machine:~$ export CLICON_DIR=$(pwd)/CliCon
-
 
 
 
