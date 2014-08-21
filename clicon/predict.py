@@ -15,19 +15,19 @@ def main():
     parser.add_argument("-i", 
         dest = "input", 
         help = "The input files to predict", 
-        default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/test_data/*')
+        default = os.path.join(os.getenv('CLICON_DIR'), 'data/test_data/*')
     )
 
     parser.add_argument("-o", 
         dest = "output", 
         help = "The directory to write the output", 
-        default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/test_predictions')
+        default = os.path.join(os.getenv('CLICON_DIR'), 'data/test_predictions')
     )
 
     parser.add_argument("-m",
         dest = "model",
         help = "The model to use for prediction",
-        default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../models/run_models/run.model')
+        default = os.path.join(os.getenv('CLICON_DIR'), 'models/run.model')
     )
 
     parser.add_argument("-f",
@@ -51,16 +51,6 @@ def main():
     format = args.format
 
 
-<<<<<<< HEAD
-    # Is crfsuite installed?
-    if args.with_crf:
-        crfsuite = args.with_crf
-    elif False:
-        'DETECT CRFSUITE FROM CONFIG FILE'
-        crfsuite = None
-    else:
-        crfsuite = None
-=======
     # Must specify output format
     if (format != 'i2b2') and (format != 'xml'):
         print >>sys.stderr, '\n\tError: Must specify output format (i2b2 or xml)'
@@ -70,7 +60,6 @@ def main():
 
     # Output directory
     helper.mkpath(os.path.join(args.output))
->>>>>>> documentation
 
 
     # Load model
@@ -99,51 +88,26 @@ def main():
         labels = model.predict(note)
 
 
-<<<<<<< HEAD
-        # Output directory
-        con = os.path.split(txt)[-1]
-        con = con[:-3] + 'con'
-
-
-        helper.mkpath(os.path.join(args.output, "lin"))
-        con_path = os.path.join(args.output, "lin", con)
-=======
         # Get predictions in proper format
         if format == 'i2b2':
             extension = 'con'
             output = note.write_i2b2(labels)
         else:
             extension = 'xml'
-            output =  note.write_xml(labels)
+            output = note.write_xml(labels)
 
->>>>>>> documentation
 
         # Output file
         basename = os.path.basename(txt)[:-3] + extension
         out_path = os.path.join(args.output, basename)
 
-<<<<<<< HEAD
-        # Get predictions in proper format
-        if format == 'i2b2':
-            output = note.write_i2b2_con(labels)
-        elif format == 'xml':
-            output =  note.write_xml(labels)
-        else:
-            output = ''
-
-        # Output the concept predictions
-        print '\n\nwriting to: ', con_path
-        with open(con_path, 'w') as f:
-=======
 
         # Output the concept predictions
         print '\n\nwriting to: ', out_path
         with open(out_path, 'w') as f:
->>>>>>> documentation
             print >>f, output
+        print
 
-
-        print ''
 
 
 

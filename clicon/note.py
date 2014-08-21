@@ -424,7 +424,7 @@ class Note:
 
 
         # If given labels to write, use them. Default to self.classifications
-        if labels:
+        if labels != None:
             classifications = labels
         elif self.classifications:
             classifications = self.classifications

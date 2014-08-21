@@ -27,13 +27,19 @@ def main():
     parser.add_argument("-m",
         dest = "model",
         help = "Path to the model that should be generated",
-        default = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../models/run_models/run.model')
+        default = os.path.join(os.getenv('CLICON_DIR'), 'models/run.model')
     )
 
     parser.add_argument("-f",
         dest = "format",
         help = "Data format (i2b2 or xml).",
         default = 'i2b2'
+    )
+
+    parser.add_argument("-g",
+        dest = "grid",
+        help = "A flag indicating whether to perform a grid search",
+        action = "store_true"
     )
 
     # Parse the command line arguments
@@ -45,15 +51,6 @@ def main():
     txt_files = glob.glob(args.txt)
     con_files = glob.glob(args.con)
 
-
-    # Is crfsuite installed?
-    if args.with_crf:
-        crfsuite = args.with_crf
-    elif False:
-        'DETECT CRFSUITE FROM CONFIG FILE'
-        crfsuite = None
-    else:
-        crfsuite = None
 
     # i2b2 or xml
     format = args.format
@@ -105,7 +102,7 @@ def main():
 
 
     # Train the model using the Note's data
-    model.train(notes)
+    model.train(notes, args.grid)
 
 
 

@@ -6,9 +6,6 @@ from multiprocessing import cpu_count
 from sklearn.metrics import f1_score
 
 
-<<<<<<< HEAD
-=======
-
 def train(X, Y, do_grid):
 
     # Search space
@@ -17,6 +14,8 @@ def train(X, Y, do_grid):
 
     # Grid search?
     if do_grid:
+        print '\t\tperforming grid search'
+
         estimates = LinearSVC() 
         parameters = [ {'C':C_range } ]
             
