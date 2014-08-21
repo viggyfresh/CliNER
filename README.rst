@@ -25,6 +25,43 @@ Features
 
 
 
+Usage Examples
+--------
+
+    End-to-End
+
+        export CLICON_DIR=.
+        bash install.sh
+        clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.con
+        clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_predictions/
+        clicon format $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/data/test_predictions/lin/pretend.con --format xml
+
+
+    i2b2 format
+        Example: Train model on i2b2-formatted data
+            clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.con
+
+        Example: Predict concepts and output in i2b2 format
+            clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_predictions/
+
+        example: Change Format
+            clicon format $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/data/test_predictions/pretend.con --format xml
+
+        example: Evaluation
+
+    xml format
+        Example: Train model on xml-formatted data
+            clicon train $CLICON_DIR/examples/pretend.xml --format xml
+
+        Example: Predict concepts and output in xml format
+            clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_predictions/ --format xml
+
+        example: Change Format
+            clicon format $CLICON_DIR/data/test_predictions/pretend.xml --format i2b2
+
+
+
+
 Installation
 --------
 
@@ -204,19 +241,4 @@ Installation Script
 8. Run unit tests
 
     **We haven't done any unit tests yet**
-
-
-
-
-Usage Examples
---------
-
-    CliCon is a Machine Learning interface for concept extraction. It is able to train and predict on data. It can also change formats from i2b2 <-> xml. Soon, it will also provide an evaluation metric to see how correct its predictions actually are.
-
-    example 1: Sanity Check - Train/Predict on the same file
-        (venv_clicon)user@your-machine:~/CliCon$ clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.con
-
-        (venv_clicon)user@your-machine:~/CliCon$ clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_predictions/
-
-        (venv_clicon)user@your-machine:~/CliCon$ clicon format $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/data/test_predictions/lin/pretend.con --format xml
 
