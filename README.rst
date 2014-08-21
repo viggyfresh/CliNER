@@ -35,17 +35,23 @@ Installation
 --------
 
 
-Installation Script
+0. Using an installation Script
 
-    For Ubuntu users, there is a script that should be able to download most of the pieces of this project. Note, it cannot get priveleged tools (such as the i2b2 data and the UMLS tables) - you must get those two pieces yourself.
+Linux users can use an installation script to download and install all the components of this project, including third-party dependencies. Note that cannot get tools and data that require special use agreements (including the i2b2 data and the UMLS tables), which have to be obtained separately.
 
-    The script will try to download CliCon's third party dependencies and will get everything except for the i2b2 data and the UMLS tables.
+    To invoke the script:
 
-    If the installation script encounters issues, please see the README section corresponding to the failure message. 
+::    
 
-    If you opt not to use the provided script, you must follow the steps described below, starting with setting up virtual environments and environment variables. Not terribly difficult (we hope!).
+    user@your-machine:~$ export CLICON_DIR=.
+    user@your-machine:~$ source install.sh
     
-    Please email wboag@cs.uml.edu with your installation questions.
+
+If the installation script encounters issues, please see the README section corresponding to the failure message. 
+
+If you opt not to use the provided script, you must follow the steps described below, starting with setting up virtual environments and environment variables. Not terribly difficult (we hope!).
+    
+Please email wboag@cs.uml.edu with your installation questions.
 
 
 1. Set up virtualenv
