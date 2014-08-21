@@ -49,10 +49,11 @@ Installation
 
 Linux users can use an installation script to download and install all the components of this project, including third-party dependencies. Note that cannot get tools and data that require special use agreements (including the i2b2 data and the UMLS tables), which have to be obtained separately.
 
-To invoke the script:
+To invoke the script, first ``cd`` into the ``CliCon`` directory and set the CLICON_DIR environmentn variable:
 
 ::    
 
+    user@your-machine:~$ cd CliCon
     user@your-machine:~$ export CLICON_DIR=.
     user@your-machine:~$ source install.sh
     
