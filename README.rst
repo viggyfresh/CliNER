@@ -32,7 +32,7 @@ Features
 Installation
 --------
 
-1. Clone the CliCon git repository:
+**Clone the CliCon git repository:**
 
 :: 
 
@@ -45,11 +45,11 @@ Installation
         Resolving deltas: 100% (812/812), done.
 
 
-2. Using an installation Script
+**Using an installation script**
 
 Linux users can use an installation script to download and install all the components of this project, including third-party dependencies. Note that cannot get tools and data that require special use agreements (including the i2b2 data and the UMLS tables), which have to be obtained separately.
 
-**To invoke the script:**
+To invoke the script:
 
 ::    
 
