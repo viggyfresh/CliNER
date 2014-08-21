@@ -32,7 +32,7 @@ Features
 Installation
 --------
 
-**Begin by cloning the git repository:**
+1. Clone the CliCon git repository:
 
 :: 
 
@@ -43,10 +43,9 @@ Installation
         remote: Total 1296 (delta 812), reused 1253 (delta 781)
         Receiving objects: 100% (1296/1296), 1001.14 KiB | 759 KiB/s, done.
         Resolving deltas: 100% (812/812), done.
-    user@your-machine:~$ export CLICON_DIR=$(pwd)/CliCon
 
 
-0. Using an installation Script
+2. Using an installation Script
 
 Linux users can use an installation script to download and install all the components of this project, including third-party dependencies. Note that cannot get tools and data that require special use agreements (including the i2b2 data and the UMLS tables), which have to be obtained separately.
 
@@ -68,7 +67,7 @@ Please email wboag@cs.uml.edu with your installation questions.
 **Step-by-step installation instructions:**
 
 
-1. Set up virtualenv
+(1) Set up virtualenv
 
     Setup a virtual environent. You must re-enable the virtual environment every new session.
 
@@ -89,6 +88,8 @@ Please email wboag@cs.uml.edu with your installation questions.
 2. environment variable
 
     In order to run CliCon, you must define the CLICON_DIR environment variable.
+
+    user@your-machine:~$ export CLICON_DIR=$(pwd)/CliCon
 
     **This variable must be the path of the directory created by git.**
 
