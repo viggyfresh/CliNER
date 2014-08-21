@@ -32,7 +32,7 @@ Features
 Installation
 --------
 
-**Clone the CliCon git repository:**
+**Cloning the CliCon git repository:**
 
 :: 
 
@@ -129,7 +129,7 @@ Please email wboag@cs.uml.edu with your installation questions.
 
 
 
-4. Get i2b2 data
+4. Get i2b2 2010 shared task data
 
     The Data Use and Confidentiality Agreement with i2b2 forbids us from redistributing their data. In order to gain access, you must go to:
 
@@ -197,18 +197,17 @@ Please email wboag@cs.uml.edu with your installation questions.
 
 
 
-7. Create 'clicon' command for CLI
+7. Create 'clicon' executable script for command-line use
 
     In order to run CliCon (as done in the usage examples), you must run setup.py.
 
-    This is very simple. As long as the python dependencies are properly installed, you can run 'python $CLICON_DIR/setup.py install'.
+    As long as the Python dependencies are properly installed, you should be able to run 'python $CLICON_DIR/setup.py install'.
 
-    If it works, you should see a tiny help message from enterring 'clicon --help'
+    If it works, you should see a brief help message when invoking clicon with the ``--help`` option: 
 
-    example:
+::
 
         (venv_clicon)user@your-machine:~/CliCon$ python $CLICON_DIR/setup.py install
-
         (venv_clicon)user@your-machine:~/CliCon$ clicon --help
 
 
