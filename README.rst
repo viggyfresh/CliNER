@@ -53,8 +53,9 @@ The following packages need to be on the system for the script to work:
 
 ::
 
-    python-pip installer 
+    python-pip
     python-virtualenv
+    python-dev
     
 Some of python modules used by CliCon have the following dependencies, which also need to be installed on the system:
     
