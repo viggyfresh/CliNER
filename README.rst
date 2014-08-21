@@ -52,6 +52,7 @@ Linux users can use an installation script to download and install all the compo
 The following packages need to be on the system for the script to work:
 
 ::
+
     python-pip installer 
     python-virtualenv
     
