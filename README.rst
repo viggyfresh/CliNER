@@ -215,7 +215,7 @@ Please email wboag@cs.uml.edu with your installation questions.
 
 8. Run unit tests
 
-    **We haven't done any unit tests yet**
+    [this section is under construction]
 
 
 
