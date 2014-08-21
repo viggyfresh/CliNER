@@ -12,7 +12,6 @@ CliCon
         :target: https://pypi.python.org/pypi/clicon
 
 
-
 Clinical Concept extraction system (CliCon) is an open-source natural language processing system for named entity recognition in clinical text of electronic health records.  CliCon system is designed to follow best practices in clinical concept extraction, as established in i2b2 2010 shared task.  
 
 CliCon is implemented as a two-pass machine learning system for named entity recognition, currently using a Conditional Random Fields (CRF) classifier to establish concept boundaries and a Support Vector Machine (SVM) classifier to establish the type of concept.  
@@ -28,55 +27,6 @@ Features
 
 * TODO
 
-
-
-
-Usage Examples
---------
-
-    End-to-End
-
-        export CLICON_DIR=.
-        
-        bash install.sh
-        
-        clicon train $CLICON_DIR/examples/pretend.xml --format xml
-        
-        clicon predict $CLICON_DIR/examples/pretend.txt
-        
-        clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --format xml
-
-
-    i2b2 format
-
-        Example: Train model on i2b2-formatted data
-            clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.con
-
-        Example: Train model on i2b2-formatted data with SVM grid search (NOTE: Currently does not work with sample data because the sample data is too small for cross validation).
-            clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.con --grid-search
-
-        Example: Predict concepts and output in i2b2 format
-            clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_predictions/
-
-        example: Evaluation
-            clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --predictions $CLICON_DIR/data/test_predictions/ --format i2b2
-
-        example: Change Format
-            clicon format $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/data/test_predictions/pretend.con --format xml
-
-
-    xml format
-        Example: Train model on xml-formatted data
-            clicon train $CLICON_DIR/examples/pretend.xml --format xml
-
-        Example: Predict concepts and output in xml format
-            clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_predictions/ --format xml
-
-        example: Evaluation
-            clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --predictions $CLICON_DIR/data/test_predictions/ --format xml
-
-        example: Change Format
-            clicon format $CLICON_DIR/data/test_predictions/pretend.xml --format i2b2
 
 
 
@@ -260,4 +210,56 @@ Installation Script
 8. Run unit tests
 
     **We haven't done any unit tests yet**
+
+
+
+Usage Examples
+--------
+
+    End-to-End
+
+        export CLICON_DIR=.
+        
+        bash install.sh
+        
+        clicon train $CLICON_DIR/examples/pretend.xml --format xml
+        
+        clicon predict $CLICON_DIR/examples/pretend.txt
+        
+        clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --format xml
+
+
+    i2b2 format
+
+        Example: Train model on i2b2-formatted data
+            clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.con
+
+        Example: Train model on i2b2-formatted data with SVM grid search (NOTE: Currently does not work with sample data because the sample data is too small for cross validation).
+            clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.con --grid-search
+
+        Example: Predict concepts and output in i2b2 format
+            clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_predictions/
+
+        example: Evaluation
+            clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --predictions $CLICON_DIR/data/test_predictions/ --format i2b2
+
+        example: Change Format
+            clicon format $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/data/test_predictions/pretend.con --format xml
+
+
+    xml format
+        Example: Train model on xml-formatted data
+            clicon train $CLICON_DIR/examples/pretend.xml --format xml
+
+        Example: Predict concepts and output in xml format
+            clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_predictions/ --format xml
+
+        example: Evaluation
+            clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --predictions $CLICON_DIR/data/test_predictions/ --format xml
+
+        example: Change Format
+            clicon format $CLICON_DIR/data/test_predictions/pretend.xml --format i2b2
+
+
+
 
