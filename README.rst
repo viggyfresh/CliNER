@@ -37,7 +37,7 @@ Installation
 
 Linux users can use an installation script to download and install all the components of this project, including third-party dependencies. Note that cannot get tools and data that require special use agreements (including the i2b2 data and the UMLS tables), which have to be obtained separately.
 
-To invoke the script:
+**To invoke the script:**
 
 ::    
 
@@ -50,6 +50,9 @@ If the installation script encounters issues, please see the README section corr
 If you opt not to use the provided script, you must follow the steps described below, starting with setting up virtual environments and environment variables. Not terribly difficult (we hope!).
     
 Please email wboag@cs.uml.edu with your installation questions.
+
+
+**Step-by-step installation instructions:**
 
 
 1. Set up virtualenv
