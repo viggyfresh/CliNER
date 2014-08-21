@@ -85,7 +85,7 @@ Please email wboag@cs.uml.edu with your installation questions.
 
 
 
-2. environment variable
+2. Set the CLICON_DIR environment variable
 
     In order to run CliCon, you must define the CLICON_DIR environment variable.
 
@@ -95,7 +95,7 @@ Please email wboag@cs.uml.edu with your installation questions.
 
 
 
-3. Install Python Dependencies
+3. Install Python dependencies
 
     This project has dependencies on scientific computation libraries.
 
