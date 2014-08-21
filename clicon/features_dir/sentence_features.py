@@ -244,10 +244,12 @@ class SentenceFeatures:
             for i in range(len(features_list))]
 
 
+        '''
         for f in features_list:
             print sorted(f.items())
             print
         print '\n\n\n'
+        '''
 
         return features_list
 

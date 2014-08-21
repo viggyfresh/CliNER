@@ -15,26 +15,27 @@ from features_dir import features, utilities
 import cProfile as profile
 
 
+labels = {
+    "none":0,
+    "treatment":1,
+    "problem":2,
+    "test":3
+}
+reverse_labels = {v:k for k, v in labels.items()}
+
+
+# IOBs labels
+IOBs_labels = {
+    'O':0,
+    'B':1,
+    'I':2
+}
+reverse_IOBs_labels = {v:k for k,v in IOBs_labels.items()}
+
+
+
 class Model:
     
-    labels = {
-        "none":0,
-        "treatment":1,
-        "problem":2,
-        "test":3
-    }
-    reverse_labels = {v:k for k, v in labels.items()}
-    
-
-    # IOBs labels
-    IOBs_labels = {
-        'O':0,
-        'B':1,
-        'I':2
-    }
-    reverse_IOBs_labels = {v:k for k,v in IOBs_labels.items()}
-
-
     @staticmethod
     def load(filename='awesome.model'):
         with open(filename, 'rb') as model:
@@ -52,7 +53,7 @@ class Model:
         self.filename = os.path.realpath(filename)
 
         # Use python-crfsuite
-        self.crf_enabled = True
+        self.crf_enabled = False
 
         # DictVectorizers
         self.first_prose_vec    = DictVectorizer()
@@ -66,7 +67,7 @@ class Model:
 
 
 
-    def train(self, notes):
+    def train(self, notes, do_grid=False):
 
         """
         Model::train()
@@ -92,7 +93,7 @@ class Model:
 
         # Train classifier (side effect - saved as object's member variable)
         print 'first pass'
-        self.first_train(data1, Y1, do_grid=False)
+        self.first_train(data1, Y1, do_grid)
 
 
 
@@ -112,7 +113,7 @@ class Model:
 
         # Train classifier (side effect - saved as object's member variable)
         print 'second pass'
-        self.second_train(data2, inds, Y2, do_grid=False)
+        self.second_train(data2, inds, Y2, do_grid)
 
 
 
@@ -124,7 +125,7 @@ class Model:
 
 
 
-    def first_train(self, data, Y, do_grid=True):
+    def first_train(self, data, Y, do_grid=False):
 
         """
         Model::first_train()
@@ -178,7 +179,7 @@ class Model:
             print '\tvectorizing features (pass one) ' + flabel
 
             # Vectorize IOB labels
-            Y = [  Model.IOBs_labels[y]  for  y  in  chunks  ]
+            Y = [  IOBs_labels[y]  for  y  in  chunks  ]
 
             # Save list structure to reconstruct after vectorization
             offsets = [ len(sublist) for sublist in fset ]
@@ -192,8 +193,6 @@ class Model:
 
 
             print '\ttraining classifiers (pass one) ' + flabel
-
-
             
             # CRF needs reconstructed lists
             if self.crf_enabled:
@@ -223,7 +222,7 @@ class Model:
     # Model::second_train()
     #
     #
-    def second_train(self, data, inds_list, Y, do_grid=True):
+    def second_train(self, data, inds_list, Y, do_grid=False):
 
         """
         Model::second_train()
@@ -245,13 +244,10 @@ class Model:
         @return          None
         """
 
-
         print '\textracting  features (pass two)'
-
 
         # Create object that is a wrapper for the features
         feat_o = features.FeatureWrapper()
-
 
         # Extract features
         X = [ feat_o.concept_features(s,inds) for s,inds in zip(data,inds_list) ]
@@ -260,16 +256,14 @@ class Model:
 
         print '\tvectorizing features (pass two)'
 
-
         # Vectorize labels
-        Y = [  Model.labels[y]  for  y  in  Y  ]
+        Y = [  labels[y]  for  y  in  Y  ]
 
         # Vectorize features
         X = self.second_vec.fit_transform(X)
 
 
         print '\ttraining  classifier (pass two)'
-
 
         # Train the model
         self.second_clf = sci.train(X, Y, do_grid)
@@ -290,7 +284,6 @@ class Model:
 
         print 'first pass'
 
-
         # Get the data and annotations from the Note objects
         data   = note.txtlist()
 
@@ -306,7 +299,6 @@ class Model:
 
 
         print 'second pass'
-
 
         # Get the data and annotations from the Note objects
         chunks = note.chunked_text()
@@ -409,7 +401,7 @@ class Model:
         prose_iobs    = []
         nonprose_iobs = []
         iobs          = []
-        trans = lambda l: Model.reverse_IOBs_labels[int(l)]
+        trans = lambda l: reverse_IOBs_labels[int(l)]
         for sentence in data:
             if utilities.prose_sentence(sentence):
                 prose_iobs.append( plist.pop(0) )
@@ -460,6 +452,7 @@ class Model:
         # Predict concept labels
         out = sci.predict(self.second_clf, X)
 
+
         # Line-by-line processing
         o = list(out)
         classifications = []
@@ -472,7 +465,7 @@ class Model:
             for ind in inds:
 
                 # Get next concept
-                concept = Model.reverse_labels[o.pop(0)]
+                concept = reverse_labels[o.pop(0)]
 
                 # Get start position (ex. 7th word of line)
                 start = 0

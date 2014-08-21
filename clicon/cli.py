@@ -13,34 +13,29 @@ def clicon():
 
 # Train
 @clicon.command()
-@click.option('--annotations', help='Concept files for training.')
-@click.option('--model'      , help='Model output by train.'     )
-@click.option('--format'     , help='Data format (i2b2 or xml).' )
-@click.option('--crfsuite'   , help='Path to crfsuite.'          )
+@click.option('--annotations'   , help='Concept files for training.'  )
+@click.option('--model'         , help='Model output by train.'       )
+@click.option('--format'        , help='Data format (i2b2 or xml).'   )
+@click.option('--grid/--no-grid', help='Flag that enables grid search')
 @click.argument('input')
-def train(annotations, model, format, crfsuite, input):
+def train(annotations, model, format, grid, input):
 
-
-    # Command line arguments
+    # i2b2 data needs concept file annotations
     if (format == 'i2b2') and (not annotations):
         print >>sys.stderr, '\n\tError: Must provide annotations for text files'
         print >>sys.stderr,  ''
         exit(1)
-
 
     # Base directory
     BASE_DIR = os.environ.get('CLICON_DIR')
     if not BASE_DIR:
         raise Exception('Environment variable CLICON_DIR must be defined')
 
-
     # Executable
-    runable = os.path.join(BASE_DIR,'clicon/train.py')
-
+    runable = os.path.join(BASE_DIR, 'clicon/train.py')
 
     # Build command
     cmd = ['python', runable, '-t', input]
-
 
     # Arguments
     if annotations:
@@ -49,7 +44,8 @@ def train(annotations, model, format, crfsuite, input):
         cmd += ['-m',       model]
     if format:
         cmd += ['-f',      format]
-
+    if grid:
+        cmd += ['-g']
 
     # Execute train.py
     subprocess.call(cmd)
@@ -62,24 +58,19 @@ def train(annotations, model, format, crfsuite, input):
 @click.option('--out'   , help='The directory to write the output')
 @click.option('--model' , help='Model used to predict on files'   )
 @click.option('--format', help='Data format (i2b2 or xml).'       )
-@click.option('--crfsuite'   , help='Path to crfsuite.'          )
 @click.argument('input')
-def predict(model, out, format, crfsuite, input):
-
+def predict(model, out, format, input):
 
     # Base directory
     BASE_DIR = os.environ.get('CLICON_DIR')
     if not BASE_DIR:
         raise Exception('Environment variable CLICON_DIR must be defined')
 
-
     # Executable
     runable = os.path.join(BASE_DIR,'clicon/predict.py')
 
-
     # Build command
     cmd = ['python', runable, '-i', input]
-
 
     # Optional arguments
     if out:
@@ -88,9 +79,6 @@ def predict(model, out, format, crfsuite, input):
         cmd += ['-m',  model]
     if format:
         cmd += ['-f', format]
-    if crfsuite:
-        cmd += ['-crf', crfsuite]
-
 
     # Execute train.py
     subprocess.call(cmd)
@@ -101,27 +89,23 @@ def predict(model, out, format, crfsuite, input):
 
 # Evaluate
 @clicon.command()
-@click.option('--predictions', help='Predicted concept files.'    )
-@click.option('--gold'       , help='Gold standard concept files.')
-@click.option('--out'        , help='Output file'                 )
-@click.option('--format'     , help='Data format (i2b2 or xml).'  )
+@click.option('--predictions', help='Directory where predictions  are stored.')
+@click.option('--gold'       , help='Directory where gold standard is stored.')
+@click.option('--out'        , help='Output file'                             )
+@click.option('--format'     , help='Data format (i2b2 or xml).'              )
 @click.argument('input')
-def evaluate(out, format, input):
-
+def evaluate(predictions, gold, out, format, input):
 
     # Base directory
     BASE_DIR = os.environ.get('CLICON_DIR')
     if not BASE_DIR:
         raise Exception('Environment variable CLICON_DIR must be defined')
 
-
     # Executable
     runable = os.path.join(BASE_DIR,'clicon/evaluate.py')
 
-
     # Build command
     cmd = ['python', runable, '-t', input]
-
 
     # Optional arguments
     if predictions:
@@ -133,7 +117,6 @@ def evaluate(out, format, input):
     if format:
         cmd += ['-f',      format]
 
-
     # Execute train.py
     subprocess.call(cmd)
 
@@ -143,22 +126,19 @@ def evaluate(out, format, input):
 
 # Format
 @clicon.command()
-@click.option('--annotations', help='Concept files for training.'      )
-@click.option('--format'     , help='Data format (i2b2 or xml).'       )
-@click.option('--out'        , help='The directory to write the output')
+@click.option('--annotations', help='Concept files for training.')
+@click.option('--format'     , help='Data format (i2b2 or xml).' )
+@click.option('--out'        , help='File to write the output.'  )
 @click.argument('input')
 def format(annotations, format, out, input):
-
 
     # Base directory
     BASE_DIR = os.environ.get('CLICON_DIR')
     if not BASE_DIR:
         raise Exception('Environment variable CLICON_DIR must be defined')
 
-
     # Executable
     runable = os.path.join(BASE_DIR,'clicon/format.py')
-
 
     # Must manually check if '.txt' or 'xml'
     if   input[-3:] == 'xml':
@@ -170,10 +150,8 @@ def format(annotations, format, out, input):
         print >>sys.stderr, ''
         exit(2)
 
-
     # Build command
     cmd = ['python', runable, flag, input]
-
 
     # Optional arguments
     if annotations:
@@ -183,11 +161,8 @@ def format(annotations, format, out, input):
     if format:
         cmd += ['-f',      format]
 
-
     # Execute train.py
     subprocess.call(cmd)
-
-
 
 
 
