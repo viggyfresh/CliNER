@@ -56,7 +56,7 @@ The following packages need to be on the system for the script to work:
     python-pip installer 
     python-virtualenv
     
-Some of the required python modules that will be installed by the script have the following dependencies, which also need to be installed:
+Some of python modules used by CliCon have the following dependencies, which also need to be installed on the system:
     
 ::
 
@@ -64,6 +64,8 @@ Some of the required python modules that will be installed by the script have th
     gfortran
     libopenblas-dev
     liblapack-dev
+
+For Ubuntu users, the above are the names of the packages that need to be installed.
 
 
 To invoke the script, first ``cd`` into the ``CliCon`` directory and set the CLICON_DIR environmentn variable:
