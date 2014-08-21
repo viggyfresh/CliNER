@@ -47,7 +47,7 @@ Installation
 
 **Using an installation script**
 
-Linux users can use an installation script to download and install all the components of this project, including third-party dependencies. Note that cannot get tools and data that require special use agreements (including the i2b2 data and the UMLS tables), which have to be obtained separately.
+Linux users can use an installation script to download and install all the components of this project, including third-party dependencies. Note that it can not get tools and data that require special use agreements (including the i2b2 data and the UMLS tables), which have to be obtained separately.
 
 The following packages need to be on the system for the script to work:
 
