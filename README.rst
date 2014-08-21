@@ -41,17 +41,14 @@ Installation Script
 
     The script will try to download CliCon's third party dependencies and will get everything except for the i2b2 data and the UMLS tables.
 
-    In the event that you run the script but encounter issues, please see the README section that corresponds to the failure's message. 
+    If the installation script encounters issues, please see the README section corresponding to the failure message. 
 
-    It is entirely likely that there are unforseen bugs. If you experience "strange" behavior (or if this document is just unclear in general), please email me at wboag@cs.uml.edu with your installation questions.
-
-    If you do not run the script, you must follow each of these steps and configure things such as virtual environments and environment variables. Not terribly difficult (we hope!).
+    If you opt not to use the provided script, you must follow the steps described below, starting with setting up virtual environments and environment variables. Not terribly difficult (we hope!).
     
+    Please email wboag@cs.uml.edu with your installation questions.
 
 
-
-
-1. virtualenv
+1. Set up virtualenv
 
     Setup a virtual environent. You must re-enable the virtual environment every new session.
 
