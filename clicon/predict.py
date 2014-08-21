@@ -51,6 +51,7 @@ def main():
     format = args.format
 
 
+<<<<<<< HEAD
     # Is crfsuite installed?
     if args.with_crf:
         crfsuite = args.with_crf
@@ -59,6 +60,17 @@ def main():
         crfsuite = None
     else:
         crfsuite = None
+=======
+    # Must specify output format
+    if (format != 'i2b2') and (format != 'xml'):
+        print >>sys.stderr, '\n\tError: Must specify output format (i2b2 or xml)'
+        print >>sys.stderr, ''
+        exit(1)
+
+
+    # Output directory
+    helper.mkpath(os.path.join(args.output))
+>>>>>>> documentation
 
 
     # Load model
@@ -87,6 +99,7 @@ def main():
         labels = model.predict(note)
 
 
+<<<<<<< HEAD
         # Output directory
         con = os.path.split(txt)[-1]
         con = con[:-3] + 'con'
@@ -94,8 +107,22 @@ def main():
 
         helper.mkpath(os.path.join(args.output, "lin"))
         con_path = os.path.join(args.output, "lin", con)
+=======
+        # Get predictions in proper format
+        if format == 'i2b2':
+            extension = 'con'
+            output = note.write_i2b2(labels)
+        else:
+            extension = 'xml'
+            output =  note.write_xml(labels)
 
+>>>>>>> documentation
 
+        # Output file
+        basename = os.path.basename(txt)[:-3] + extension
+        out_path = os.path.join(args.output, basename)
+
+<<<<<<< HEAD
         # Get predictions in proper format
         if format == 'i2b2':
             output = note.write_i2b2_con(labels)
@@ -107,6 +134,12 @@ def main():
         # Output the concept predictions
         print '\n\nwriting to: ', con_path
         with open(con_path, 'w') as f:
+=======
+
+        # Output the concept predictions
+        print '\n\nwriting to: ', out_path
+        with open(out_path, 'w') as f:
+>>>>>>> documentation
             print >>f, output
 
 

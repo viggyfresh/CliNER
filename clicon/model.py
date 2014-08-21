@@ -64,7 +64,6 @@ class Model:
         self.first_nonprose_clf = None
         self.second_clf         = None
 
-        
 
 
     def train(self, notes):
@@ -240,7 +239,7 @@ class Model:
                                into the corresponding line for 'data'
         @param Y         A list of concept labels
                            - assertion: there are sum(len(inds_list)) labels
-v                              AKA each index from inds_list maps to a label
+                               AKA each index from inds_list maps to a label
         @param do_grid   A boolean indicating whether to perform a grid search
 
         @return          None
@@ -369,6 +368,7 @@ v                              AKA each index from inds_list maps to a label
                 preds.append([])
                 continue
 
+
             print '\tvectorizing features (pass one) ' + flabel
 
             # Save list structure to reconstruct after vectorization
@@ -383,7 +383,6 @@ v                              AKA each index from inds_list maps to a label
 
             print '\tpredicting    labels (pass one) ' + flabel
 
-
             # CRF requires reconstruct lists
             if self.crf_enabled:
                 X = list(X)
@@ -392,10 +391,8 @@ v                              AKA each index from inds_list maps to a label
             else:
                 lib = sci
 
-
             # Predict IOB labels
             out = lib.predict(clf, X)
-
 
             # Format labels from output
             pred = [out[i:j] for i, j in zip([0] + offsets, offsets)]
@@ -426,7 +423,6 @@ v                              AKA each index from inds_list maps to a label
 
         # list of list of IOB labels
         return iobs, prose_iobs, nonprose_iobs
-
 
 
 
@@ -464,21 +460,19 @@ v                              AKA each index from inds_list maps to a label
         # Predict concept labels
         out = sci.predict(self.second_clf, X)
 
-
-        # List of concept tuples to return
-        classifications = []
-
-
         # Line-by-line processing
+        o = list(out)
+        classifications = []
         for lineno,inds in enumerate(inds_list):
 
             # Skip empty line
             if not inds: continue
 
+            # For each concept
             for ind in inds:
 
                 # Get next concept
-                concept = Model.reverse_labels[out.pop(0)]
+                concept = Model.reverse_labels[o.pop(0)]
 
                 # Get start position (ex. 7th word of line)
                 start = 0
@@ -489,11 +483,8 @@ v                              AKA each index from inds_list maps to a label
                 length = len(data[lineno][ind].split())
 
                 # Classification token
-                classifications.append((concept,lineno+1,start,start+length-1))
-
-        #for c in classifications:
-        #    print c
-
+                classifications.append( (concept,lineno+1,start,start+length-1) )
+        
         # Return classifications
         return classifications
 

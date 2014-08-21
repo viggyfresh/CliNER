@@ -3,7 +3,6 @@ import os.path
 import glob
 import argparse
 import helper
-import libml
 
 from sets import Set
 from model import Model
@@ -16,13 +15,13 @@ def main():
     parser.add_argument("-t", 
         dest = "txt", 
         help = "The files that contain the training examples",
-        default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/txt/*')
+        default = os.path.join(os.getenv('CLICON_DIR'), 'data/concept_assertion_relation_training_data/merged/txt/*')
     )
     
     parser.add_argument("-c", 
         dest = "con", 
         help = "The files that contain the labels for the training examples",
-        default = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/concept_assertion_relation_training_data/merged/concept/*')
+        default = os.path.join(os.getenv('CLICON_DIR'), 'data/concept_assertion_relation_training_data/merged/concept/*')
     )
 
     parser.add_argument("-m",
@@ -31,32 +30,11 @@ def main():
         default = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../models/run_models/run.model')
     )
 
-    parser.add_argument("-d",
-        dest = "disabled_features",
-        help = "The features that should not be used",
-        nargs = "+",
-        default = None
-    )
-
-    parser.add_argument("-e",
-        dest = "enabled_features",
-        help = "The features that should be used. This option trumps -d",
-        nargs = "+",
-        default = None
-    )
-
     parser.add_argument("-f",
         dest = "format",
         help = "Data format (i2b2 or xml).",
         default = 'i2b2'
     )
-
-    parser.add_argument("-crf",
-        dest = "with_crf",
-        help = "Specify where to find crfsuite",
-        default = None
-    )
-
 
     # Parse the command line arguments
     args = parser.parse_args()
