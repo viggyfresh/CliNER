@@ -8,8 +8,8 @@ class Note:
 
     # Constructor
     def __init__(self):
-        # data     - A list of list of words
-        # concepts - A one-to-one correspondence of each word's concept
+        # data            - A list of list of words
+        # concepts        - A one-to-one correspondence of each word's concept
         # classifications - A list of tuples that convey concept labels
         # boundaries      - A one-to-one correspondence of each word's BIO status
         self.data            = []
@@ -108,10 +108,10 @@ class Note:
 
 
 
-    def write_i2b2_con(self, labels=None):
+    def write_i2b2(self, labels=None):
 
         """
-        Note::write_i2b2_con()
+        Note::write_i2b2()
         
         Purpose: Return the given concept label predictions in i2b2 format
         
@@ -190,8 +190,8 @@ class Note:
         
         Purpose: Print the prediction of BIOs concept boundary classification
         
-        @param  _.      Filename. Ignore it.
-        @param  labels. A list of list of BIOs labels
+        @param  filename. Filename. Ignore it.
+        @param  labels.   A list of list of BIOs labels
         """
 
         fid = open(filename,"w")
@@ -337,8 +337,11 @@ class Note:
                 start_ind = -1
                 i = 0
 
+                # IOB labels
+                iobs = [] # [  'O'  for  _  in  line.split()  ]
+
                 # State variable is sufficient because concepts are not nested
-                inside_concept = False
+                concept_state = 'O'
                 for word in line.split():
 
                     # Search for xml tag
@@ -347,29 +350,39 @@ class Note:
 
                         con = match.group(1)
                         
-                        # end tag
+                        # begin tag
                         if con[0] != '/':
                             # store data 
                             concept = con
                             start_ind = i
 
                             # state variable
-                            inside_concept = True
+                            concept_state = 'B'
 
-                        # begin tag
+                        # end tag
                         else:
                             # store data 
                             tup = (concept,lineno+1,start_ind,i-1)
                             self.classifications.append(tup)
 
                             # state variable
-                            inside_concept = False
+                            concept_state = 'O'
 
                     # non-tag text
                     else:
 
+                        # Part of multi-word concept
+                        if concept_state == 'B':
+                            iobs.append('B')
+                            concept_state = 'I'
+                        else:
+                            iobs.append(concept_state)
+
                         # Next token
                         i += 1
+
+                self.boundaries.append(iobs)
+
 
 
     def write_xml(self, labels=None):
@@ -428,7 +441,7 @@ class Note:
 
         # Stitch text back together
         toks = [  ' '.join(s)  for  s  in toks  ]
-        toks = '\n'.join(toks)
+        toks = '\n'.join(toks) + '\n'
 
         #print toks
         #print ''

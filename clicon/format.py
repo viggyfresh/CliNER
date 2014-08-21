@@ -22,6 +22,13 @@ import note
 
 
 
+
+def create_filename(odir, bfile, extension):
+    fname = os.path.basename(bfile) + extension
+    return os.path.join(odir,fname)
+
+
+
 def main():
 
     # Argument Parser
@@ -44,7 +51,7 @@ def main():
 
     parser.add_argument("-o",
         dest = "out",
-        default = '.',
+        default = None,
         help = "Directory to output data",
     )
 
@@ -58,11 +65,11 @@ def main():
 
 
     # Parse arguments
-    txt_f   = args.txt
-    con_f   = args.con
-    xml_f   = args.xml
-    out_dir = args.out
-    format  = args.format
+    txt      = args.txt
+    con      = args.con
+    xml      = args.xml
+    out_file = args.out
+    format   = args.format
 
 
     # Ensure format is specified
@@ -72,12 +79,12 @@ def main():
         exit(1)
 
     # Cannot have ambiguous input
-    if (txt_f and con_f) and xml_f:
+    if (txt and con) and xml:
         print >>sys.stderr, '\n\tError: Input must be either (i2b2) XOR (xml)\n'
         exit(2)
 
-    # Ensure proper data is available (equal - AKA if not XOR)
-    if (not (txt_f and con_f)) and (not xml_f):
+    # If insufficient data is given (must have txt+con OR xml)
+    if (not (txt and con)) and (not xml):
         print >>sys.stderr, '\n\tError: Must supply either:'
         print >>sys.stderr,   '\t         1) i2b2 txt & con file'
         print >>sys.stderr,   '\t         2) xml file\n'
@@ -86,49 +93,34 @@ def main():
 
     # Read input data into note object
     N = note.Note()
-    if xml_f:
-        basefile = xml_f
-        N.read_xml(xml_f)
+    if xml:
+        N.read_xml(xml)
     else:
-        basefile = txt_f
-        N.read_i2b2(txt_f, con_f)
+        N.read_i2b2(txt, con)
  
-        
-    # Output data in desired format
-    if format == 'xml':
 
-        # xml format
-        xml_out = N.write_xml()
-
-        # output xml file
-        xml_file = create_filename(out_dir, basefile, '.xml')
-        output_file(xml_file, xml_out)
-
+    # Where to output data
+    if out_file:
+        out_f = open(out_file, 'w')
     else:
+        out_f = sys.stdout
 
+        
+    # Desired output format
+    if format == 'xml':
+        out = N.write_xml()
+    else:
         # i2b2 format
-        txt_out = N.write_txt()
-        con_out = N.write_i2b2_con()
+        out = N.write_i2b2()
 
-        # output txt file
-        txt_file = create_filename(out_dir, basefile, '.txt')
-        output_file(txt_file, txt_out)
-
-        # output con file
-        con_file = create_filename(out_dir, basefile, '.con')
-        output_file(con_file, con_out)
+    # Output data
+    out_f.write(out)
 
 
+    # Close output file
+    if out_file:
+        out_f.close()
 
-def output_file(fname, out):
-    print 'outputting: ', fname
-    with open(fname, 'w') as f:
-        print >>f, out
-
-
-def create_filename(odir, bfile, extension):
-    fname = bfile[:-4] + extension
-    return os.path.join(odir,fname)
 
 
 if __name__ == '__main__':

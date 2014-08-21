@@ -21,7 +21,7 @@ def train(annotations, model, format, input):
 
 
     # Command line arguments
-    if not annotations:
+    if (format == 'i2b2') and (not annotations):
         print >>sys.stderr, '\n\tError: Must provide annotations for text files'
         print >>sys.stderr,  ''
         exit(1)
@@ -38,14 +38,16 @@ def train(annotations, model, format, input):
 
 
     # Build command
-    cmd = ['python', runable, '-t', input, '-c', annotations]
+    cmd = ['python', runable, '-t', input]
 
 
-    # Optional arguments
+    # Arguments
+    if annotations:
+        cmd += ['-c', annotations]
     if model:
-        cmd += ['-m',  model]
+        cmd += ['-m',       model]
     if format:
-        cmd += ['-f', format]
+        cmd += ['-f',      format]
 
 
     # Execute train.py

@@ -38,7 +38,7 @@ class Model:
         return model
 
 
-    def __init__(self, filename='awesome.model', type=sci.LIN):
+    def __init__(self, filename='awesome.model'):
 
         model_directory = os.path.dirname(filename)
         if model_directory != "":
@@ -52,13 +52,10 @@ class Model:
         self.second_vec         = DictVectorizer()
 
         # Classifiers
-        self.first_prose_clfs    = {}
-        self.first_nonprose_clfs = {}
-        self.second_clfs         = {}
+        self.first_prose_clf    = {}
+        self.first_nonprose_clf = {}
+        self.second_clf         = {}
 
-        # FIXME: Only using scikit's SVM
-        self.type = sci.LIN
-        
 
 
     def train(self, notes):
@@ -197,8 +194,8 @@ class Model:
 
 
         # Train classifiers
-        self.first_prose_clfs    = sci.train(X_prose   , Y_prose   , self.type, do_grid)
-        self.first_nonprose_clfs = sci.train(X_nonprose, Y_nonprose, self.type, do_grid)
+        self.first_prose_clf    = sci.train(X_prose   , Y_prose   , do_grid)
+        self.first_nonprose_clf = sci.train(X_nonprose, Y_nonprose, do_grid)
 
 
 
@@ -254,7 +251,7 @@ class Model:
 
 
         # Train the model
-        self.second_clfs = sci.train(X, Y, self.type, do_grid)
+        self.second_clf = sci.train(X, Y, do_grid)
 
 
 
@@ -345,13 +342,13 @@ class Model:
 
 
         # Predict
-        out_p = sci.predict(self.first_prose_clfs   , X_prose,   sci.LIN)
-        out_n = sci.predict(self.first_nonprose_clfs, X_nonprose,sci.LIN)
+        out_p = sci.predict(self.first_prose_clf   , X_prose   )
+        out_n = sci.predict(self.first_nonprose_clf, X_nonprose)
 
 
         # Format labels
-        plist = [  n  for  n  in  list(out_p[sci.LIN]) ]
-        nlist = [  n  for  n  in  list(out_n[sci.LIN]) ]
+        plist = [  n  for  n  in  list(out_p) ]
+        nlist = [  n  for  n  in  list(out_n) ]
         
 
         # Stitch prose and nonprose labels lists together
@@ -422,51 +419,37 @@ class Model:
 
 
         # Predict concept labels
-        out = sci.predict(self.second_clfs, X, sci.LIN)
+        out = sci.predict(self.second_clf, X)
 
 
+        # Line-by-line processing
+        o = list(out)
+        classifications = []
+        for lineno,inds in enumerate(inds_list):
 
-        # FIXME - Output prediction labels are entirely wrong
-        # ex. trained on file with 3 concepts (prob,treat,treat) and predicted
-        #        on same file. Got (test,test,test) as labels
+            # Skip empty line
+            if not inds: continue
 
-        retVal = {}
-        for t in sci.bits(self.type):
+            # For each concept
+            for ind in inds:
 
-            # Index into output dictionary
-            o = list(out[t])
-            classifications = []
+                # Get next concept
+                concept = Model.reverse_labels[o.pop(0)]
 
+                # Get start position (ex. 7th word of line)
+                start = 0
+                for i in range(ind):
+                    start += len( data[lineno][i].split() )
 
-            # Line-by-line processing
-            for lineno,inds in enumerate(inds_list):
+                # Length of chunk
+                length = len(data[lineno][ind].split())
 
-                # Skip empty line
-                if not inds: continue
-
-
-                # For each concept
-                for ind in inds:
-
-                    # Get next concept
-                    concept = Model.reverse_labels[o.pop(0)]
-
-                    # Get start position (ex. 7th word of line)
-                    start = 0
-                    for i in range(ind):
-                        start += len( data[lineno][i].split() )
-
-                    # Length of chunk
-                    length = len(data[lineno][ind].split())
-
-                    # Classification token
-                    classifications.append(  (concept, lineno+1, start, start+length-1 ) )
-            
-                retVal[t] = classifications
-
+                # Classification token
+                classifications.append( (concept,lineno+1,start,start+length-1) )
+        
 
         # Return values
-        return retVal
+        return classifications
 
 
 
