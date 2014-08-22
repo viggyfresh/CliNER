@@ -74,7 +74,6 @@ To invoke the script, first ``cd`` into the ``CliCon`` directory and set the CLI
 ::    
 
     user@your-machine:~$ cd CliCon
-    user@your-machine:~/CliCon$ export CLICON_DIR=.
     user@your-machine:~/CliCon$ source install.sh
     
 
