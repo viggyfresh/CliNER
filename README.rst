@@ -74,8 +74,8 @@ To invoke the script, first ``cd`` into the ``CliCon`` directory and set the CLI
 ::    
 
     user@your-machine:~$ cd CliCon
-    user@your-machine:~$ export CLICON_DIR=.
-    user@your-machine:~$ source install.sh
+    user@your-machine:~/CliCon$ export CLICON_DIR=.
+    user@your-machine:~/CliCon$ source install.sh
     
 
 If the installation script encounters issues, please see the README section corresponding to the failure message. 
@@ -92,10 +92,9 @@ Please email wboag@cs.uml.edu with your installation questions.
 
     Setup a virtual environent. You must re-enable the virtual environment every new session.
 
+::
 
-    example:
         user@your-machine:~$ virtualenv venv_clicon
-
         user@your-machine:~$ source venv_clicon/bin/activate
 
 
@@ -109,8 +108,10 @@ Please email wboag@cs.uml.edu with your installation questions.
 2. Set the CLICON_DIR environment variable
 
     In order to run CliCon, you must define the CLICON_DIR environment variable.
+    
+    ::
 
-    user@your-machine:~$ export CLICON_DIR=$(pwd)/CliCon
+        user@your-machine:~$ export CLICON_DIR=$(pwd)/CliCon
 
     **This variable must be the path of the directory created by git.**
 
@@ -121,29 +122,31 @@ Please email wboag@cs.uml.edu with your installation questions.
     This project has dependencies on scientific computation libraries.
 
     Ensure the following python modules are installed:
-        - numpy
-        - scikit-learn
-        - scipy
-        - python-crfsuite
-        - nltk  (AND run the NLTK downloader)
+        * numpy
+        * scikit-learn
+        * scipy
+        * python-crfsuite
+        * nltk  (AND run the NLTK downloader)
 
 
         These modules, themselves may have dependencies to install. If necessary, sudo apt-get install these packages
 
             Ubuntu:
-                - g++
-                - gfortran
-                - libopenblas-dev
-                - liblapack-dev
+                * python-pip
+                * python-virtualenv
+                * python-dev
+                * g++
+                * gfortran
+                * libopenblas-dev
+                * liblapack-dev
 
 
             Mac OSX
                 **Tristan should put stuff here**
 
 
-    example:
-        (venv_clicon)user@your-machine:~/CliCon$ sudo apt-get install g++ gfortran libopenblas-dev liblapack-dev -y
-
+    ::
+        (venv_clicon)user@your-machine:~/CliCon$ sudo apt-get install python-pip python-virtualenv python-dev g++ gfortran libopenblas-dev liblapack-dev -y
         (venv_clicon)user@your-machine:~/CliCon$ pip install numpy scikit-learn scipy nltk python-crfsuite
 
 
@@ -185,11 +188,11 @@ Please email wboag@cs.uml.edu with your installation questions.
 
     Steps
 
-        1. First you must download the sources for GENIA. Do that with 'wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.1.tar.gz'
+        1. First you must download the sources for GENIA. Do that with ''wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.1.tar.gz''
 
-        2. In order to compile the sources, you may need to edit a C++ so that it has an additional include directive. Basically, morph.cpp needs to include cstdlib. This should be able to be accomplished by enterring the geniatagger-3.0.1/ directory and running 'echo "$(sed '1i#include <cstdlib>' morph.cpp)" > morph.cpp'
+        2. In order to compile the sources, you may need to edit a C++ so that it has an additional include directive. Basically, morph.cpp needs to include cstdlib. This should be able to be accomplished by enterring the geniatagger-3.0.1/ directory and running ''echo "$(sed '1i#include <cstdlib>' morph.cpp)" > morph.cpp''
 
-        3. Compile GENIA. This is simple. Just run 'make'
+        3. Compile GENIA. Just run ''make''
 
         4. If you do not have any errors, then the tagger has been built successfully. If there were compile errors, try to resolve them (it'd be one of those "well it works for me" scenarios).
 
@@ -222,14 +225,14 @@ Please email wboag@cs.uml.edu with your installation questions.
 
     In order to run CliCon (as done in the usage examples), you must run setup.py.
 
-    As long as the Python dependencies are properly installed, you should be able to run 'python $CLICON_DIR/setup.py install'.
+    As long as the Python dependencies are properly installed, you should be able to run the setup script.
 
     If it works, you should see a brief help message when invoking clicon with the ``--help`` option: 
 
-::
+    ::
 
-        (venv_clicon)user@your-machine:~/CliCon$ python $CLICON_DIR/setup.py install
-        (venv_clicon)user@your-machine:~/CliCon$ clicon --help
+            (venv_clicon)user@your-machine:~/CliCon$ python $CLICON_DIR/setup.py install
+            (venv_clicon)user@your-machine:~/CliCon$ clicon --help
 
 
 
@@ -245,48 +248,53 @@ Usage Examples
 
     End-to-End
 
-        export CLICON_DIR=.
-        
-        bash install.sh
-        
-        clicon train $CLICON_DIR/examples/pretend.xml --format xml
-        
-        clicon predict $CLICON_DIR/examples/pretend.txt
-        
-        clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --format xml
+    ::
+        user@your-machine:~/CliCon$ export CLICON_DIR=.
+        user@your-machine:~/CliCon$ source install.sh
+        (venv_clicon)user@your-machine:~/CliCon$ clicon train $CLICON_DIR/examples/pretend.xml --format xml
+        (venv_clicon)user@your-machine:~/CliCon$ clicon predict $CLICON_DIR/examples/pretend.txt
+        (venv_clicon)user@your-machine:~/CliCon$ clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --format xml
 
 
     i2b2 format
 
-        Example: Train model on i2b2-formatted data
-            clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.con
+        Train model on i2b2-formatted data
+        ::
+            (venv_clicon)user@your-machine:~/CliCon$ clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.con
 
-        Example: Train model on i2b2-formatted data with SVM grid search (NOTE: Currently does not work with sample data because the sample data is too small for cross validation).
-            clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.con --grid-search
+        Train model on i2b2-formatted data with SVM grid search (NOTE: Currently does not work with sample data because the sample data is too small for cross validation).
+        ::
+            (venv_clicon)user@your-machine:~/CliCon$ clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.con --grid-search
 
-        Example: Predict concepts and output in i2b2 format
-            clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_predictions/
+        Predict concepts and output in i2b2 format
+        ::
+            (venv_clicon)user@your-machine:~/CliCon$ clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_predictions/
 
-        example: Evaluation
-            clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --predictions $CLICON_DIR/data/test_predictions/ --format i2b2
+        Evaluation
+        ::
+            (venv_clicon)user@your-machine:~/CliCon$ clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --predictions $CLICON_DIR/data/test_predictions/ --format i2b2
 
-        example: Change Format
-            clicon format $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/data/test_predictions/pretend.con --format xml
+        Change Format
+        ::
+            (venv_clicon)user@your-machine:~/CliCon$ clicon format $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/data/test_predictions/pretend.con --format xml
 
 
     xml format
-        Example: Train model on xml-formatted data
-            clicon train $CLICON_DIR/examples/pretend.xml --format xml
 
-        Example: Predict concepts and output in xml format
-            clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_predictions/ --format xml
+        Train model on xml-formatted data
+        ::
+            (venv_clicon)user@your-machine:~/CliCon$ clicon train $CLICON_DIR/examples/pretend.xml --format xml
 
-        example: Evaluation
-            clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --predictions $CLICON_DIR/data/test_predictions/ --format xml
+        Predict concepts and output in xml format
+        ::
+            (venv_clicon)user@your-machine:~/CliCon$ clicon predict $CLICON_DIR/examples/pretend.txt --out $CLICON_DIR/data/test_predictions/ --format xml
 
-        example: Change Format
-            clicon format $CLICON_DIR/data/test_predictions/pretend.xml --format i2b2
+        Evaluation
+        ::
+            (venv_clicon)user@your-machine:~/CliCon$ clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --predictions $CLICON_DIR/data/test_predictions/ --format xml
 
-
+        Change Format
+        ::
+            (venv_clicon)user@your-machine:~/CliCon$ clicon format $CLICON_DIR/data/test_predictions/pretend.xml --format i2b2
 
 

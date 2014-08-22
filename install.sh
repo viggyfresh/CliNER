@@ -14,7 +14,7 @@ function get_genia {
     old_path=$(pwd)
 
     # Get sources
-    cd $CLICON_DIR/clicon/features/genia
+    cd $CLICON_DIR/clicon/features_dir/genia
     wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.1.tar.gz
     tar xzvf geniatagger-3.0.1.tar.gz
 
@@ -46,52 +46,49 @@ function get_genia {
 
 
 
-
-# Create virtual environment
-virtualenv venv_clicon
-source venv_clicon/bin/activate
-
-
+# Ensure resources are available
+which g++ gfortran virtualenv pip
+resources=$?
+if [[ $resources -eq 0 ]] ; then
 
 
-# CLICON_DIR must be defined before proceeding
-if [[ "$CLICON_DIR" = "" ]] ; then
-    CLICON_DIR="$( cd "$( dirname "$0" )" && pwd )"
-    echo -e "\nEnvironment variable CLICON_DIR must be defined."
-    echo -e   "Execute the following and re-run install.sh: \n"
-    echo -e "\texport CLICON_DIR=\"$CLICON_DIR\""
+    # CLICON_DIR must be defined before proceeding
+    if [[ "$CLICON_DIR" = "" ]] ; then
+
+        CLICON_DIR="$( cd "$( dirname "$0" )" && pwd )"
+        export CLICON_DIR=\"$CLICON_DIR\"
+        echo -e "export CLICON_DIR=\"$CLICON_DIR\"" >> .bashrc
+
+    fi
+
+
+    # Create virtual environment
+    virtualenv venv_clicon
+    source venv_clicon/bin/activate
+
+
+    # Install python dependencies
+    pip install nltk numpy scikit-learn scipy python-crfsuite
+    python -m nltk.downloader maxent_treebank_pos_tagger wordnet
+
+
+    # Download & install GENIA tagger
+    get_genia
+
+
+    # Install 'clicon' script for command line usage
+    python setup.py install
+
+
+else
+
+    echo -e "\n\tError: Not all resources available on system."
+    echo -e "\nPlease ensure the following packages are installed:"
+
+    packages=(g++ gfortran python-dev python-pip python-virtualenv libopenblas-dev liblapack-dev)
+    for p in ${packages[@]} ; do
+        echo -e "\t$p"
+    done
     echo ""
-    exit
+
 fi
-
-
-
-
-# Install python dependencies
-easy_install pip simplejson
-easy_install simplejson
-pip install Flask
-pip install nose
-pip install -U pyyaml 
-python -m nltk.downloader maxent_treebank_pos_tagger
-python -m nltk.downloader wordnet
-
-# Install Scikit-Learn (SVM)
-pip install numpy 
-pip install scikit-learn
-pip install scipy
-
-# Install python-crfsuite (CRF)
-pip install python-crfsuite
-
-
-
-
-# Download & install GENIA tagger
-get_genia
-
-
-
-
-# Install 'clicon' CLI command
-python setup.py install
