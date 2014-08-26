@@ -69,7 +69,7 @@ Some of python modules used by CliCon have the following dependencies, which als
 For Ubuntu users, the above are the names of the packages that need to be installed.
 
 
-To invoke the script, first ``cd`` into the ``CliCon`` directory and set the CLICON_DIR environmentn variable:
+To invoke the script, first ``cd`` into the ``CliCon`` directory:
 
 ::    
 
