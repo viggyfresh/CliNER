@@ -74,7 +74,6 @@ To invoke the script, first ``cd`` into the ``CliCon`` directory and set the CLI
 ::    
 
     user@your-machine:~$ cd CliCon
-    user@your-machine:~/CliCon$ export CLICON_DIR=.
     user@your-machine:~/CliCon$ source install.sh
     
 
@@ -91,37 +90,50 @@ Please email wboag@cs.uml.edu with your installation questions.
 (1) Set up virtualenv
 
     Setup a virtual environent. You must re-enable the virtual environment every new session.
-
-::
-
+    
+    ::
+    
         user@your-machine:~$ virtualenv venv_clicon
         user@your-machine:~$ source venv_clicon/bin/activate
-
-
+    
+    
     reference
         https://virtualenv.pypa.io/en/latest/
 
 
 
-
-
-2. Set the CLICON_DIR environment variable
+(2) Set the CLICON_DIR environment variable
 
     In order to run CliCon, you must define the CLICON_DIR environment variable.
+    
+    **This variable must be the path of the directory created by git.**
     
     ::
 
         user@your-machine:~$ export CLICON_DIR=$(pwd)/CliCon
 
-    **This variable must be the path of the directory created by git.**
 
 
+(3) Install dependencies
 
-3. Install Python dependencies
 
-    This project has dependencies on scientific computation libraries.
+    Ensure the following packages are installed on the system (they are used for building the required Python dependencies):
 
-    Ensure the following python modules are installed:
+        Linux:
+            * python-pip
+            * python-virtualenv
+            * python-dev
+            * g++
+            * gfortran
+            * libopenblas-dev
+            * liblapack-dev
+
+
+        Mac OSX
+            **Tristan should put stuff here**
+
+
+    Ensure the following python modules are installed (install via pip):
         * numpy
         * scikit-learn
         * scipy
@@ -129,31 +141,15 @@ Please email wboag@cs.uml.edu with your installation questions.
         * nltk  (AND run the NLTK downloader)
 
 
-        These modules, themselves may have dependencies to install. If necessary, sudo apt-get install these packages
-
-            Ubuntu:
-                * python-pip
-                * python-virtualenv
-                * python-dev
-                * g++
-                * gfortran
-                * libopenblas-dev
-                * liblapack-dev
-
-
-            Mac OSX
-                **Tristan should put stuff here**
-
-
     ::
+    
         (venv_clicon)user@your-machine:~/CliCon$ sudo apt-get install python-pip python-virtualenv python-dev g++ gfortran libopenblas-dev liblapack-dev -y
         (venv_clicon)user@your-machine:~/CliCon$ pip install numpy scikit-learn scipy nltk python-crfsuite
 
 
 
 
-
-4. Get i2b2 2010 shared task data
+(4) Get i2b2 2010 shared task data
 
     The Data Use and Confidentiality Agreement with i2b2 forbids us from redistributing their data. In order to gain access, you must go to:
 
@@ -162,19 +158,17 @@ Please email wboag@cs.uml.edu with your installation questions.
     to register and sign the DUA. Then you will be able to request the data through them.
 
 
-    Although we cannot provide i2b2 data, there is a sample to demonstrate how the data is formatted (not actual data from i2b2, though). Here is a very basic description of the data formats. It is by no means a complete tutorial.
+    Although we cannot provide i2b2 data, there is a sample to demonstrate how the data is formatted (not actual data from i2b2, though). **Here is a very basic description of the data formats.** It is by no means a complete tutorial.
 
-    Go to the '$CLICON_DIR/examples' directory.
-
-        pretend.txt
+        * $CLICON_DIR/examples/pretend.txt
 
             This is a text file. Discharge summaries are written out in plaintext, just like this. It is paired with a concept file, which has its annotations.
 
-        pretend.con
+        * $CLICON_DIR/examples/pretend.con
 
             This is a concept file. It provides annotations for the concepts (problem, treatment, test) of the text file. The format is as follows - each instance of a concept has one line. The line describes the word span, the line number and token numbers of the span (delimited by white space), and the label of the concept.
 
-        pretend.xml
+        * $CLICON_DIR/examples/pretend.xml
 
             This is an alternative way to annotate concepts from a discharge summary. Unlike the text/concept files, this format is not in a pair - it provides both the text and annotations for the discharge summary. This format is easier to read.
 
@@ -182,27 +176,25 @@ Please email wboag@cs.uml.edu with your installation questions.
 
 
 
-5. Install GENIA tagger (optional)
+(5) Install GENIA tagger (optional)
 
     This is an optional part of installation. Adding the GENIA tagger will improve results of the system's predictions, but it could run without it.
 
     Steps
 
-        1. First you must download the sources for GENIA. Do that with ''wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.1.tar.gz''
+        1. First you must download the sources for GENIA. Do that with ``wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.1.tar.gz``
 
-        2. In order to compile the sources, you may need to edit a C++ so that it has an additional include directive. Basically, morph.cpp needs to include cstdlib. This should be able to be accomplished by enterring the geniatagger-3.0.1/ directory and running ''echo "$(sed '1i#include <cstdlib>' morph.cpp)" > morph.cpp''
+        2. In order to compile the sources, you may need to edit a C++ so that it has an additional include directive. This should be able to be accomplished by enterring the geniatagger-3.0.1/ directory and running ``echo "$(sed '1i#include <cstdlib>' morph.cpp)" > morph.cpp``
 
-        3. Compile GENIA. Just run ''make''
+        3. Compile GENIA. Just run ``make``
 
         4. If you do not have any errors, then the tagger has been built successfully. If there were compile errors, try to resolve them (it'd be one of those "well it works for me" scenarios).
 
-        5. Set the file "$CLICON_DIR/clicon/features/features.config" so that the line that has "GENIA None" is replaced with "GENIA <path-to-tagger-you-just-built>'. This file is how CliCon is able to find and run the tagger.
+        5. Set the file "$CLICON_DIR/config.txt" so that the line that has "GENIA None" is replaced with "GENIA <path-to-tagger-you-just-built>'. This file is how CliCon is able to find and run the tagger. This can be done with the ugly command ``sed -i "s/GENIA None/GENIA $(echo $CLICON_DIR | sed 's/\//\\\//g')\/clicon\/features_dir\/genia\/geniatagger-3.0.1\/geniatagger/g" $CLICON_DIR/config.txt``
 
 
 
-
-
-6. Get UMLS tables (optional)
+(6) Get UMLS tables (optional)
 
     This is an optional part of installation. Adding the UMLS tables will improve results of the system's predictions, but it could run without it.
 
@@ -210,18 +202,15 @@ Please email wboag@cs.uml.edu with your installation questions.
 
     http://www.nlm.nih.gov/databases/umls.html
 
-    You will need to get following tables: MRREL, MRCON, MRSTY
+    You will need to get following tables: **MRREL, MRCON, MRSTY**
 
-    Put these tables in the $CLICON_DIR/umls_tables directory.
+    **Put these tables in the $CLICON_DIR/umls_tables directory.**
 
-    In order to tell CliCon that the tables are there, you must edit the file "$CLICON_DIR/clicon/features" and change the line saying "UMLS None" to "UMLS <path-to-your-umls_tables-dir>".
-
-
+    In order to tell CliCon that the tables are there, you must edit the file "$CLICON_DIR/config.txt" and change the line saying "UMLS  None" to "UMLS True". This command will do that ``sed -i "s/UMLS  None/UMLS  True/g" $CLICON_DIR/config.txt``
 
 
 
-
-7. Create 'clicon' executable script for command-line use
+(7) Create 'clicon' executable script for command-line use
 
     In order to run CliCon (as done in the usage examples), you must run setup.py.
 
@@ -236,8 +225,7 @@ Please email wboag@cs.uml.edu with your installation questions.
 
 
 
-
-8. Run unit tests
+(8) Run unit tests
 
     [this section is under construction]
 
@@ -247,13 +235,11 @@ Usage Examples
 --------
 
     End-to-End
-
     ::
-        user@your-machine:~/CliCon$ export CLICON_DIR=.
         user@your-machine:~/CliCon$ source install.sh
-        (venv_clicon)user@your-machine:~/CliCon$ clicon train $CLICON_DIR/examples/pretend.xml --format xml
-        (venv_clicon)user@your-machine:~/CliCon$ clicon predict $CLICON_DIR/examples/pretend.txt
-        (venv_clicon)user@your-machine:~/CliCon$ clicon evaluate $CLICON_DIR/examples/pretend.txt --gold $CLICON_DIR/examples --format xml
+        (venv_clicon)user@your-machine:~/CliCon$ clicon train    $CLICON_DIR/examples/pretend.xml --format xml
+        (venv_clicon)user@your-machine:~/CliCon$ clicon predict  $CLICON_DIR/examples/pretend.txt
+        (venv_clicon)user@your-machine:~/CliCon$ clicon evaluate $CLICON_DIR/examples/pretend.txt --format xml --gold $CLICON_DIR/examples
 
 
     i2b2 format
