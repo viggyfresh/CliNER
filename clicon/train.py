@@ -42,14 +42,22 @@ def main():
         action = "store_true"
     )
 
+    parser.add_argument("-no-crf",
+        dest = "nocrf",
+        help = "A flag indicating whether to use crfsuite for pass one.",
+        action = "store_true"
+    )
+
     # Parse the command line arguments
     args = parser.parse_args()
+    is_crf = not args.nocrf
 
 
     # A list of text    file paths
     # A list of concept file paths
     txt_files = glob.glob(args.txt)
     con_files = glob.glob(args.con)
+
 
 
     # i2b2 or xml
@@ -98,7 +106,7 @@ def main():
 
 
     # Create a Machine Learning model
-    model = Model(filename = args.model)
+    model = Model(filename = args.model, is_crf=is_crf)
 
 
     # Train the model using the Note's data

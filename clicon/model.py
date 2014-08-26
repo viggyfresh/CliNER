@@ -44,7 +44,7 @@ class Model:
         return model
 
 
-    def __init__(self, filename='awesome.model'):
+    def __init__(self, filename='awesome.model', is_crf=True):
 
         model_directory = os.path.dirname(filename)
         if model_directory != "":
@@ -53,7 +53,7 @@ class Model:
         self.filename = os.path.realpath(filename)
 
         # Use python-crfsuite
-        self.crf_enabled = False
+        self.crf_enabled = is_crf
 
         # DictVectorizers
         self.first_prose_vec    = DictVectorizer()

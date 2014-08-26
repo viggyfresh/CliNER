@@ -16,9 +16,12 @@ def clicon():
 @click.option('--annotations'   , help='Concept files for training.'  )
 @click.option('--model'         , help='Model output by train.'       )
 @click.option('--format'        , help='Data format (i2b2 or xml).'   )
-@click.option('--grid/--no-grid', help='Flag that enables grid search')
+@click.option('--grid/--no-grid', help='Flag that enables grid search', 
+              default=False)
+@click.option('--crf/--no-crf'  , help='Flag that enables crfsuite'   ,
+              default=True)
 @click.argument('input')
-def train(annotations, model, format, grid, input):
+def train(annotations, model, format, grid, crf, input):
 
     # i2b2 data needs concept file annotations
     if (format == 'i2b2') and (not annotations):
@@ -46,6 +49,8 @@ def train(annotations, model, format, grid, input):
         cmd += ['-f',      format]
     if grid:
         cmd += ['-g']
+    if not crf:
+        cmd += ['-no-crf']
 
     # Execute train.py
     subprocess.call(cmd)
