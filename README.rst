@@ -245,12 +245,10 @@ Please email wboag@cs.uml.edu with your installation questions.
 Usage Examples
 --------
 
-    End-to-End
+    Demo Script
     ::
         user@your-machine:~/CliCon$ source install.sh
-        (venv_clicon)user@your-machine:~/CliCon$ clicon train    $CLICON_DIR/examples/pretend.xml --format xml
-        (venv_clicon)user@your-machine:~/CliCon$ clicon predict  $CLICON_DIR/examples/pretend.txt
-        (venv_clicon)user@your-machine:~/CliCon$ clicon evaluate $CLICON_DIR/examples/pretend.txt --format xml --gold $CLICON_DIR/examples
+        (venv_clicon)user@your-machine:~/CliCon$ bash examples/demo.sh
 
 
     i2b2 format
