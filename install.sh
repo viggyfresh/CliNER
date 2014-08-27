@@ -9,6 +9,30 @@
 #
 
 
+
+function install_python_dependencies {
+
+    modules=(nltk python-crfsuite nose numpy scipy scikit-learn)
+    for m in ${modules[@]} ; do
+
+        #echo -e "\n\nmodule: $m\n\n"
+
+        # Install module if necessary
+        python $CLICON_DIR/clicon/is_installed.py $m
+        if [[ $? != 0 ]] ; then
+            echo "$m is not installed"
+            pip install -U $m
+        fi
+
+    done
+
+    # Install nltk data
+    python -m nltk.downloader maxent_treebank_pos_tagger wordnet
+
+}
+
+
+
 function get_genia {
     # save current path
     old_path=$(pwd)
@@ -17,6 +41,7 @@ function get_genia {
     cd $CLICON_DIR/clicon/features_dir/genia
     wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.1.tar.gz
     tar xzvf geniatagger-3.0.1.tar.gz
+    rm geniatagger-3.0.1.tar.gz
 
     # Build GENIA tagger
     cd geniatagger-3.0.1/
@@ -47,7 +72,7 @@ function get_genia {
 
 
 # Ensure resources are available
-which g++ gfortran virtualenv pip
+which g++ gfortran virtualenv pip &> /dev/null
 resources=$?
 if [[ $resources -eq 0 ]] ; then
 
@@ -56,20 +81,19 @@ if [[ $resources -eq 0 ]] ; then
     if [[ "$CLICON_DIR" = "" ]] ; then
 
         CLICON_DIR="$( cd "$( dirname "$0" )" && pwd )"
-        export CLICON_DIR=\"$CLICON_DIR\"
-        echo -e "export CLICON_DIR=\"$CLICON_DIR\"" >> .bashrc
+        export CLICON_DIR=$CLICON_DIR
+        echo -e "export CLICON_DIR=$CLICON_DIR" >> .bashrc
 
     fi
 
 
     # Create virtual environment
-    virtualenv venv_clicon
+    virtualenv venv_clicon --system-site-packages
     source venv_clicon/bin/activate
 
 
     # Install python dependencies
-    pip install nltk numpy scikit-learn scipy python-crfsuite
-    python -m nltk.downloader maxent_treebank_pos_tagger wordnet
+    install_python_dependencies
 
 
     # Download & install GENIA tagger
