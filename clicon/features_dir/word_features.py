@@ -16,7 +16,6 @@ __date__   = 'Apr 27, 2014'
 
 import nltk
 import re
-from sets import ImmutableSet
 from wordshape import getWordShapes
     
 
@@ -24,25 +23,14 @@ from wordshape import getWordShapes
 
 class WordFeatures:
 
-    #enabled_IOB_prose_word_features = ImmutableSet( ['Generic#', 'last_two_letters', 'word', 'length', 'mitre', 'stem_porter', 'stem_lancaster', 'word_shape', 'metric_unit' ] )
+    enabled_IOB_prose_word_features = frozenset( ['Generic#', 'last_two_letters', 'word', 'length', 'mitre', 'stem_porter', 'stem_lancaster', 'word_shape', 'metric_unit' ] )
 
-    enabled_IOB_nonprose_word_features = ImmutableSet( ['word', 'word_shape', 'metric_unit', 'mitre', 'directive', 'date' ] )
+    enabled_IOB_nonprose_word_features = frozenset( ['word', 'word_shape', 'metric_unit', 'mitre', 'directive', 'date' ] )
 
-    enabled_concept_features = ImmutableSet( ['word', 'prefix', 'stem_porter', 'stem_lancaster', 'previous_word_stem', 'next_word_stem'] )
+    enabled_concept_features = frozenset( ['word', 'prefix', 'stem_porter', 'stem_lancaster', 'previous_word_stem', 'next_word_stem'] )
 
 
     def __init__(self):
-
-        self.enabled_IOB_prose_word_features = []
-        #self.enabled_IOB_prose_word_features.append('word')
-        self.enabled_IOB_prose_word_features.append('Generic#')
-        #self.enabled_IOB_prose_word_features.append('last_two_letters')
-        #self.enabled_IOB_prose_word_features.append('length')
-        #self.enabled_IOB_prose_word_features.append('mitre')
-        #self.enabled_IOB_prose_word_features.append('stem_porter')
-        #self.enabled_IOB_prose_word_features.append('stem_lancaster')
-        #self.enabled_IOB_prose_word_features.append('word_shape')
-
         pass
 
 
