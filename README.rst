@@ -68,8 +68,15 @@ Some of python modules used by CliCon have the following dependencies, which als
 
 For Ubuntu users, the above are the names of the packages that need to be installed.
 
+Although the script is able to build python dependencies via pip, this is a slow process. It would be much faster to obtain binaries of certain python modules and then run the script:
 
-To invoke the script, first ``cd`` into the ``CliCon`` directory and set the CLICON_DIR environmentn variable:
+::
+
+    numpy
+    scipy
+    scikit-learn
+
+To invoke the script, first ``cd`` into the ``CliCon`` directory and run it:
 
 ::    
 
@@ -133,7 +140,8 @@ Please email wboag@cs.uml.edu with your installation questions.
             **Tristan should put stuff here**
 
 
-    Ensure the following python modules are installed (install via pip):
+    Ensure the following python modules are installed:
+        * nose
         * numpy
         * scikit-learn
         * scipy
@@ -144,7 +152,8 @@ Please email wboag@cs.uml.edu with your installation questions.
     ::
     
         (venv_clicon)user@your-machine:~/CliCon$ sudo apt-get install python-pip python-virtualenv python-dev g++ gfortran libopenblas-dev liblapack-dev -y
-        (venv_clicon)user@your-machine:~/CliCon$ pip install numpy scikit-learn scipy nltk python-crfsuite
+        (venv_clicon)user@your-machine:~/CliCon$ pip install nose numpy scikit-learn scipy nltk python-crfsuite
+        (venv_clicon)user@your-machine:~/CliCon$ python -m nltk.downloader maxent_treebank_pos_tagger wordnet
 
 
 
@@ -190,7 +199,7 @@ Please email wboag@cs.uml.edu with your installation questions.
 
         4. If you do not have any errors, then the tagger has been built successfully. If there were compile errors, try to resolve them (it'd be one of those "well it works for me" scenarios).
 
-        5. Set the file "$CLICON_DIR/config.txt" so that the line that has "GENIA None" is replaced with "GENIA <path-to-tagger-you-just-built>'. This file is how CliCon is able to find and run the tagger. This can be done with the ugly command ``sed -i "s/GENIA None/GENIA $(echo $CLICON_DIR | sed 's/\//\\\//g')\/clicon\/features_dir\/genia\/geniatagger-3.0.1\/geniatagger/g" $CLICON_DIR/config.txt``
+        5. Set the file "$CLICON_DIR/config.txt" so that the line that has "GENIA None" is replaced with "GENIA <path-to-geniatagger-3.0.1/geniatagger>'. This file is how CliCon is able to find and run the tagger.
 
 
 
@@ -207,6 +216,8 @@ Please email wboag@cs.uml.edu with your installation questions.
     **Put these tables in the $CLICON_DIR/umls_tables directory.**
 
     In order to tell CliCon that the tables are there, you must edit the file "$CLICON_DIR/config.txt" and change the line saying "UMLS  None" to "UMLS True". This command will do that ``sed -i "s/UMLS  None/UMLS  True/g" $CLICON_DIR/config.txt``
+
+    **The database will be built from the tables when CliCon is run for the first time.**
 
 
 
