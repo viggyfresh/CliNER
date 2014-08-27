@@ -1,5 +1,4 @@
 import re
-from sets import Set
 
 BOUNDARY_SIZE = 2
 
@@ -235,7 +234,7 @@ def wordShapeChris2Long (s, omitIfInBoundary,  length,  knownLCWords):
     endChars = ""
     beginUpto = 0
     endUpto = 0
-    seenSet = Set([])
+    seenSet = set([])
 
     nonLetters = False
     for i in range (0, len(s)):
