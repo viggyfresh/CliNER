@@ -8,7 +8,6 @@
 
 
 
-from sets import ImmutableSet
 from umls_cache import UmlsCache
 import umls
 
@@ -17,13 +16,13 @@ import umls
 class UMLSFeatures:
 
 
-    enabled_prose_features    = ImmutableSet( [ 'umls_cui', 'umls_semantic_type_word', 'umls_hypernyms' ] )
+    enabled_prose_features    = frozenset( [ 'umls_cui', 'umls_semantic_type_word', 'umls_hypernyms' ] )
 
-    enabled_nonprose_features = ImmutableSet( [ 'umls_cui', 'umls_semantic_type_word' ] )
+    enabled_nonprose_features = frozenset( [ 'umls_cui', 'umls_semantic_type_word' ] )
 
 
-    enabled_concept_features_for_word = ImmutableSet( [ 'umls_semantic_type_word', 'umls_cui' ] )
-    enabled_concept_features_for_sentence = ImmutableSet( [ 'umls_semantic_type_sentence', 'umls_semantic_context' ] )
+    enabled_concept_features_for_word = frozenset( [ 'umls_semantic_type_word', 'umls_cui' ] )
+    enabled_concept_features_for_sentence = frozenset( [ 'umls_semantic_type_sentence', 'umls_semantic_context' ] )
 
 
 
