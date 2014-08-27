@@ -13,7 +13,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-t",
-        help = "Test files that were used to generate predictions",
+        help = "Text files that were used to generate predictions",
         dest = "txt",
         default = os.path.join(os.getenv('CLICON_DIR'), 'data/test_data/*')
     )
@@ -71,13 +71,11 @@ def main():
 
     # List of gold data
     ref_files = glob.glob( os.path.join(args.ref, wildcard) )
-    ref_files = map(lambda f: os.path.join(args.ref, f), ref_files)
     ref_files_map = helper.map_files(ref_files)
 
 
     # List of predictions
     pred_files = glob.glob( os.path.join(args.con, wildcard) )
-    pred_files = map(lambda f: os.path.join(args.con, f), pred_files)
     pred_files_map = helper.map_files(pred_files)
 
 
