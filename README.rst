@@ -74,7 +74,7 @@ Although the script is able to build python dependencies via pip, this is a slow
 
     numpy
     scipy
-    scikit-learn
+    scikit-learn (version 0.14)
 
 To invoke the script, first ``cd`` into the ``CliCon`` directory:
 
@@ -143,7 +143,7 @@ Please email wboag@cs.uml.edu with your installation questions.
     Ensure the following python modules are installed:
         * nose
         * numpy
-        * scikit-learn
+        * scikit-learn (version 0.14)
         * scipy
         * python-crfsuite
         * nltk  (AND run the NLTK downloader)
