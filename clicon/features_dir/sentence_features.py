@@ -14,7 +14,6 @@ __date__   = 'Apr. 27, 2014'
 
 import nltk
 import re
-from sets import ImmutableSet
 from wordshape import getWordShapes
 
 
@@ -42,11 +41,9 @@ class SentenceFeatures:
 
 
     # Feature Enabling
-    #enabled_IOB_prose_sentence_features = ImmutableSet( [ 'pos', 'stem_wordnet', 'GENIA', 'prev', 'next', 'prev_3_pos', 'next_3_pos', 'UMLS'] )
+    enabled_IOB_nonprose_sentence_features = frozenset( ['pos', 'test_result', 'prev', 'next','prev_3_pos', 'next_3_pos', 'UMLS'])
 
-    enabled_IOB_nonprose_sentence_features = ImmutableSet( ['pos', 'test_result', 'prev', 'next','prev_3_pos', 'next_3_pos', 'UMLS'])
-
-    enabled_concept_features = ImmutableSet( ['pos','prev_3_pos', 'stem_wordnet', 'test_result', 'word_shape','prev','next', "UMLS"])
+    enabled_concept_features = frozenset( ['pos','prev_3_pos', 'stem_wordnet', 'test_result', 'word_shape','prev','next', "UMLS"])
 
 
 
