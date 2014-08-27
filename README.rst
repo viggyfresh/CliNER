@@ -76,7 +76,7 @@ Although the script is able to build python dependencies via pip, this is a slow
     scipy
     scikit-learn
 
-To invoke the script, first ``cd`` into the ``CliCon`` directory and run it:
+To invoke the script, first ``cd`` into the ``CliCon`` directory:
 
 ::    
 
@@ -137,7 +137,7 @@ Please email wboag@cs.uml.edu with your installation questions.
 
 
         Mac OSX
-            **Tristan should put stuff here**
+            **[to be added]**
 
 
     Ensure the following python modules are installed:
@@ -160,7 +160,7 @@ Please email wboag@cs.uml.edu with your installation questions.
 
 (4) Get i2b2 2010 shared task data
 
-    The Data Use and Confidentiality Agreement with i2b2 forbids us from redistributing their data. In order to gain access, you must go to:
+    The Data Use and Confidentiality Agreement (DUA) with i2b2 forbids us from redistributing the i2b2 data. In order to gain access to the data, you must go to:
 
     https://www.i2b2.org/NLP/DataSets/AgreementAR.php
 
