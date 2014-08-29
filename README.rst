@@ -12,12 +12,6 @@ Please note that for optimal performance, CliCon requires the users to obtain a 
 * Free software: BSD license
 * Documentation: http://clicon.readthedocs.org.
 
-Features
---------
-
-* TODO
-
-
 
 Installation
 --------
