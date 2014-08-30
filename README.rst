@@ -120,8 +120,9 @@ Please email wboag@cs.uml.edu with your installation questions.
             * liblapack-dev
 
 
-        Mac OSX
-            **[to be added]**
+        Mac OSX (e.g. using [Homebrew](http://brew.sh/)):
+            * python
+            * gfortran
 
 
     Ensure the following python modules are installed:
