@@ -9,7 +9,7 @@ CliCon is implemented as a two-pass machine learning system for named entity rec
 Please note that for optimal performance, CliCon requires the users to obtain a Unified Medical Language System (UMLS) license, since UMLS Metathesaurus is used as one of the knowledge sources for the above classifiers.  
 
 
-* Free software: BSD license
+* Free software: Apache v2.0 license
 * Documentation: http://clicon.readthedocs.org.
 
 
