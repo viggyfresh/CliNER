@@ -41,6 +41,9 @@ The following packages need to be on the system for the script to work:
     python-virtualenv
     python-dev
     
+
+
+
 Some of python modules used by CliCon have the following dependencies, which also need to be installed on the system:
     
 ::
@@ -50,7 +53,12 @@ Some of python modules used by CliCon have the following dependencies, which als
     libopenblas-dev
     liblapack-dev
 
-For Ubuntu users, the above are the names of the packages that need to be installed.
+For Ubuntu users, the above are the names of the packages that need to be installed.  A typical command to install a python module on a Debian-flavored Linux is:
+
+::
+
+    apt-get install <package-name>
+
 
 Although the script is able to build python dependencies via pip, this is a slow process. It would be much faster to obtain binaries of certain python modules and then run the script:
 
@@ -59,6 +67,7 @@ Although the script is able to build python dependencies via pip, this is a slow
     numpy
     scipy
     scikit-learn (version 0.14)
+
 
 To invoke the script, first ``cd`` into the ``CliCon`` directory:
 
