@@ -69,7 +69,7 @@ Although the script is able to build python dependencies via pip, this is a slow
     scikit-learn (version 0.14)
 
 
-To invoke the script, first ``cd`` into the ``CliCon`` directory:
+To invoke the script, ensure you are running a bash shell. Next, ``cd`` into the ``CliCon`` directory:
 
 ::    
 
