@@ -11,8 +11,8 @@
 
 
 # Installation log
-CLICON_DIR="$( cd "$( dirname "$0" )" && pwd )"
-log="$CLICON_DIR/installation_log.txt"
+BASE_DIR="$( cd "$( dirname "$0" )" && pwd )"
+log="$BASE_DIR/installation_log.txt"
 
 
 function install_python_dependencies {
@@ -32,7 +32,8 @@ function install_python_dependencies {
     done
 
     # Install nltk data
-    python -m nltk.downloader maxent_treebank_pos_tagger wordnet
+    echo "downloading nltk data"
+    python -m nltk.downloader maxent_treebank_pos_tagger wordnet >> $log
 
 }
 
@@ -44,14 +45,14 @@ function get_genia {
 
     # Get sources
     cd $CLICON_DIR/clicon/features_dir/genia
-    wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.1.tar.gz
+    wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.1.tar.gz >> $log
     tar xzvf geniatagger-3.0.1.tar.gz
     rm geniatagger-3.0.1.tar.gz
 
     # Build GENIA tagger
     cd geniatagger-3.0.1/
     echo "$(sed '1i#include <cstdlib>' morph.cpp)" > morph.cpp # fix build error
-    make
+    make >> $log
 
     # Successful build ?
     if ! [[ $? -eq 0 ]] ; then
@@ -84,9 +85,7 @@ if [[ $resources -eq 0 ]] ; then
 
     # CLICON_DIR must be defined before proceeding
     if [[ "$CLICON_DIR" = "" ]] ; then
-
-        CLICON_DIR="$( cd "$( dirname "$0" )" && pwd )"
-        export CLICON_DIR=$CLICON_DIR
+        export CLICON_DIR=$BASE_DIR
         echo -e "export CLICON_DIR=$CLICON_DIR" >> .bashrc
 
     fi
@@ -107,7 +106,7 @@ if [[ $resources -eq 0 ]] ; then
 
     # Install 'clicon' script for command line usage
     setup_output="setup_output.txt"
-    python setup.py install >> $setup_output
+    python setup.py install > $setup_output
 
 
     # Successful
@@ -116,6 +115,7 @@ if [[ $resources -eq 0 ]] ; then
     else
         echo "CliCon installation failure"
         cat $setup_output
+    fi
 
 
     cat $setup_output >> $log
