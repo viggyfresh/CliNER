@@ -10,6 +10,11 @@
 
 
 
+# Installation log
+CLICON_DIR="$( cd "$( dirname "$0" )" && pwd )"
+log="$CLICON_DIR/installation_log.txt"
+
+
 function install_python_dependencies {
 
     modules=(nltk python-crfsuite nose numpy scipy scikit-learn)
@@ -20,8 +25,8 @@ function install_python_dependencies {
         # Install module if necessary
         python $CLICON_DIR/clicon/is_installed.py $m
         if [[ $? != 0 ]] ; then
-            echo "$m is not installed"
-            pip install -U $m
+            echo "installing $m"
+            pip install -U $m >> $log
         fi
 
     done
@@ -101,7 +106,20 @@ if [[ $resources -eq 0 ]] ; then
 
 
     # Install 'clicon' script for command line usage
-    python setup.py install
+    setup_output="setup_output.txt"
+    python setup.py install >> $setup_output
+
+
+    # Successful
+    if [[ $? == 0 ]] ; then
+        echo "CliCon successfully installed"
+    else
+        echo "CliCon installation failure"
+        cat $setup_output
+
+
+    cat $setup_output >> $log
+    rm $setup_output
 
 
 else
