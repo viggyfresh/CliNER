@@ -110,6 +110,9 @@ class Note:
 
                     #print "\n" + "-" * 80
 
+            # Safe guard against concept file having duplicate entries
+            classifications = list(set(classifications))
+
             # Concept file does not guarantee ordering by line number
             self.classifications = sorted(classifications, cmp=concept_cmp)
 

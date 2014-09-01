@@ -265,6 +265,7 @@ class Model:
 
         print '\ttraining  classifier (pass two)'
 
+
         # Train the model
         self.second_clf = sci.train(X, Y, do_grid)
 
