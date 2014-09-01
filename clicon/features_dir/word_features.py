@@ -46,12 +46,13 @@ class WordFeatures:
         # Allow for particular features to be enabled
         for feature in self.enabled_IOB_prose_word_features:
 
+            if feature == "word":
+                features[(feature, word.lower())] = 1
+
+            '''
             if feature == "stem_lancaster":
                 st = nltk.stem.LancasterStemmer()
                 features[ (feature, st.stem(word.lower())) ] = 1
-
-            if feature == "word":
-                features[(feature, word.lower())] = 1
 
             # Feature: Generic# stemmed word
             if feature == 'Generic#':
@@ -79,6 +80,7 @@ class WordFeatures:
                 wordShapes = getWordShapes(word)
                 for shape in wordShapes:
                     features[(feature, shape)] = 1
+            '''
 
 
         return features

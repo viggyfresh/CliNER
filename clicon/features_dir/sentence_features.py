@@ -75,7 +75,7 @@ class SentenceFeatures:
         #self.enabled_IOB_prose_sentence_features.append('next2')
         #self.enabled_IOB_prose_sentence_features.append('next3')
         self.enabled_IOB_prose_sentence_features.append('GENIA')
-        #self.enabled_IOB_prose_sentence_features.append('UMLS')
+        self.enabled_IOB_prose_sentence_features.append('UMLS')
 
 
 
