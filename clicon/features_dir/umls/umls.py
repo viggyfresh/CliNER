@@ -211,9 +211,6 @@ def get_cui( cache , word ):
 # Get the hypernyms of a string
 def umls_hypernyms( cache, string ):
 
-    print 'hypernym lookup is unacceptably slow'
-    #return []
-
     # If hypernyms already in cache
     if cache.has_key( string + '--hypernyms' ):
 

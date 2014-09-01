@@ -59,7 +59,7 @@ def cui_lookup( string ):
 
 def hypernyms_lookup( string ):
 
-    print 'hypernym lookup is unacceptably slow'
+    #print 'hypernym lookup is unacceptably slow'
     return []
 
     c.execute( "SELECT CUI FROM MRCON WHERE STR = ? LIMIT 1 ;" , (string,) )
