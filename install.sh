@@ -118,7 +118,6 @@ if [[ $resources -eq 0 ]] ; then
         echo "Building executable 'clicon' script"
         python setup.py install &> $setup_output
         success=$?
-        echo "success: $success"
         echo -e "'clicon' script built\n"
 
 
