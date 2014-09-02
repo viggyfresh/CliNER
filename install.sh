@@ -9,12 +9,6 @@
 #
 
 
-
-# Installation log
-BASE_DIR="$( cd "$( dirname "$0" )" && pwd )"
-log="$BASE_DIR/installation_log.txt"
-
-
 function install_python_dependencies {
 
     modules=(nltk python-crfsuite nose numpy scipy scikit-learn)
@@ -55,7 +49,7 @@ function get_genia {
     cd geniatagger-3.0.1/
     echo "$(sed '1i#include <cstdlib>' morph.cpp)" > morph.cpp # fix build error
     echo "building GENIA tagger"
-    make >> $log
+    make &>> $log
     echo -e "GENIA tagger built\n"
 
     # Successful build ?
@@ -65,6 +59,11 @@ function get_genia {
     fi
 
     # Set config file location of tagger
+    if [[ -f "$CLICON_DIR/config.txt" ]] ; then
+        echo -e "\n\tWarning: Could not update config.txt because CLICON_DIR must be an absolute path"
+        cd $old_path
+        return
+    fi
     config_file="$CLICON_DIR/config.txt"
     out_tmp="out.tmp.txt"
     echo "GENIA $(pwd)/geniatagger" > $out_tmp
@@ -89,43 +88,50 @@ if [[ $resources -eq 0 ]] ; then
 
     # CLICON_DIR must be defined before proceeding
     if [[ "$CLICON_DIR" = "" ]] ; then
-        export CLICON_DIR=$BASE_DIR
-        echo -e "export CLICON_DIR=$CLICON_DIR" >> .bashrc
-    fi
 
+        echo -e "\n\tYou must define the CLICON_DIR evironment variable to run this script\n"
 
-    # Create virtual environment
-    virtualenv venv_clicon --system-site-packages
-    source venv_clicon/bin/activate
-
-
-    # Install python dependencies
-    install_python_dependencies
-
-
-    # Download & install GENIA tagger
-    get_genia
-
-
-    # Install 'clicon' script for command line usage
-    setup_output="setup_output.txt"
-    echo "Building executable 'clicon' script"
-    python setup.py install &> $setup_output
-    echo -e "'clicon' script built\n"
-
-
-    # Successful
-    if [[ $? == 0 ]] ; then
-        echo "CliCon successfully installed"
     else
-        echo "CliCon installation failure"
-        cat $setup_output
+
+        # Installation log
+        log="$CLICON_DIR/installation_log.txt"
+
+
+        # Create virtual environment
+        echo "creating virtual environment"
+        virtualenv venv_clicon --system-site-packages &>> $log
+        source venv_clicon/bin/activate
+        echo "virtual environment enabled"
+
+
+        # Install python dependencies
+        install_python_dependencies
+
+
+        # Download & install GENIA tagger
+        get_genia
+
+
+        # Install 'clicon' script for command line usage
+        setup_output="setup_output.txt"
+        echo "Building executable 'clicon' script"
+        python setup.py install &> $setup_output
+        echo -e "'clicon' script built\n"
+
+
+        # Successful
+        if [[ $? == 0 ]] ; then
+            echo "CliCon successfully installed"
+        else
+            echo "CliCon installation failure"
+            cat $setup_output
+        fi
+
+
+        cat $setup_output >> $log
+        rm $setup_output
+
     fi
-
-
-    cat $setup_output >> $log
-    rm $setup_output
-
 
 else
 
