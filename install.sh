@@ -59,8 +59,8 @@ function get_genia {
     fi
 
     # Set config file location of tagger
-    if [[ -f "$CLICON_DIR/config.txt" ]] ; then
-        echo -e "\n\tWarning: Could not update config.txt because CLICON_DIR must be an absolute path"
+    if [[ ! -f "$CLICON_DIR/config.txt" ]] ; then
+        echo -e "\tWarning: Could not update config.txt because CLICON_DIR must be an absolute path\n"
         cd $old_path
         return
     fi
@@ -101,7 +101,7 @@ if [[ $resources -eq 0 ]] ; then
         echo "creating virtual environment"
         virtualenv venv_clicon --system-site-packages &>> $log
         source venv_clicon/bin/activate
-        echo "virtual environment enabled"
+        echo -e "virtual environment enabled\n"
 
 
         # Install python dependencies
