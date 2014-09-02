@@ -116,15 +116,19 @@ if [[ $resources -eq 0 ]] ; then
         setup_output="setup_output.txt"
         echo "Building executable 'clicon' script"
         python setup.py install &> $setup_output
+        success=$?
+        echo "success: $success"
         echo -e "'clicon' script built\n"
 
 
         # Successful
-        if [[ $? == 0 ]] ; then
+        if [[ $success == 0 ]] ; then
             echo "CliCon successfully installed"
         else
-            echo "CliCon installation failure"
+            echo -e "CliCon installation failure\n"
+            echo "---------------------FAILURE-------------------------"
             cat $setup_output
+            echo "-----------------------------------------------------"
         fi
 
 
