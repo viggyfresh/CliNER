@@ -89,8 +89,8 @@ if [[ $resources -eq 0 ]] ; then
     # CLICON_DIR must be defined before proceeding
     if [[ "$CLICON_DIR" = "" ]] ; then
 
-        echo -e "\n\tYou must define the CLICON_DIR evironment variable to run this script\n"
-        echo -e   "\tRecommendation: 'cd' to the directory containing this script and execute 'export CLICON_DIR=$(pwd)'"
+        echo -e "\n\tYou must define the CLICON_DIR evironment variable to run this script"
+        echo -e   "\tRecommendation: 'cd' to the directory containing this script and execute 'export CLICON_DIR=$(pwd)'\n"
 
     else
 
