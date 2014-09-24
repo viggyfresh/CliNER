@@ -45,7 +45,7 @@ def string_lookup( string ):
 
 
 
-# get all semantic types for a given concept
+# get concept for a given string.
 def cui_lookup( string ):
 
     try:
