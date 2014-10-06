@@ -15,6 +15,7 @@ __date__   = 'Oct. 5, 2014'
 from __future__ import with_statement
 
 import re
+import string
 from copy import copy
 import nltk.data
 
@@ -169,6 +170,9 @@ class Note:
         # Read in the medical text
         with open(txt) as f:
             for line in f:
+                # Strip away non-printable characters
+                line = filter(lambda x: x in string.printable, line)
+
                 # Add sentence to the data list
                 self.data.append(line.split())
 
