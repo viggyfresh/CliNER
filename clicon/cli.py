@@ -1,8 +1,24 @@
+######################################################################
+#  CliNER - cli.py                                                   #
+#                                                                    #
+#  Willie Boag                                      wboag@cs.uml.edu #
+#                                                                    #
+#  Purpose: Command Line Interface for working with CliNER.          #
+######################################################################
+
+
+__author__ = 'Willie Boag'
+__date__   = 'Oct. 5, 2014'
+
+
+
 import click
 import os
 import sys
 import subprocess
 import glob
+
+from note import Note
 
 
 @click.group()
@@ -10,12 +26,14 @@ def clicon():
     pass
 
 
+supported_formats_help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )"
+
 
 # Train
 @clicon.command()
 @click.option('--annotations'   , help='Concept files for training.'  )
 @click.option('--model'         , help='Model output by train.'       )
-@click.option('--format'        , help='Data format (i2b2 or xml).'   )
+@click.option('--format'        , help=supported_formats_help         )
 @click.option('--grid/--no-grid', help='Flag that enables grid search', 
               default=False)
 @click.option('--crf/--no-crf'  , help='Flag that enables crfsuite'   ,
@@ -23,8 +41,8 @@ def clicon():
 @click.argument('input')
 def train(annotations, model, format, grid, crf, input):
 
-    # i2b2 data needs concept file annotations
-    if (format == 'i2b2') and (not annotations):
+    # training data needs concept file annotations
+    if not annotations:
         print >>sys.stderr, '\n\tError: Must provide annotations for text files'
         print >>sys.stderr,  ''
         exit(1)
@@ -62,7 +80,7 @@ def train(annotations, model, format, grid, crf, input):
 @clicon.command()
 @click.option('--out'   , help='The directory to write the output')
 @click.option('--model' , help='Model used to predict on files'   )
-@click.option('--format', help='Data format (i2b2 or xml).'       )
+@click.option('--format', help=supported_formats_help             )
 @click.argument('input')
 def predict(model, out, format, input):
 
@@ -97,7 +115,7 @@ def predict(model, out, format, input):
 @click.option('--predictions', help='Directory where predictions  are stored.')
 @click.option('--gold'       , help='Directory where gold standard is stored.')
 @click.option('--out'        , help='Output file'                             )
-@click.option('--format'     , help='Data format (i2b2 or xml).'              )
+@click.option('--format'     , help=supported_formats_help                    )
 @click.argument('input')
 def evaluate(predictions, gold, out, format, input):
 
@@ -132,7 +150,7 @@ def evaluate(predictions, gold, out, format, input):
 # Format
 @clicon.command()
 @click.option('--annotations', help='Concept files for training.')
-@click.option('--format'     , help='Data format (i2b2 or xml).' )
+@click.option('--format'     , help=supported_formats_help       )
 @click.option('--out'        , help='File to write the output.'  )
 @click.argument('input')
 def format(annotations, format, out, input):

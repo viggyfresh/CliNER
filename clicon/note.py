@@ -1,10 +1,62 @@
+######################################################################
+#  CliNER - note.py                                                  #
+#                                                                    #
+#  Willie Boag                                      wboag@cs.uml.edu #
+#                                                                    #
+#  Purpose: Internal representation of data for CliNER.              #
+######################################################################
+
+
+__author__ = 'Willie Boag'
+__date__   = 'Oct. 5, 2014'
+
+
+
 from __future__ import with_statement
 
 import re
 from copy import copy
+import nltk.data
 
 
 class Note:
+
+    # Private class
+    class SentenceTokenizer:
+
+        # TODO - Maybe get fancy API or something
+        def __init__(self):
+            self.sent_tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+
+        def tokenize(self, text):
+            """ Split the document into sentences """
+            return self.sent_tokenizer.tokenize(text)
+
+            # nltk tokenizer doesn't preserve double spaces after sentence end
+            sections = text.split('  ')
+            parts = [ self.sent_tokenizer.tokenize(sections[0]) ]
+            for section in sections[1:]:
+                toks = self.sent_tokenizer.tokenize(section)
+                parts += ['  '] + toks
+
+            return sections
+
+
+
+    # Private class
+    class WordTokenizer:
+
+        # TODO - Maybe get fancy API or something
+        # http://www.nltk.org/api/nltk.tokenize.html
+        # PunktWordTokenizer
+        def __init__(self):
+            pass
+
+        def tokenize(self, sent):
+            """ Split the sentence into tokens """
+            return sent.split()
+
+
 
     # Constructor
     def __init__(self):
@@ -19,6 +71,68 @@ class Note:
         self.text_chunks     = []
 
 
+        # Tokenizing text files
+        self.sent_tokenizer = Note.SentenceTokenizer()
+        self.word_tokenizer =     Note.WordTokenizer()
+
+
+
+    # NOTE: Extend this when defining new reader
+    # Mapping from file formats to filename extensions
+    supported_formats = {   'i2b2':'con'  , 
+                             'xml':'xml'  ,
+                         'semeval':'pipe' }
+
+
+
+    @staticmethod
+    def supportedFormats():
+        """ returns a list of data formats supported by CliNER """
+        return Note.supported_formats.keys()
+
+
+    @staticmethod
+    def getExtension(format):
+        """ returns the appropriate filename extension for a given data format """
+        return Note.supported_formats[format]
+
+
+    def reader(self, format, txt, con):
+        """
+        reader()
+
+        Purpose: Dispatch appropriate reader for given format.
+        """
+
+        # FIXME - I wish Python had a frozen dict to guarantee saftey
+        # Error check input
+        if format not in Note.supportedFormats():
+            raise Exception('format %s not supported' % format)
+
+        # Dispatch to reader
+        dispatch = 'self.read_%s(txt, con)' % format
+        eval(dispatch)
+
+
+
+    def writer(self, format, txt, con=None):
+        """
+        reader()
+
+        Purpose: Dispatch appropriate writer for given format.
+        """
+
+        # Error check input
+        if format not in Note.supportedFormats():
+            raise Exception('format %s not supported' % format)
+
+        # Dispatch to reader
+        dispatch = 'self.write_%s(txt)'      % format
+
+        eval(dispatch)
+
+
+
 
     # Note::read_i2b2()
     #
@@ -26,6 +140,7 @@ class Note:
     # @param con. A file path for the i2b2 annotated concepts associated with txt
     def read_i2b2(self, txt, con=None):
 
+        # TODO - split with OpeNLP tokenizer
 
         def concept_cmp(a,b):
             """
@@ -338,7 +453,7 @@ class Note:
 
 
 
-    def read_xml(self, xml):
+    def read_xml(self, txt, xml):
 
         """
         Note::read_xml()
@@ -480,6 +595,92 @@ class Note:
         return toks
 
 
+
+    def read_semeval(self, txt, con=None):
+
+
+        def lineno(line_inds, ind):
+            """ Identify which line number contains index 'ind' """
+            pass
+
+        line_indices = []
+        start = 0
+        end = 0
+
+        with open(txt) as f:
+
+            # Get entire file
+            text = f.read()
+
+            # Sentence splitter
+            sents = self.sent_tokenizer.tokenize(text)
+
+            # Test if tokenzier preserves anything
+            output = ''.join(sents)
+
+            # Tokenize each sentence into words (and save line number indices)
+            toks = []
+            line_indices = []  # indices
+            #gold = []          # Actual lines
+            for s in sents:
+                #gold.append(s)
+
+                toks.append( self.word_tokenizer.tokenize(s) )
+
+                # Keep track of which indices each line has
+                end = start + len(s)
+                line_indices.append( (start,end) )
+                start = end + 1
+
+                # Account for occasional double space after sentence end
+                while (start < len(text)) and (text[start] == ' '): start += 1
+
+            """
+            for line,inds in zip(gold,line_indices):
+                print line + '!!!'
+                print '\t', 'xx'*10
+                print inds
+                print '\t', 'xx'*10
+                print text[inds[0]: inds[1]] + '!!!'
+                print '---'
+                print '\n'
+                print 'Xx' * 20
+            """
+
+        # FIXME TODO - Test if lineno() function works
+
+        #print toks
+
+        print '\n\n\n'
+
+        exit()
+
+        # If an accompanying concept file was specified, read it
+        if con:
+            with open(con) as f:
+                for line in f:
+
+                    # Empty line
+                    if line == '\n': continue
+
+                    # Parse concept file line
+                    fields = line.strip().split('||')
+                    print fields
+                    concept = fields[1]
+                    cui     = fields[2]
+                    span_inds = []
+                    for i in range(3,len(fields),2):
+                        span= int(fields[i]), int(fields[i+1])
+                        span_inds.append( span )
+
+                    print '\t', concept
+                    print '\t', cui
+                    print '\t', span_inds
+
+
+
+    def write_semeval(self, labels):
+        return 'foo bar\nbaz'
 
 
     # txtlist()

@@ -1,3 +1,16 @@
+######################################################################
+#  CliNER - train.py                                                 #
+#                                                                    #
+#  Willie Boag                                      wboag@cs.uml.edu #
+#                                                                    #
+#  Purpose: Build model for given training data.                     #
+######################################################################
+
+
+__author__ = 'Willie Boag'
+__date__   = 'Oct. 5, 2014'
+
+
 import os
 import os.path
 import glob
@@ -32,7 +45,7 @@ def main():
 
     parser.add_argument("-f",
         dest = "format",
-        help = "Data format (i2b2 or xml).",
+        help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )",
         default = 'i2b2'
     )
 
@@ -59,44 +72,38 @@ def main():
     con_files = glob.glob(args.con)
 
 
-
-    # i2b2 or xml
+    # data format
     format = args.format
-    if format == 'i2b2':
-
-        # ex. {'record-13': 'record-13.con'}
-        txt_files_map = helper.map_files(txt_files)
-        con_files_map = helper.map_files(con_files)
-
-        # ex. training_list =  [ ('record-13.txt', 'record-13.con') ]
-        training_list = []
-        for k in txt_files_map:
-            if k in con_files_map:
-                training_list.append((txt_files_map[k], con_files_map[k]))
-
-        # file names
-        print '\n', training_list, '\n'
-
-        # Read the data into a Note object
-        notes = []
-        for txt, con in training_list:
-            note_tmp = Note()             # Create Note
-            note_tmp.read_i2b2(txt, con)  # Read data into Note
-            notes.append(note_tmp)        # Add the Note to the list
 
 
-    elif format == 'xml':
+    # Must specify output format
+    if format not in Note.supportedFormats():
+        print >>sys.stderr, '\n\tError: Must specify output format'
+        print >>sys.stderr,   '\tAvailable formats: ', ' | '.join(Note.supportedFormats())
+        print >>sys.stderr, ''
+        exit(1)
 
-        # file names
-        print '\n', txt_files, '\n'
 
-        # Read the data into a Note object
-        notes = []
-        for xml in txt_files:
-            note_tmp = Note()             # Create Note
-            note_tmp.read_xml(xml)        # Read data into Note
-            notes.append(note_tmp)        # Add the Note to the list
+    # Collect training data file paths
+    txt_files_map = helper.map_files(txt_files) # ex. {'record-13': 'record-13.con'}
+    con_files_map = helper.map_files(con_files)
+    
+    training_list = []                          # ex. training_list =  [ ('record-13.txt', 'record-13.con') ]
+    for k in txt_files_map:
+        if k in con_files_map:
+            training_list.append((txt_files_map[k], con_files_map[k]))
 
+
+    # display file names (for user to see data was properly located)
+    print '\n', training_list, '\n'
+
+
+    # Read the data into a Note object
+    notes = []
+    for txt, con in training_list:
+        note_tmp = Note()                  # Create Note
+        note_tmp.reader(format, txt, con)  # Read data into Note
+        notes.append(note_tmp)             # Add the Note to the list
 
 
     # file names
