@@ -28,7 +28,7 @@ function install_python_dependencies {
 
     # Install nltk data
     echo "downloading nltk data"
-    python -m nltk.downloader maxent_treebank_pos_tagger wordnet &>> $log
+    python -m nltk.downloader maxent_treebank_pos_tagger wordnet punkt &>> $log
     echo -e "nltk download complete\n"
 
 }

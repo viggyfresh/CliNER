@@ -1,10 +1,6 @@
-#!/usr/bin/env bash
+clicon train "$CLICON_DIR/data/train/txt/*.txt" --annotations "$CLICON_DIR/data/train/con/*.con"
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+clicon predict "$CLICON_DIR/data/test_data/*.txt"
 
-
-python "$DIR/code/train.py" -t data/concept_assertion_relation_training_data/beth/txt/record-13.txt -c data/concept_assertion_relation_training_data/beth/concept/record-13.con -m models/run_models/run.model
-python "$DIR/code/predict.py" -i data/concept_assertion_relation_training_data/beth/txt/record-13.txt -o data/test_predictions -m models/run_models/run.model
-python "$DIR/code/evaluate.py" -t data/concept_assertion_relation_training_data/beth/txt/record-13.txt -c data/test_predictions -r data/concept_assertion_relation_training_data/beth/concept/
-
+clicon evaluate "$CLICON_DIR/data/test_data/*.txt" --predictions "$CLICON_DIR/data/test_predictions" --gold "$CLICON_DIR/data/reference_standard_for_test_data/concepts"
 

@@ -272,7 +272,7 @@ Usage Examples
 
         Train model on xml-formatted data
         ::
-            (venv_clicon)user@your-machine:~/CliCon$ clicon train $CLICON_DIR/examples/pretend.xml --format xml
+            (venv_clicon)user@your-machine:~/CliCon$ clicon train $CLICON_DIR/examples/pretend.txt --annotations $CLICON_DIR/examples/pretend.xml --format xml
 
         Predict concepts and output in xml format
         ::
