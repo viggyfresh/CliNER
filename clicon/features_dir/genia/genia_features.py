@@ -60,6 +60,7 @@ class GeniaFeatures:
         # Feature: Current word's GENIA features
         for i,curr in enumerate(genia_feats):
             keys = ['GENIA-stem','GENIA-POS','GENIA-chunktag']
+            #keys = ['GENIA-stem','GENIA-POS','GENIA-chunktag', 'GENIA-NEtag']
             output = dict( ((k, curr[k]), 1) for k in keys if k in curr )
             features_list[i].update(output)
 

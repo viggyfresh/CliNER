@@ -25,9 +25,10 @@ class WordFeatures:
 
     enabled_IOB_prose_word_features = frozenset( ['Generic#', 'last_two_letters', 'word', 'length', 'mitre', 'stem_porter', 'stem_lancaster', 'word_shape', 'metric_unit' ] )
 
-    enabled_IOB_nonprose_word_features = frozenset( ['word', 'word_shape', 'metric_unit', 'mitre', 'directive', 'date' ] )
+    enabled_IOB_nonprose_word_features = frozenset( ['word', 'word_shape', 'mitre', 'QANN' ] )
 
-    enabled_concept_features = frozenset( ['word', 'prefix', 'stem_porter', 'stem_lancaster', 'previous_word_stem', 'next_word_stem'] )
+    #enabled_concept_features = frozenset( ['word', 'prefix', 'stem_porter', 'stem_lancaster', 'previous_word_stem', 'next_word_stem'] )
+    enabled_concept_features = frozenset( ['word', 'prefix', 'stem_porter', 'stem_lancaster', 'previous_word_stem', 'next_word_stem', 'word_shape', 'metric_unit', 'mitre', 'directive', 'date'] )
 
 
     def __init__(self):
@@ -46,41 +47,46 @@ class WordFeatures:
         # Allow for particular features to be enabled
         for feature in self.enabled_IOB_prose_word_features:
 
+            '''
             if feature == "word":
                 features[(feature, word.lower())] = 1
 
-            '''
             if feature == "stem_lancaster":
                 st = nltk.stem.LancasterStemmer()
                 features[ (feature, st.stem(word.lower())) ] = 1
+            '''
 
             # Feature: Generic# stemmed word
             if feature == 'Generic#':
                 generic = re.sub('[0-9]','0',word)
                 features[ ('Generic#',generic) ] = 1
 
+            '''
             # Feature: Last two leters of word
             if feature == 'last_two_letters':
                 features[ ('last_two_letters',word[-2:]) ] = 1
+            '''
 
 
+            '''
             if feature == "length":
                 features[(feature, None)] = len(word)
+
+            if feature == "stem_porter":
+                st = nltk.stem.PorterStemmer()
+                features[(feature, st.stem(word))] = 1
+            '''
+
 
             if feature == "mitre":
                 for f in self.mitre_features:
                     if re.search(self.mitre_features[f], word):
                         features[(feature, f)] = 1
 
-            if feature == "stem_porter":
-                st = nltk.stem.PorterStemmer()
-                features[(feature, st.stem(word))] = 1
-
             if feature == "word_shape":
                 wordShapes = getWordShapes(word)
                 for shape in wordShapes:
                     features[(feature, shape)] = 1
-            '''
 
 
         return features
@@ -95,42 +101,13 @@ class WordFeatures:
     # output: A dictionary of features
     def IOB_nonprose_features(self, word):
 
-        # Feature: <dummy>
-        features = {'dummy': 1}  # always have >0 dimensions
+        features = {}
 
-        enabled = True
+        # Feature: The word, itself
+        features[('word', word.lower())] = 1
 
         # Allow for particular features to be enabled
         for feature in self.enabled_IOB_nonprose_word_features:
-
-            # Feature: The word, itself
-            if feature == 'word':
-                features[('word', word.lower())] = 1
-
-
-            # Feature: Metric Unit
-            if feature == "metric_unit":
-                unit = None
-                if self.is_weight(word):
-                    unit = 'weight'
-                elif self.is_size(word):
-                    unit = 'size'
-                elif self.is_volume(word):
-                    unit = 'volume'
-                features[('metric_unit',unit)] = 1
-
-
-            # Feature: Date
-            if feature == 'date':
-                if self.is_date(word):
-                    features[('date',None)] = 1
-
-
-            # Feature: Directive
-            if feature == 'directive':
-                if self.is_directive(word):
-                    features[('directive',None)] = 1
-
 
             # Feature: Mitre
             if feature == "mitre":
@@ -138,12 +115,16 @@ class WordFeatures:
                     if re.search(self.mitre_features[f], word):
                         features[('mitre', f)] = 1
 
-
             # Feature: Word Shape
             if feature == "word_shape":
                 wordShapes = getWordShapes(word)
                 for shape in wordShapes:
                     features[('word_shape', shape)] = 1
+
+            # Feature: QANN features
+            if feature == 'QANN':
+                qann_feats = self.QANN_features(word)
+                features.update(qann_feats)
 
         return features
 
@@ -168,6 +149,8 @@ class WordFeatures:
             if feature == "word":
                 features[ ("word",word.lower()) ] = 1
 
+
+            '''
             # Feature: Porter Stem
             if feature == "stem_porter":
                 st = nltk.stem.PorterStemmer()
@@ -177,29 +160,57 @@ class WordFeatures:
             if feature == "stem_lancaster":
                 st = nltk.stem.LancasterStemmer()
                 features[ ("stem_lancaster", st.stem(word)) ] = 1
+            '''
 
+            '''
             # Feature: First Four Letters
             if feature == "prefix":
                 prefix = word[:4].lower()
                 features[ ("prefix",prefix) ] = 1
+            '''
 
-
-
+            '''
+            # Use: None
             # Feature: Length
             if feature == "length":
                 features[ ("length",None) ] = len(word)
+            '''
+
+            # Feature: Metric Unit
+            if feature == "metric_unit":
+                unit = None
+                if self.is_weight(word):
+                    unit = 'weight'
+                elif self.is_size(word):
+                    unit = 'size'
+                elif self.is_volume(word):
+                    unit = 'volume'
+                features[('metric_unit',unit)] = 1
+
+            '''
+            # Feature: Date
+            if feature == 'date':
+                if self.is_date(word):
+                    features[('date',None)] = 1
+
+            # Feature: Directive
+            if feature == 'directive':
+                if self.is_directive(word):
+                    features[('directive',None)] = 1
 
             # Feature: Mitre
             if feature == "mitre":
                 for f in self.mitre_features:
                     if re.search(self.mitre_features[f], word):
-                        features[ ("mitre",f) ] = 1
+                        features[('mitre', f)] = 1
 
             # Feature: Word Shape
             if feature == "word_shape":
                 wordShapes = getWordShapes(word)
                 for shape in wordShapes:
-                    features[ ("word_shape", shape) ] = 1
+                    features[('word_shape', shape)] = 1
+            '''
+
 
 
         return features
@@ -223,6 +234,7 @@ class WordFeatures:
             word_features = self.concept_features_for_word(w)
             features.update(word_features)
 
+        return features
 
         # Stemmer
         st = nltk.stem.PorterStemmer()
@@ -239,17 +251,17 @@ class WordFeatures:
                     prev_word = st.stem( prev_chunk[-1] )
                     features[ ('prev_word_stem',prev_word) ] = 1
                 else:
-                    features[ ('prev_word_stem',None) ] = 1
+                    features[ ('prev_word_stem','<START>') ] = 1
 
             # Feature: Previous word
-            if feature == "previous_word_stem":
+            if feature == "next_word_stem":
                 if ind != len(sentence)-1:
                     next_ind = ind + 1
                     next_chunk = sentence[next_ind].split()
-                    next_word = st.stem( next_chunk[-1] )
+                    next_word = st.stem( next_chunk[0] )
                     features[ ('next_word_stem',next_word) ] = 1
                 else:
-                    features[ ('next_word_stem',None) ] = 1
+                    features[ ('next_word_stem','<END>') ] = 1
 
 
         return features
@@ -278,6 +290,43 @@ class WordFeatures:
         "DATESEPERATOR": r"^[-/]$",
     }
 
+    # Try to get QANN features
+    def QANN_features(self, word):
+        features = {}
+
+        # Feature: test result
+        if self.is_test_result(word):    features[('test_result',None)] = 1
+
+        # Feature: measurements
+        if self.is_measurement(word):    features[('measurement',None)] = 1
+
+        # Feature: directive
+        if self.is_directive(word):      features[('directive',  None)] = 1
+
+        # Feature: date
+        if self.is_date(word):           features[('date',       None)] = 1
+
+        # Feature: volume
+        if self.is_volume(word):         features[('volume',     None)] = 1
+
+        # Feature: weight
+        if self.is_weight(word):         features[('weight',     None)] = 1
+
+        # Feature: size
+        if self.is_size(word):           features[('size',       None)] = 1
+
+        # Feature: prognosis location
+        if self.is_prognosis_location:   features[('prog_location', None)] = 1
+
+        # Feature: problem form
+        if self.has_problem_form(word):  features[('problem_form',     None)] = 1
+
+        # Feature: concept class
+        if self.is_weight(word):         features[('weight',     None)] = 1
+
+        return features
+
+
     def is_test_result(self, context):
         # note: make spaces optional?
         regex = r"^[A-Za-z]+( )*(-|--|:|was|of|\*|>|<|more than|less than)( )*[0-9]+(%)*"
@@ -285,8 +334,7 @@ class WordFeatures:
             return re.search(r"^[A-Za-z]+ was (positive|negative)", context)
         return True
 
-    # Try to get QANN features
-    def is_meaurement(self, word):
+    def is_measurement(self, word):
         regex = r"^[0-9]*(unit(s)|cc|L|mL|dL)$"
         return re.search(regex, word)
 
