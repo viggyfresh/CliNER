@@ -16,16 +16,6 @@ import umls
 class UMLSFeatures:
 
 
-    enabled_prose_features    = frozenset( [ 'umls_cui', 'umls_semantic_type_word', 'umls_hypernyms' ] )
-
-    enabled_nonprose_features = frozenset( [ 'umls_cui', 'umls_semantic_type_word' ] )
-
-
-    enabled_concept_features_for_word = frozenset( [ 'umls_semantic_type_word', 'umls_cui' ] )
-    enabled_concept_features_for_sentence = frozenset( [ 'umls_semantic_type_sentence', 'umls_semantic_context' ] )
-
-
-
     def __init__(self):
 
         """
@@ -37,109 +27,47 @@ class UMLSFeatures:
 
 
 
-
-    def IOB_prose_features(self, word):
+    def IOB_prose_features(self, sentence):
 
         """
         UMLSFeatures::IOB_prose_features()
 
-        @ param word.  word to lookup in UMLS database
-        @return        dictionary of features
+        @ param sentence.  A list of words
+        @return            dictionary of features
         """
 
-        # Return value is a list of dictionaries (of features)
-        features = {}
+        features_list = []
 
+        for word in sentence:
+            features_list.append( self.features_for_word(word) )
 
-        for feature in self.enabled_prose_features:
-
-
-            # Feature: UMLS Semantic Types
-            if feature == "umls_cui":
-
-                # Get UMLS CUIs (could have multiple)
-                cuis = umls.get_cui(self.umls_lookup_cache , word)
-
-                # Add each CUI
-                if cuis:
-                    for cui in cuis:
-                        features[(feature,cui)] = 1
-
-
-            # Feature: UMLS Hypernyms
-            if feature == "umls_hypernyms":
-
-                # Get UMLS hypernyms
-                hyps = umls.umls_hypernyms(self.umls_lookup_cache,word)
-
-                # Add all hypernyms
-                if hyps:
-                    #for hyp in hyps:
-                    features[(feature,hyps[0])] = 1
-
-
-            # Feature: UMLS Semantic Type (for each word)
-            if feature == "umls_semantic_type_word":
-                # Get UMLS semantic type (could have multiple)
-                mapping = umls.umls_semantic_type_word(self.umls_lookup_cache , word )
-
-                #print mapping
-
-                # If is at least one semantic type
-                if mapping != None:
-                    for concept in mapping:
-                        features[('umls_semantic_type_word', concept )] = 1
-
-
-        return features
+        return features_list
 
 
 
-    def IOB_nonprose_features(self, word):
+    def IOB_nonprose_features(self, sentence):
 
         """
         UMLSFeatures::IOB_nonprose_features()
 
-        @ param word.  word to lookup in UMLS database
+        @ param sentence.  A list of words
         @return        dictionary of features
         """
 
-        # Return value is a list of dictionaries (of features)
-        features = {}
+        features_list = []
 
+        for word in sentence:
+            features_list.append( self.features_for_word(word) )
 
-        for feature in self.enabled_nonprose_features:
-
-
-            # Feature: UMLS Semantic Types
-            if feature == "umls_cui":
-                # Get UMLS CUIs (could have multiple)
-                cuis = umls.get_cui(self.umls_lookup_cache , word)
-
-                # Add each CUI
-                for cui in cuis:
-                    features[(feature,cui)] = 1
-
-
-            # Feature: UMLS Semantic Type (for each word)
-            if feature == "umls_semantic_type_word":
-                # Get UMLS semantic type (could have multiple)
-                mapping = umls.umls_semantic_type_word(self.umls_lookup_cache , word )
-                # If is at least one semantic type
-                if mapping != None:
-                    for concept in mapping:
-                        features[('umls_semantic_type_word', concept )] = 1
-
-
-        return features
+        return features_list
 
 
 
 
-    def concept_features_for_word(self, word):
+    def features_for_word(self, word):
 
         """
-        UMLSFeatures::concept_features_for_word()
+        UMLSFeatures::features_for_word()
 
         @ param word.  word to lookup in UMLS database
         @return        dictionary of  word-level features
@@ -149,37 +77,35 @@ class UMLSFeatures:
         # Return value is a list of dictionaries (of features)
         features = {}
 
+        #print '\n'
+        #print word
 
-        for feature in self.enabled_concept_features_for_word:
+        # Feature: UMLS Semantic Types
+        cuis = umls.get_cui(self.umls_lookup_cache , word)
 
-            # Feature: UMLS Semantic Types
-            if feature == "umls_cui":
-
-                # Get UMLS CUIs (could have multiple)
-                cuis = umls.get_cui(self.umls_lookup_cache , word)
-
-                # Add each CUI
-                if cuis:
-                    for cui in cuis:
-                        features[(feature,cui)] = 1
+        # Add each CUI
+        if cuis:
+            for cui in cuis:
+                features[('umls_cui',cui)] = 1
+                #print '\tcui: ', cui
+            #print
 
 
-            # Feature: UMLS Semantic Type (for each word)
-            if feature == "umls_semantic_type_word":
+        # Feature: UMLS Semantic Type (for each word)
+        mapping = umls.umls_semantic_type_word(self.umls_lookup_cache , word )
 
-                # Get UMLS semantic type (could have multiple)
-                mapping = umls.umls_semantic_type_word(self.umls_lookup_cache , word )
-                # If is at least one semantic type
-                if mapping:
-                    for concept in mapping:
-                        features[('umls_semantic_type_word', concept )] = 1
-
+        # Add each semantic type
+        if mapping:
+            for concept in mapping:
+                features[('umls_semantic_type_word', concept )] = 1
+                #print '\t', 'semantic_type_word: ', concept
+            #print
 
         return features
 
 
 
-    def concept_features_for_sentence(self, sentence):
+    def concept_features_for_chunk(self, sentence, ind):
 
         """
         UMLSFeatures::concept_features_for_sentence()
@@ -188,10 +114,19 @@ class UMLSFeatures:
         @return           dictionary of chunk-level features
         """
 
+        #print '\n\n\n'
+        #print 'concept_features_for_chunk'
+        #print sentence
+        #print ind
 
         # Return value is a list of dictionaries (of features)
         features = {}
 
+        # UMLS features for each words
+        for word in sentence[ind].split():
+            word_feats = self.features_for_word(word)
+            features.update(word_feats)
+        
 
         for feature in self.enabled_concept_features_for_sentence:
 

@@ -1,28 +1,39 @@
 import cPickle as pickle
 import SQLookup 
+import create_trie
+
+# Global trie
+trie = create_trie.create_trie()
+
 
 def umls_semantic_type_word( umls_string_cache , sentence ):
 
     #If the umls semantic type is in the cache use that semantic type otherwise lookup the semantic type and add to the cache.
-    if umls_string_cache.has_key( sentence ):
+    if False and umls_string_cache.has_key( sentence ):
         mapping = umls_string_cache.get_map( sentence )
     else:
-        concept = SQLookup.string_lookup( sentence )
-        umls_string_cache.add_map( sentence , concept )
-        '''
-        if concept != None:
-            #umls_string_cache.add_map( sentence , concept[0] )
-            umls_string_cache.add_map( sentence , concept )
-        else:
-            umls_string_cache.add_map( sentence , None )
-        '''
+        #concept = SQLookup.string_lookup( sentence )
+        #umls_string_cache.add_map( sentence , concept )
+        #'''
+        #if concept != None:
+        #    #umls_string_cache.add_map( sentence , concept[0] )
+        #    umls_string_cache.add_map( sentence , concept )
+        #else:
+        #    umls_string_cache.add_map( sentence , None )
+        #'''
+        #mapping = umls_string_cache.get_map(sentence)
+        concepts = SQLookup.string_lookup( sentence )
+        concepts = [  singleton[0]  for singleton  in set(concepts)  ]
+        umls_string_cache.add_map(sentence , concepts)
         mapping = umls_string_cache.get_map(sentence)
+
 
     #print 'umls_semantic_type_word - returning:'
     #print mapping
     #print ''
 
-    return mapping  
+    # FIXME - For some reason, this is thought t return multiple strings via list
+    return mapping
     
 
 def umls_semantic_context_of_words( umls_string_cache, sentence ):
@@ -49,7 +60,9 @@ def umls_semantic_context_of_words( umls_string_cache, sentence ):
                 rawstring += ( sentence[tj] + " " ) 
             
             #Each string is of length 1 to currentWindowSize.
-            rawstring = rawstring[0:-1]  
+            rawstring = rawstring.strip()
+
+            #print rawstring
 
             #If the string is not in cache, look the umls concept up and add to the cache. 
             if not( umls_string_cache.has_key( rawstring ) ):
@@ -137,7 +150,7 @@ def umls_semantic_type_sentence( cache , sentence ):
                 rawstring += ( sentence[tj] + " " )
 
             #Each string is of length 1 to currentWindowSize.                                                                                                                                  
-            rawstring = rawstring[0:-1]
+            rawstring = rawstring.strip()
 
             #If the umls semantic type is already in the cache then us the one stored otherwise lookup and add to cache 
             if cache.has_key( rawstring ):
@@ -155,8 +168,8 @@ def umls_semantic_type_sentence( cache , sentence ):
                     cache.add_map( rawstring  , [] )
 
                 mappings[rawstring] = cache.get_map( rawstring )
-#            print "rawstring: ", rawstring
- #           print "mappings: " ,mappings[rawstring] 
+            #print "rawstring: ", rawstring
+            #print "mappings: " ,mappings[rawstring] 
     size_s = 0
 
     phrase = []
