@@ -1,3 +1,16 @@
+######################################################################
+#  CliNER - predict.py                                               #
+#                                                                    #
+#  Willie Boag                                      wboag@cs.uml.edu #
+#                                                                    #
+#  Purpose: Use trained model to predict concept labels for data.    #
+######################################################################
+
+
+__author__ = 'Willie Boag'
+__date__   = 'Oct. 5, 2014'
+
+
 import os
 import sys
 import glob
@@ -32,7 +45,7 @@ def main():
 
     parser.add_argument("-f",
         dest = "format",
-        help = "Data format (i2b2 or xml).",
+        help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )", 
         default = 'i2b2'
     )
 
@@ -52,8 +65,9 @@ def main():
 
 
     # Must specify output format
-    if (format != 'i2b2') and (format != 'xml'):
-        print >>sys.stderr, '\n\tError: Must specify output format (i2b2 or xml)'
+    if format not in Note.supportedFormats():
+        print >>sys.stderr, '\n\tError: Must specify output format'
+        print >>sys.stderr,   '\tAvailable formats: ', ' | '.join(Note.supportedFormats())
         print >>sys.stderr, ''
         exit(1)
 
@@ -77,7 +91,7 @@ def main():
 
         # Read the data into a Note object
         note = Note()
-        note.read_i2b2(txt)
+        note.reader(format, txt)
 
 
         print '-' * 30
@@ -86,20 +100,17 @@ def main():
 
         # Predict concept labels
         labels = model.predict(note)
+        #labels = []
 
 
         # Get predictions in proper format
-        if format == 'i2b2':
-            extension = 'con'
-            output = note.write_i2b2(labels)
-        else:
-            extension = 'xml'
-            output = note.write_xml(labels)
+        extension = Note.getExtension(format)
+        output = note.writer(format, labels)
 
 
         # Output file
-        basename = os.path.basename(txt)[:-3] + extension
-        out_path = os.path.join(args.output, basename)
+        fname = os.path.splitext(os.path.basename(txt))[0] + '.' + extension
+        out_path = os.path.join(args.output, fname)
 
 
         # Output the concept predictions

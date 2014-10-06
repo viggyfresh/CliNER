@@ -1,3 +1,17 @@
+######################################################################
+#  CliNER - evaluate.py                                              #
+#                                                                    #
+#  Kevin Wacome                                   kwacome@cs.uml.edu #
+#                                                                    #
+#  Purpose: Evaluate predictions of concept labels against gold.     #
+######################################################################
+
+
+__author__ = 'Kevin Wacome'
+__date__   = 'Aug. 20, 2014'
+
+
+
 import os
 import os.path
 import sys
@@ -296,7 +310,7 @@ def main():
 
     parser.add_argument("-f",
         dest = "format",
-        help = "Data format (i2b2 or xml).",
+        help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )",
         default = 'i2b2'
     )
 
@@ -308,6 +322,7 @@ def main():
 
     # Parse command line arguments
     args = parser.parse_args()
+    format = args.format
 
 
     # Is output destination specified?
@@ -317,20 +332,18 @@ def main():
         args.output = sys.stdout
 
 
-    # Which format to read?
-    if   args.format == 'i2b2':
-        wildcard = '*.con'
-    elif args.format == 'xml':
-        wildcard = '*.xml'
-    else:
-        print >>sys.stderr, '\n\tError: Must specify output format (i2b2 or xml)'
+    # Must specify output format
+    if format not in Note.supportedFormats():
+        print >>sys.stderr, '\n\tError: Must specify output format'
+        print >>sys.stderr,   '\tAvailable formats: ', ' | '.join(Note.supportedFormats())
         print >>sys.stderr, ''
         exit(1)
-
+    
 
     # List of medical text
     txt_files = glob.glob(args.txt)
     txt_files_map = helper.map_files(txt_files)
+    wildcard = '*.' + Note.getExtension(format)
 
 
     # List of gold data
@@ -349,9 +362,10 @@ def main():
         if k in pred_files_map and k in ref_files_map:
             files.append((txt_files_map[k], pred_files_map[k], ref_files_map[k]))
 
+
     # txt          <- medical text                                               
     # annotations  <- predictions                                                
-    # gold        <- gold standard
+    # gold         <- gold standard
 
 
     truePositivesExactSpan = 0
@@ -374,12 +388,8 @@ def main():
         # Read predictions and gols standard data                                
         cnote = Note()
         rnote = Note()
-        if args.format == 'i2b2':
-            cnote.read_i2b2(txt, annotations)
-            rnote.read_i2b2(txt, gold)
-        else:
-            cnote.read_xml(annotations)
-            rnote.read_xml(gold)
+        cnote.reader(format, txt, annotations)
+        rnote.reader(format, txt,        gold)
 
         referenceSpans = getConceptSpans(rnote.boundaries, rnote.conlist())
         predictedSpans = getConceptSpans(cnote.boundaries, cnote.conlist())
