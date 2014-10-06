@@ -1,3 +1,6 @@
+from __future__ import with_statement
+
+
 ######################################################################
 #  CliNER - note.py                                                  #
 #                                                                    #
@@ -12,13 +15,15 @@ __date__   = 'Oct. 5, 2014'
 
 
 
-from __future__ import with_statement
-
 import re
 import string
 from copy import copy
 import nltk.data
 
+
+
+# TODO - Create directory/module for note 
+#         with individual files for different data format readers/writers.
 
 class Note:
 
@@ -71,6 +76,10 @@ class Note:
         self.boundaries      = []
         self.text_chunks     = []
 
+        # semeval formay internals
+        self.text      = ''
+        self.line_inds = []
+
 
         # Tokenizing text files
         self.sent_tokenizer = Note.SentenceTokenizer()
@@ -98,7 +107,7 @@ class Note:
         return Note.supported_formats[format]
 
 
-    def reader(self, format, txt, con):
+    def reader(self, format, txt, con=None):
         """
         reader()
 
@@ -134,6 +143,32 @@ class Note:
 
 
 
+    @ staticmethod
+    def concept_cmp(a,b):
+        """
+        concept_cmp()
+
+        Purpose: Compare concept classification tokens
+        """
+        a = (int(a[1]), int(a[2]))
+        b = (int(b[1]), int(b[2]))
+
+        # Sort by line number
+        if a[0] < b[0]:
+            return -1
+        if a[0] > b[0]:
+            return  1
+        else:
+            # Resolve lineno ties with indices
+            if a[1] < b[1]:
+                return -1
+            if a[1] > b[1]:
+                return  1
+            else:
+                return 0
+
+
+
 
     # Note::read_i2b2()
     #
@@ -142,30 +177,6 @@ class Note:
     def read_i2b2(self, txt, con=None):
 
         # TODO - split with OpeNLP tokenizer
-
-        def concept_cmp(a,b):
-            """
-            concept_cmp()
-
-            Purpose: Compare concept classification tokens
-            """
-            a = (int(a[1]), int(a[2]))
-            b = (int(b[1]), int(b[2]))
-
-            # Sort by line number
-            if a[0] < b[0]:
-                return -1
-            if a[0] > b[0]:
-                return  1
-            else:
-                # Resolve lineno ties with indices
-                if a[1] < b[1]:
-                    return -1
-                if a[1] > b[1]:
-                    return  1
-                else:
-                    return 0
-
 
         # Read in the medical text
         with open(txt) as f:
@@ -179,6 +190,8 @@ class Note:
                 # Make put a temporary 'O' in each spot
                 self.boundaries.append( ['O' for _ in line.split()] )
 
+                # Original text file
+                self.text += line
 
         # If an accompanying concept file was specified, read it
         if con:
@@ -233,7 +246,7 @@ class Note:
             classifications = list(set(classifications))
 
             # Concept file does not guarantee ordering by line number
-            self.classifications = sorted(classifications, cmp=concept_cmp)
+            self.classifications = sorted(classifications, cmp=Note.concept_cmp)
 
 
 
@@ -467,6 +480,11 @@ class Note:
         @param xml. A file path for the xml formatted medical record
         """
 
+        # Original text file
+        with open(txt, 'r') as f:
+            self.text = f.read()
+
+
         # Read in the medical text
         with open(xml) as f:
 
@@ -603,11 +621,36 @@ class Note:
     def read_semeval(self, txt, con=None):
 
 
-        def lineno(line_inds, ind):
-            """ Identify which line number contains index 'ind' """
-            pass
+        def lineno_and_tokspan(char_span):
+            """ Identify which line number and token number of given char ind """
+            for i,span in enumerate(self.line_inds):
+                if char_span[1] < span[1]: 
+                    start = char_span[0] - span[0]
+                    end   = char_span[1] - span[0]
 
-        line_indices = []
+                    # FIXME - Might not always be true, 
+                    # but assumed single space separating tokens
+                    tok_span = [0,len(self.data[i])-1]
+                    char_count = 0
+                    for j,tok in enumerate(self.data[i]):
+                        if char_count > end: 
+                            tok_span[1] = j-1
+                            break
+                        elif char_count == start:
+                            tok_span[0] = j
+                        char_count += len(tok) + 1
+                        #print '\t',j, '\t', tok, '(', char_count, ')'
+
+                    #print start, end
+                    #print tok_span
+                    #print text[span[0]:span[1]][86]
+                    #print self.data[i][tok_span[0]:tok_span[1]]
+
+                    # return line number AND token span
+                    return (i,tuple(tok_span))
+            return None
+
+
         start = 0
         end = 0
 
@@ -615,6 +658,7 @@ class Note:
 
             # Get entire file
             text = f.read()
+            self.text = text
 
             # Sentence splitter
             sents = self.sent_tokenizer.tokenize(text)
@@ -624,43 +668,45 @@ class Note:
 
             # Tokenize each sentence into words (and save line number indices)
             toks = []
-            line_indices = []  # indices
-            #gold = []          # Actual lines
+            gold = []          # Actual lines
             for s in sents:
-                #gold.append(s)
+                gold.append(s)
 
-                toks.append( self.word_tokenizer.tokenize(s) )
+                # Store data
+                toks = self.word_tokenizer.tokenize(s)
+                self.data.append(toks)
+
+                # Make put a temporary 'O' in each spot
+                self.boundaries.append( ['O' for _ in toks] )
 
                 # Keep track of which indices each line has
                 end = start + len(s)
-                line_indices.append( (start,end) )
+                self.line_inds.append( (start,end) )
                 start = end + 1
 
-                # Account for occasional double space after sentence end
-                while (start < len(text)) and (text[start] == ' '): start += 1
+                # Skip ahead to next non-whitespace
+                while (start < len(text)) and text[start].isspace(): start += 1
 
-            """
+            '''
             for line,inds in zip(gold,line_indices):
-                print line + '!!!'
+                print '!!!' + line + '!!!'
                 print '\t', 'xx'*10
                 print inds
                 print '\t', 'xx'*10
-                print text[inds[0]: inds[1]] + '!!!'
+                print '!!!' + text[inds[0]: inds[1]] + '!!!'
                 print '---'
                 print '\n'
                 print 'Xx' * 20
-            """
+            '''
 
-        # FIXME TODO - Test if lineno() function works
+        #lno,span = lineno_and_tokspan((2329, 2351))
+        #lno,span = lineno_and_tokspan((1327, 1344))
+        #print self.data[lno][span[0]:span[1]+1]
 
-        #print toks
-
-        print '\n\n\n'
-
-        exit()
 
         # If an accompanying concept file was specified, read it
         if con:
+            classifications = []
             with open(con) as f:
                 for line in f:
 
@@ -669,17 +715,48 @@ class Note:
 
                     # Parse concept file line
                     fields = line.strip().split('||')
-                    print fields
+                    #print fields
                     concept = fields[1]
                     cui     = fields[2]
                     span_inds = []
                     for i in range(3,len(fields),2):
-                        span= int(fields[i]), int(fields[i+1])
+                        span = int(fields[i]), int(fields[i+1])
                         span_inds.append( span )
 
-                    print '\t', concept
-                    print '\t', cui
-                    print '\t', span_inds
+                    #print '\t', concept
+                    #print '\t', cui
+                    #print '\t', span_inds
+
+                    # Everything is a Disease_Disorder
+                    concept = 'problem'
+
+                    # FIXME - For now, treat non-contiguous spans as separate
+                    for span in span_inds:
+                        l,(start,end) = lineno_and_tokspan(span)
+
+                        # Add the classification to the Note object
+                        classifications.append( (concept,l+1,start,end) )
+
+
+                        # Beginning of a concept
+                        try:
+                            self.boundaries[l][start] = 'B'
+                        except:
+                            print 'Problem with IOB in read_semeval()'
+                            print 'txt: ', txt
+                            print 'con: ', con
+
+                        # Inside of a concept
+                        for i in range(start,end):
+                            self.boundaries[l][i+1] = 'I'
+
+
+            # Safe guard against concept file having duplicate entries
+            classifications = list(set(classifications))
+
+            # Concept file does not guarantee ordering by line number
+            self.classifications = sorted(classifications, cmp=Note.concept_cmp)
+
 
 
 

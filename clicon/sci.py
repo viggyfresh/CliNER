@@ -6,7 +6,22 @@ from multiprocessing import cpu_count
 from sklearn.metrics import f1_score
 
 
+# Solution for trying to train with all instances having single label
+class TrivialClassifier:
+
+    def __init__(self, label):
+        self.label = label
+
+    def predict(self, X):
+        return [ self.label for x in X ]
+
+
+
 def train(X, Y, do_grid):
+
+    # scikit-learn requires you train data with more than one label
+    if len(Y) and all( [ (y==Y[0]) for y in Y ] ):
+        return TrivialClassifier(Y[0])
 
     # Search space
     C_range     = 10.0 ** np.arange( -5, 9 )
