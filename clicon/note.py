@@ -39,13 +39,13 @@ class Note:
             return self.sent_tokenizer.tokenize(text)
 
             # nltk tokenizer doesn't preserve double spaces after sentence end
-            sections = text.split('  ')
-            parts = [ self.sent_tokenizer.tokenize(sections[0]) ]
-            for section in sections[1:]:
-                toks = self.sent_tokenizer.tokenize(section)
-                parts += ['  '] + toks
+           # sections = text.split('  ')
+           #parts = [ self.sent_tokenizer.tokenize(sections[0]) ]
+        #    for section in sections[1:]:
+         #       toks = self.sent_tokenizer.tokenize(section)
+          #      parts += ['  '] + toks
 
-            return sections
+        #    return sections
 
 
 
