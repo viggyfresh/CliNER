@@ -18,8 +18,9 @@ __date__   = 'Oct. 5, 2014'
 import re
 import string
 from copy import copy
+import copy
 import nltk.data
-
+import os.path
 
 
 # TODO - Create directory/module for note 
@@ -80,6 +81,8 @@ class Note:
         self.text      = ''
         self.line_inds = []
 
+        # name of file read. does not include extension.
+        self.fileName = None
 
         # Tokenizing text files
         self.sent_tokenizer = Note.SentenceTokenizer()
@@ -114,6 +117,8 @@ class Note:
         Purpose: Dispatch appropriate reader for given format.
         """
 
+        self.fileName = os.path.basename(txt).split('.')[0]
+
         # FIXME - I wish Python had a frozen dict to guarantee saftey
         # Error check input
         if format not in Note.supportedFormats():
@@ -139,7 +144,7 @@ class Note:
         # Dispatch to reader
         dispatch = 'self.write_%s(txt)'      % format
 
-        eval(dispatch)
+        return eval(dispatch)
 
 
 
@@ -618,36 +623,66 @@ class Note:
 
 
 
-    def read_semeval(self, txt, con=None):
-
+    def read_semeval(self, txt, con=None):            
 
         def lineno_and_tokspan(char_span):
+
+         #   print self.text
+
+#            print "CHARACTER SPAN: ", char_span, '\n'
+
             """ Identify which line number and token number of given char ind """
             for i,span in enumerate(self.line_inds):
-                if char_span[1] < span[1]: 
+                if char_span[1] < span[1]:
+
+#                    print "span: ", span 
+                   
+                    # start and end of span relative to sentence
                     start = char_span[0] - span[0]
                     end   = char_span[1] - span[0]
 
-                    # FIXME - Might not always be true, 
-                    # but assumed single space separating tokens
+#                    print "START: ", start
+#                    print "END: ", end
+
+                    #print "USING span on self.text: ", self.text[span[0]:span[1]]
+                    #print "USING start and end: ", self.text[span[0]:span[1]][start:end]
+
+                    #print "self.data", self.data[i]
                     tok_span = [0,len(self.data[i])-1]
                     char_count = 0
-                    for j,tok in enumerate(self.data[i]):
-                        if char_count > end: 
-                            tok_span[1] = j-1
+
+                    dataWithEmptyChars = re.split(" |\n|\t", self.text[span[0]:span[1] + 1])
+                  
+                    index = 0
+                    for j,tok in enumerate(dataWithEmptyChars):
+                        if char_count > end:
+                            tok_span[1] = index -1
                             break
                         elif char_count == start:
-                            tok_span[0] = j
+                            tok_span[0] = index
                         char_count += len(tok) + 1
+                        if len(tok) > 0:
+                           index += 1
                         #print '\t',j, '\t', tok, '(', char_count, ')'
 
                     #print start, end
                     #print tok_span
-                    #print text[span[0]:span[1]][86]
+                    #print text[span[0]:span[1]]
                     #print self.data[i][tok_span[0]:tok_span[1]]
 
                     # return line number AND token span
-                    return (i,tuple(tok_span))
+                    #print "LINE: ", i
+                    #print "TOK SPAN: ", tok_span
+                    #print self.data[i]
+                    #print tok_span
+
+                    #print "USING char_span on self.text: ", self.text[char_span[0]:char_span[1]]
+                    #print "USING tok_span on self.data[i]", self.data[i][tok_span[0]], self.data[i][tok_span[1]]
+                    #print "USING char_span on self.text: ", self.text[char_span[0]], self.text[char_span[1]]
+
+
+                    return (i, tuple(tok_span))
+
             return None
 
 
@@ -658,22 +693,36 @@ class Note:
 
             # Get entire file
             text = f.read()
+#            print "\nTEXT:------------------"
+#            print text
+
             self.text = text
 
             # Sentence splitter
             sents = self.sent_tokenizer.tokenize(text)
 
-            # Test if tokenzier preserves anything
-            output = ''.join(sents)
+#            print "\nSENTS:-----------------------------"
+#            print sents
 
             # Tokenize each sentence into words (and save line number indices)
             toks = []
             gold = []          # Actual lines
+            
             for s in sents:
+           
                 gold.append(s)
+
+#                print "\nsentence:-------------------------------"
+#                print s
+
+#                print s
 
                 # Store data
                 toks = self.word_tokenizer.tokenize(s)
+
+#                print "\ntokenized sentence:---------------------------------"
+#                print toks
+
                 self.data.append(toks)
 
                 # Make put a temporary 'O' in each spot
@@ -681,6 +730,16 @@ class Note:
 
                 # Keep track of which indices each line has
                 end = start + len(s)
+
+#                print "\nindices:--------------------------------------------"
+#                print (start, end)
+
+#                print "\nusing index on entire txt----------------------------"
+#                print text[start:end]
+
+#                print "\nEQUAL?"
+#                print text[start:end] == s
+
                 self.line_inds.append( (start,end) )
                 start = end + 1
 
@@ -723,12 +782,15 @@ class Note:
                         span = int(fields[i]), int(fields[i+1])
                         span_inds.append( span )
 
-                    #print '\t', concept
-                    #print '\t', cui
-                    #print '\t', span_inds
+#                    print '\t', concept
+#                    print '\t', cui
+#                    print '\t', span_inds
 
                     # Everything is a Disease_Disorder
                     concept = 'problem'
+
+#                    getWhiteSpaceSpans()
+#                    return
 
                     # FIXME - For now, treat non-contiguous spans as separate
                     for span in span_inds:
@@ -761,8 +823,38 @@ class Note:
 
 
     def write_semeval(self, labels):
-        return 'foo bar\nbaz'
 
+        spans = {}
+        for _, line, startTok, endTok in labels:
+
+            (start, end) = self.line_inds[line-1]        
+            dataWithEmptyChars = re.split(" |\n|\t", self.text[start:end+1])
+
+            tokPosRelToSent = []
+            count = 0
+            for string in dataWithEmptyChars:
+                if string != '':
+                    tokPosRelToSent.append((count, count + len(string)-1))
+                    count += len(string) + 1
+                else:  # empty string
+                    count += 1
+
+            startOfTokRelToText = tokPosRelToSent[startTok:endTok+1][0][0] + start
+            endOfTokRelToText = tokPosRelToSent[startTok:endTok+1][-1][1] + start
+
+            if line not in spans:
+                spans[line] = (self.fileName + ".text||Diease Disorder||CUI-less||" + str(startOfTokRelToText) + "||" +  str(endOfTokRelToText))
+            else:
+                spans[line] += ("\n" + self.fileName + ".text||Diease Disorder||CUI-less||" + str(startOfTokRelToText) + "||" +  str(endOfTokRelToText))
+
+        output = ""
+        lines = list(spans)
+        lines.sort()
+        for line in lines:
+            output += (spans[line] + "\n")
+
+        return output
+ 
 
     # txtlist()
     #
