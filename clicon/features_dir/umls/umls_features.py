@@ -59,6 +59,25 @@ class UMLSFeatures:
         for word in sentence:
             features_list.append( self.features_for_word(word) )
 
+
+        # TODO - Add umls.umls_semantic_type_sentence() to first pass feature set
+        '''
+        # Feature: UMLS semantic type for the sentence
+        # a list of the uml semantic of the largest substring(s).
+        sentence_mapping = umls.umls_semantic_type_sentence( self.umls_lookup_cache, sentence )
+
+        # if there are no mappings
+        if not sentence_mapping:
+            features[('umls_semantic_type_sentence', None ) ] = 1
+        # assign the umls definitions to the vector for each word
+        else:
+            for concept in sentence_mapping:
+                if concept:
+                    for mapping in concept:
+                        features[('umls_semantic_type_sentence' , mapping[0] ) ] = 1
+        '''
+
+
         return features_list
 
 
@@ -128,38 +147,38 @@ class UMLSFeatures:
             features.update(word_feats)
         
 
-        for feature in self.enabled_concept_features_for_sentence:
+        # Feature: UMLS semantic type for the sentence
+        # a list of the uml semantic of the largest substring(s).
+        sentence_mapping = umls.umls_semantic_type_sentence( self.umls_lookup_cache, sentence )
+
+        # if there are no mappings
+        if not sentence_mapping:
+            features[('umls_semantic_type_sentence', None ) ] = 1
+        # assign the umls definitions to the vector for each word
+        else:
+            for concept in sentence_mapping:
+                for mapping in concept:
+                    features[('umls_semantic_type_sentence' , mapping[0] ) ] = 1
 
 
-            # Feature: UMLS semantic type for the sentence
-            if feature == "umls_semantic_type_sentence":
+        # Feature: UMLS semantic context
 
-                # a list of the uml semantic of the largest substring(s).
-                sentence_mapping = umls.umls_semantic_type_sentence( self.umls_lookup_cache, sentence )
+        # the umls definition of the largest string the word is in
+        umls_semantic_context_mappings = umls.umls_semantic_context_of_words( self.umls_lookup_cache , sentence )
 
-                # if there are no mappings
-                if not sentence_mapping:
-                    features[('umls_semantic_type_sentence', None ) ] = 1
-                # assign the umls definitions to the vector for each word
-                else:
-
-                    for concept in sentence_mapping:
-                        if concept:
-                            for mapping in concept:
-                                features[('umls_semantic_type_sentence' , mapping[0] ) ] = 1
-
-
-            # Feature: UMLS semantic context
-            if feature == "umls_semantic_context":
-
-                # the umls definition of the largest string the word is in
-                umls_semantic_context_mappings = umls.umls_semantic_context_of_words( self.umls_lookup_cache , sentence )
-
-                # there could be multiple contexts, iterate through the sublist
-                for mapping in umls_semantic_context_mappings:
-                    if not mapping: continue
-                    for concept in mapping:
-                        features[(feature,concept)] = 1
-
+        # there could be multiple contexts, iterate through the sublist
+        for mapping in umls_semantic_context_mappings:
+            if not mapping: continue
+            for concept in mapping:
+                features[('umls_semantic_context',concept)] = 1
 
         return features
+
+
+
+    def concept_features_for_chunks(self, sentence, inds):
+        retVal = []
+        for ind in inds:
+            retVal.append( self.concept_features_for_chunk(sentence, ind) )
+        return retVal
+

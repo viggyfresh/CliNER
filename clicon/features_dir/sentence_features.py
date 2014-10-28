@@ -388,7 +388,7 @@ class SentenceFeatures:
 
         # FIXME - more closely resembling Harabagiu
         # NOTE: excludes UMLS features
-        return features_list
+        #return features_list
 
 
         '''
@@ -406,8 +406,16 @@ class SentenceFeatures:
             # Features: UMLS features
             # Note: Very slow, doesn't add much when you have lots of training data
             if (feature == "UMLS") and enabled['UMLS']:
-                umls_features = self.feat_umls.IOB_prose_features(sentence)
-                for i in range(len(sentence)):
+                umls_features = self.feat_umls.concept_features_for_chunks(sentence, chunk_inds)
+                if chunk_inds:
+                    print sentence
+                    print chunk_inds
+                    print umls_features
+                    print
+                for i in range(len(chunk_inds)):
+                    print sentence[chunk_inds[i]]
+                    print umls_features[i]
+                    print '\n\n'
                     features_list[i].update( umls_features[i] )
 
             continue
