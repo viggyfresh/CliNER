@@ -58,6 +58,7 @@ def create_trie():
     concepts = []
     for line in MRCON_DATA:
         if len(line) < 6: continue
+
         concept = line[6]
 
         # Ignore non-ascii
@@ -83,4 +84,4 @@ def create_trie():
 
 
 if __name__ == '__main__':
-    create_trie()
+    t = create_trie()

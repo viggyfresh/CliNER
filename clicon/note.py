@@ -34,18 +34,23 @@ class Note:
         def __init__(self):
             self.sent_tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
-        def tokenize(self, text):
+        def tokenize(self, text_file):
             """ Split the document into sentences """
+            #return self.sent_tokenizer.tokenize(text)
+            text = open(text_file, 'r').read()
+
+            # Sentence Splitter
+            cmd = '/opt/apache-opennlp-1.5.3/bin/opennlp SentenceDetector /opt/apache-opennlp-1.5.3/models/en-sent.bin < %s' % text_file
+            #status,output = commands.getstatusoutput(cmd)
+            #sents = '\n'.join(output.split('\n')[1:-6])
+
+
+            # Temporary file
+            #tmpfile = 'tmp-file.txt'
+            #with open(tmpfile, 'w') as f:
+            #    f.write(sents)
+
             return self.sent_tokenizer.tokenize(text)
-
-            # nltk tokenizer doesn't preserve double spaces after sentence end
-           # sections = text.split('  ')
-           #parts = [ self.sent_tokenizer.tokenize(sections[0]) ]
-        #    for section in sections[1:]:
-         #       toks = self.sent_tokenizer.tokenize(section)
-          #      parts += ['  '] + toks
-
-        #    return sections
 
 
 
@@ -61,6 +66,17 @@ class Note:
         def tokenize(self, sent):
             """ Split the sentence into tokens """
             return sent.split()
+
+
+            '''
+            # Tokenize
+            cmd = '/opt/apache-opennlp-1.5.3/bin/opennlp SimpleTokenizer < %s' % tmpfile
+            status,output = commands.getstatusoutput(cmd)
+            tokens = '\n'.join(output.split('\n')[:-5])
+
+            # Display output
+            print tokens
+            '''
 
 
 
@@ -622,7 +638,7 @@ class Note:
 
 
         def lineno_and_tokspan(char_span):
-            """ Identify which line number and token number of given char ind """
+            """ File character offsets => line number and index into line """
             for i,span in enumerate(self.line_inds):
                 if char_span[1] < span[1]: 
                     start = char_span[0] - span[0]
@@ -643,8 +659,8 @@ class Note:
 
                     #print start, end
                     #print tok_span
-                    #print text[span[0]:span[1]][86]
                     #print self.data[i][tok_span[0]:tok_span[1]]
+                    #print
 
                     # return line number AND token span
                     return (i,tuple(tok_span))
@@ -661,7 +677,7 @@ class Note:
             self.text = text
 
             # Sentence splitter
-            sents = self.sent_tokenizer.tokenize(text)
+            sents = self.sent_tokenizer.tokenize(txt)
 
             # Test if tokenzier preserves anything
             output = ''.join(sents)
@@ -688,7 +704,7 @@ class Note:
                 while (start < len(text)) and text[start].isspace(): start += 1
 
             '''
-            for line,inds in zip(gold,line_indices):
+            for line,inds in zip(gold,self.line_inds):
                 print '!!!' + line + '!!!'
                 print '\t', 'xx'*10
                 print inds
@@ -706,6 +722,7 @@ class Note:
 
         # If an accompanying concept file was specified, read it
         if con:
+            offset_classifications = []
             classifications = []
             with open(con) as f:
                 for line in f:
@@ -734,9 +751,10 @@ class Note:
                     for span in span_inds:
                         l,(start,end) = lineno_and_tokspan(span)
 
-                        # Add the classification to the Note object
-                        classifications.append( (concept,l+1,start,end) )
 
+                        # Add the classification to the Note object
+                        offset_classifications.append((concept,span[0],span[1]))
+                        classifications.append( (concept,l+1,start,end) )
 
                         # Beginning of a concept
                         try:
@@ -749,7 +767,6 @@ class Note:
                         # Inside of a concept
                         for i in range(start,end):
                             self.boundaries[l][i+1] = 'I'
-
 
             # Safe guard against concept file having duplicate entries
             classifications = list(set(classifications))

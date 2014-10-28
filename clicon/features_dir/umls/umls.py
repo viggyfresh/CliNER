@@ -133,67 +133,57 @@ def umls_semantic_type_sentence( cache , sentence ):
 
     #print sentence
 
-    #Defines the largest string span for the sentence.                                                                                               
-
+    #Defines the largest string span for the sentence.
     WINDOW_SIZE = 7
 
-    #holds the mappings for every substring of size 1 to WINDOW_SIZE             
-    mappings = {}
- 
-    #Creates and finds the span of a umls concept for each possible substring of length 1 to currentWindowSize.                                                                                                   
-    for currentWindowSize in range( 1 , WINDOW_SIZE ):
-        for ti in range( 0 , ( len(sentence) - currentWindowSize ) + 1 ):
+    #print sentence
 
-            rawstring = ""
+    longestSpanLength = 0
+    longestSpans = []       # List of (start,end) tokens
 
-            for tj in range( ti , ti + currentWindowSize):
-                rawstring += ( sentence[tj] + " " )
+    for i in range(len(sentence)):
+        #print i, ': ', sentence[i]
+        maxVal = min(i+WINDOW_SIZE, len(sentence))
+        for j in range(i,maxVal):
+            #print '\t', j, ':\t',  sentence[i:j+1]
+            span = sentence[i:j+1]
+            rawstring = unicode(' '.join(span))
+            #print 'rawstring: ', rawstring
 
-            #Each string is of length 1 to currentWindowSize.                                                                                                                                  
-            rawstring = rawstring.strip()
+            if rawstring in trie:
+                if   len(span) == longestSpanLength:
+                    #print '\tcontinuing: ', span
+                    longestSpans.append( (i,j) )
+                elif len(span) >  longestSpanLength:
+                    #print '\tnew: ', span
+                    longestSpans = [ (i,j) ]
+                    longestSpanLength = len(span)
 
-            #If the umls semantic type is already in the cache then us the one stored otherwise lookup and add to cache 
-            if cache.has_key( rawstring ):
-                mappings[rawstring] = cache.get_map( rawstring )
 
+    def span2concept(span):
+        rawstring = ' '.join(sentence[span[0]:span[1]+1])
+
+        #If the umls semantic type is already in the cache then us the one stored otherwise lookup and add to cache 
+        if cache.has_key( rawstring ):
+            return cache.get_map( rawstring )
+
+        else:
+            concept = string_lookup( rawstring )
+
+            if concept:
+                cache.add_map( rawstring , concept )
             else:
+                cache.add_map( rawstring  , [] )
 
-                concept = string_lookup( rawstring )
+            return cache.get_map( rawstring )
 
-                #cache.add_map( rawstring , concept )
 
-                if concept:
-                    cache.add_map( rawstring , concept )
-                else:
-                    cache.add_map( rawstring  , [] )
+    mappings = [ span2concept(span) for span in longestSpans ]
 
-                mappings[rawstring] = cache.get_map( rawstring )
-            #print "rawstring: ", rawstring
-            #print "mappings: " ,mappings[rawstring] 
-    size_s = 0
+    #print mappings
+    #print longestSpans
 
-    phrase = []
-
-    
-    #print "mappings: " , mappings 
-    #get longest sub string with a mapping 
-
-    for mapping in mappings.iteritems():
-        #print mapping 
-        if(  mapping[1]  ):
- #           print mapping 
-            if( len( mapping[0] )   > size_s ):
-
-                phrase = []
-                phrase.append( mapping[1] )
-                size_s = len( mapping[0] )
-                continue
-            if( len(mapping[0]) == size_s ):
-                phrase.append( mapping[1] )
-  
-#    print "phrase: " , phrase
-#    print phrase 
-    return phrase
+    return mappings
 
 
 
