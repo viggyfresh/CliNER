@@ -52,7 +52,8 @@ def main():
     parser.add_argument("-crf",
         dest = "with_crf",
         help = "Specify where to find crfsuite",
-        default = None
+ 
+      default = None
     )
 
     args = parser.parse_args()
@@ -100,18 +101,16 @@ def main():
 
         # Predict concept labels
         labels = model.predict(note)
-        #labels = []
-
 
         # Get predictions in proper format
         extension = Note.getExtension(format)
         output = note.writer(format, labels)
 
+        #print output
 
         # Output file
         fname = os.path.splitext(os.path.basename(txt))[0] + '.' + extension
         out_path = os.path.join(args.output, fname)
-
 
         # Output the concept predictions
         print '\n\nwriting to: ', out_path

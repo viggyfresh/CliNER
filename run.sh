@@ -1,6 +1,5 @@
-clicon train "$CLICON_DIR/data/train/txt/*.txt" --annotations "$CLICON_DIR/data/train/con/*.con"
+file="00098-016139"
 
-clicon predict "$CLICON_DIR/data/test_data/*.txt"
+#python clicon/train.py -t test/text/$file.text  -c test/pipe/$file.pipe -f semeval
 
-clicon evaluate "$CLICON_DIR/data/test_data/*.txt" --predictions "$CLICON_DIR/data/test_predictions" --gold "$CLICON_DIR/data/reference_standard_for_test_data/concepts"
-
+python clicon/predict.py -i test/text/$file.text -f semeval
