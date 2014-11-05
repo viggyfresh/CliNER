@@ -1,8 +1,8 @@
 ===============================
-CliCon
+CliNER
 ===============================
 
-Clinical Concept extraction system (CliCon) is an open-source natural language processing system for named entity recognition in clinical text of electronic health records.  CliCon system is designed to follow best practices in clinical concept extraction, as established in i2b2 2010 shared task.  
+Clinical Named Entity Recognition system (CliNER) is an open-source natural language processing system for named entity recognition in clinical text of electronic health records.  CliCon system is designed to follow best practices in clinical concept extraction, as established in i2b2 2010 shared task.  
 
 CliCon is implemented as a two-pass machine learning system for named entity recognition, currently using a Conditional Random Fields (CRF) classifier to establish concept boundaries and a Support Vector Machine (SVM) classifier to establish the type of concept.  
 
