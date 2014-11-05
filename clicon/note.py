@@ -843,6 +843,11 @@ class Note:
             (start, end) = self.line_inds[line-1]        
             dataWithEmptyChars = re.split(" |\n|\t", self.text[start:end+1])
 
+            #print 'start: ', start
+            #print 'end:   ', end
+            #print 'dataWith: ', dataWithEmptyChars
+            #print
+
             tokPosRelToSent = []
             count = 0
             for string in dataWithEmptyChars:
@@ -852,13 +857,28 @@ class Note:
                 else:  # empty string
                     count += 1
 
-            startOfTokRelToText = tokPosRelToSent[startTok:endTok+1][0][0] + start
-            endOfTokRelToText = tokPosRelToSent[startTok:endTok+1][-1][1] + start
+            #print tokPosRelToSent
+            #print tokPosRelToSent[startTok:endTok+1]
+
+            startOfTokRelToText = tokPosRelToSent[startTok][0] + start
+            endOfTokRelToText   = tokPosRelToSent[  endTok][1] + start
+
+            #print '---' + self.text[endOfTokRelToText-3:endOfTokRelToText+4] + '---'
+
+            #print startOfTokRelToText, '  ', endOfTokRelToText
+
+            # Heuristc / Hack for determining when to include extra space
+            if (    self.text[endOfTokRelToText  ].isalpha()) and \
+               (not self.text[endOfTokRelToText+1].isalpha()) :
+                       endOfTokRelToText += 1
+
+            #print startOfTokRelToText, '  ', endOfTokRelToText
+            #print '\n'
 
             if line not in spans:
-                spans[line] = (self.fileName + ".text||Diease Disorder||CUI-less||" + str(startOfTokRelToText) + "||" +  str(endOfTokRelToText))
+                spans[line] = (self.fileName + ".text||Disease_Disorder||CUI-less||" + str(startOfTokRelToText) + "||" +  str(endOfTokRelToText))
             else:
-                spans[line] += ("\n" + self.fileName + ".text||Diease Disorder||CUI-less||" + str(startOfTokRelToText) + "||" +  str(endOfTokRelToText))
+                spans[line] += ("\n" + self.fileName + ".text||Disease_Disorder||CUI-less||" + str(startOfTokRelToText) + "||" +  str(endOfTokRelToText))
 
         output = ""
         lines = list(spans)
