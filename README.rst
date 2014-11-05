@@ -217,7 +217,7 @@ Please email wboag@cs.uml.edu with your installation questions.
 
 (7) Create 'clicon' executable script for command-line use
 
-    In order to run CliCon (as done in the usage examples), you must run setup.py.
+    In order to run CliNER (as done in the usage examples), you must run setup.py.
 
     As long as the Python dependencies are properly installed, you should be able to run the setup script.
 
