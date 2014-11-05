@@ -104,7 +104,7 @@ Please email wboag@cs.uml.edu with your installation questions.
 
 (2) Set the CLICON_DIR environment variable
 
-    In order to run CliCon, you must define the CLICON_DIR environment variable.
+    In order to run CliNER, you must define the CLICON_DIR environment variable.
     
     **This variable must be the path of the directory created by git.**
     
@@ -209,9 +209,9 @@ Please email wboag@cs.uml.edu with your installation questions.
 
     **Put these tables in the $CLICON_DIR/umls_tables directory.**
 
-    In order to tell CliCon that the tables are there, you must edit the file "$CLICON_DIR/config.txt" and change the line saying "UMLS  None" to "UMLS True". This command will do that ``sed -i "s/UMLS  None/UMLS  True/g" $CLICON_DIR/config.txt``
+    In order to tell CliNER that the tables are there, you must edit the file "$CLICON_DIR/config.txt" and change the line saying "UMLS  None" to "UMLS True". This command will do that ``sed -i "s/UMLS  None/UMLS  True/g" $CLICON_DIR/config.txt``
 
-    **The database will be built from the tables when CliCon is run for the first time.**
+    **The database will be built from the tables when CliNER is run for the first time.**
 
 
 
