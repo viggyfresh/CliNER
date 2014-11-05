@@ -1,12 +1,12 @@
 ===============================
-CliCon
+CliNER
 ===============================
 
-Clinical Concept extraction system (CliCon) is an open-source natural language processing system for named entity recognition in clinical text of electronic health records.  CliCon system is designed to follow best practices in clinical concept extraction, as established in i2b2 2010 shared task.  
+Clinical Named Entity Recognition system (CliNER) is an open-source natural language processing system for named entity recognition in clinical text of electronic health records.  CliNER system is designed to follow best practices in clinical concept extraction, as established in i2b2 2010 shared task.  
 
-CliCon is implemented as a two-pass machine learning system for named entity recognition, currently using a Conditional Random Fields (CRF) classifier to establish concept boundaries and a Support Vector Machine (SVM) classifier to establish the type of concept.  
+CliNER is implemented as a two-pass machine learning system for named entity recognition, currently using a Conditional Random Fields (CRF) classifier to establish concept boundaries and a Support Vector Machine (SVM) classifier to establish the type of concept.  
 
-Please note that for optimal performance, CliCon requires the users to obtain a Unified Medical Language System (UMLS) license, since UMLS Metathesaurus is used as one of the knowledge sources for the above classifiers.  
+Please note that for optimal performance, CliNER requires the users to obtain a Unified Medical Language System (UMLS) license, since UMLS Metathesaurus is used as one of the knowledge sources for the above classifiers.  
 
 
 * Free software: Apache v2.0 license
@@ -44,7 +44,7 @@ The following packages need to be on the system for the script to work:
 
 
 
-Some of python modules used by CliCon have the following dependencies, which also need to be installed on the system:
+Some of python modules used by CliNER have the following dependencies, which also need to be installed on the system:
     
 ::
 
@@ -104,7 +104,7 @@ Please email wboag@cs.uml.edu with your installation questions.
 
 (2) Set the CLICON_DIR environment variable
 
-    In order to run CliCon, you must define the CLICON_DIR environment variable.
+    In order to run CliNER, you must define the CLICON_DIR environment variable.
     
     **This variable must be the path of the directory created by git.**
     
@@ -209,15 +209,15 @@ Please email wboag@cs.uml.edu with your installation questions.
 
     **Put these tables in the $CLICON_DIR/umls_tables directory.**
 
-    In order to tell CliCon that the tables are there, you must edit the file "$CLICON_DIR/config.txt" and change the line saying "UMLS  None" to "UMLS True". This command will do that ``sed -i "s/UMLS  None/UMLS  True/g" $CLICON_DIR/config.txt``
+    In order to tell CliNER that the tables are there, you must edit the file "$CLICON_DIR/config.txt" and change the line saying "UMLS  None" to "UMLS True". This command will do that ``sed -i "s/UMLS  None/UMLS  True/g" $CLICON_DIR/config.txt``
 
-    **The database will be built from the tables when CliCon is run for the first time.**
+    **The database will be built from the tables when CliNER is run for the first time.**
 
 
 
 (7) Create 'clicon' executable script for command-line use
 
-    In order to run CliCon (as done in the usage examples), you must run setup.py.
+    In order to run CliNER (as done in the usage examples), you must run setup.py.
 
     As long as the Python dependencies are properly installed, you should be able to run the setup script.
 
