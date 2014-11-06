@@ -13,13 +13,12 @@ __date__   = 'Aug. 20, 2014'
 
 
 import os
-import os.path
 import sys
 import argparse
 import glob
 import helper
-
 from copy import deepcopy
+
 from model import labels
 from note import *
 

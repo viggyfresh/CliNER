@@ -18,7 +18,6 @@ __date__   = 'Oct. 5, 2014'
 import re
 import string
 from copy import copy
-import copy
 import nltk.data
 import os.path
 
@@ -501,74 +500,86 @@ class Note:
         @param xml. A file path for the xml formatted medical record
         """
 
-        # Original text file
-        with open(txt, 'r') as f:
-            self.text = f.read()
+        # Read in the medical text
+        with open(txt) as f:
+            for line in f:
+                # Strip away non-printable characters
+                line = filter(lambda x: x in string.printable, line)
+
+                # Add sentence to the data list
+                self.data.append(line.split())
+
+                # Make put a temporary 'O' in each spot
+                self.boundaries.append( ['O' for _ in line.split()] )
+
+                # Original text file
+                self.text += line
 
 
         # Read in the medical text
-        with open(xml) as f:
+        if xml:
+            with open(xml, 'r') as f:
 
-            for lineno,line in enumerate(f.readlines()):
+                for lineno,line in enumerate(f.readlines()):
 
-                # Add sentence to the data list
-                data_line = []
-                for word in line.split():
-                    if (word[0] != '<') and (word[-1] != '>'):
-                        data_line.append(word)
-                self.data.append(data_line)
+                    # Add sentence to the data list
+                    data_line = []
+                    for word in line.split():
+                        if (word[0] != '<') and (word[-1] != '>'):
+                            data_line.append(word)
+                    self.data.append(data_line)
 
 
-                # Stored data for self.classifications
-                concept = 'N/A'
-                start_ind = -1
-                i = 0
+                    # Stored data for self.classifications
+                    concept = 'N/A'
+                    start_ind = -1
+                    i = 0
 
-                # IOB labels
-                iobs = [] # [  'O'  for  _  in  line.split()  ]
+                    # IOB labels
+                    iobs = [] # [  'O'  for  _  in  line.split()  ]
 
-                # State variable is sufficient because concepts are not nested
-                concept_state = 'O'
-                for word in line.split():
+                    # State variable is sufficient because concepts are not nested
+                    concept_state = 'O'
+                    for word in line.split():
 
-                    # Search for xml tag
-                    match = re.search('<(.*)>', word)
-                    if match:
+                        # Search for xml tag
+                        match = re.search('<(.*)>', word)
+                        if match:
 
-                        con = match.group(1)
-                        
-                        # begin tag
-                        if con[0] != '/':
-                            # store data 
-                            concept = con
-                            start_ind = i
+                            con = match.group(1)
+                            
+                            # begin tag
+                            if con[0] != '/':
+                                # store data 
+                                concept = con
+                                start_ind = i
 
-                            # state variable
-                            concept_state = 'B'
+                                # state variable
+                                concept_state = 'B'
 
-                        # end tag
+                            # end tag
+                            else:
+                                # store data 
+                                tup = (concept,lineno+1,start_ind,i-1)
+                                self.classifications.append(tup)
+
+                                # state variable
+                                concept_state = 'O'
+
+                        # non-tag text
                         else:
-                            # store data 
-                            tup = (concept,lineno+1,start_ind,i-1)
-                            self.classifications.append(tup)
 
-                            # state variable
-                            concept_state = 'O'
+                            # Part of multi-word concept
+                            if concept_state == 'B':
+                                iobs.append('B')
+                                concept_state = 'I'
+                            else:
+                                iobs.append(concept_state)
 
-                    # non-tag text
-                    else:
+                            # Next token
+                            i += 1
 
-                        # Part of multi-word concept
-                        if concept_state == 'B':
-                            iobs.append('B')
-                            concept_state = 'I'
-                        else:
-                            iobs.append(concept_state)
-
-                        # Next token
-                        i += 1
-
-                self.boundaries.append(iobs)
+                    self.boundaries.append(iobs)
 
 
 
@@ -646,14 +657,14 @@ class Note:
             for i,span in enumerate(self.line_inds):
                 if char_span[1] < span[1]:
 
-#                    print "span: ", span 
+                    #print "span: ", span 
                    
                     # start and end of span relative to sentence
                     start = char_span[0] - span[0]
                     end   = char_span[1] - span[0]
 
-#                    print "START: ", start
-#                    print "END: ", end
+                    #print "START: ", start
+                    #print "END: ", end
 
                     #print "USING span on self.text: ", self.text[span[0]:span[1]]
                     #print "USING start and end: ", self.text[span[0]:span[1]][start:end]
@@ -795,9 +806,9 @@ class Note:
                         span = int(fields[i]), int(fields[i+1])
                         span_inds.append( span )
 
-#                    print '\t', concept
-#                    print '\t', cui
-#                    print '\t', span_inds
+                    #print '\t', concept
+                    #print '\t', cui
+                    print '\t', span_inds
 
                     # Everything is a Disease_Disorder
                     concept = 'problem'
