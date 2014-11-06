@@ -7,8 +7,8 @@ import sys
 
 from sklearn.feature_extraction  import DictVectorizer
 
-import sci
-import crf
+from machine_learning import sci
+from machine_learning import crf
 from features_dir import features, utilities
 
 
