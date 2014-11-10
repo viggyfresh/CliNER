@@ -11,26 +11,8 @@ from machine_learning import sci
 from machine_learning import crf
 from features_dir import features, utilities
 
+from notes.note import concept_labels, reverse_concept_labels, IOB_labels, reverse_IOB_labels
 
-import cProfile as profile
-
-
-labels = {
-    "none":0,
-    "treatment":1,
-    "problem":2,
-    "test":3
-}
-reverse_labels = {v:k for k, v in labels.items()}
-
-
-# IOBs labels
-IOBs_labels = {
-    'O':0,
-    'B':1,
-    'I':2
-}
-reverse_IOBs_labels = {v:k for k,v in IOBs_labels.items()}
 
 
 
@@ -44,13 +26,7 @@ class Model:
         return model
 
 
-    def __init__(self, filename='awesome.model', is_crf=True):
-
-        model_directory = os.path.dirname(filename)
-        if model_directory != "":
-            helper.mkpath(model_directory)
-
-        self.filename = os.path.realpath(filename)
+    def __init__(self, is_crf=True):
 
         # Use python-crfsuite
         self.crf_enabled = is_crf
@@ -84,8 +60,8 @@ class Model:
         ##############
 
         # Get the data and annotations from the Note objects
-        text    = [  note.txtlist()        for  note  in  notes  ]
-        ioblist = [  note.iob_labels()     for  note  in  notes  ]
+        text    = [  note.getTokenizedSentences()  for  note  in  notes  ]
+        ioblist = [  note.getIOBLabels()           for  note  in  notes  ]
 
         data1 = reduce( concat,    text )
         Y1    = reduce( concat, ioblist )
@@ -102,9 +78,9 @@ class Model:
         ###############
 
         # Get the data and annotations from the Note objects
-        chunks  = [  note.chunked_text()    for  note  in  notes  ] 
-        indices = [  note.concept_indices() for  note  in  notes  ]
-        conlist = [  note.concept_labels()  for  note  in  notes  ]
+        chunks  = [  note.getChunkedText()     for  note  in  notes  ] 
+        indices = [  note.getConceptIndices()  for  note  in  notes  ]
+        conlist = [  note.getConceptLabels()   for  note  in  notes  ]
 
         data2 = reduce( concat, chunks  )
         inds  = reduce( concat, indices )
@@ -115,13 +91,6 @@ class Model:
         print 'second pass'
         self.second_train(data2, inds, Y2, do_grid)
 
-
-
-        # Pickle dump
-        print 'pickle dump\n'
-        with open(self.filename, "wb") as model:
-            pickle.dump(self, model)
-    
 
 
 
@@ -152,7 +121,7 @@ class Model:
         pchunks = []
         nchunks = []
         for line,labels in zip(data,Y):
-            isProse,feats = feat_obj.IOB_features(line)
+            isProse,feats = feat_obj.extract_IOB_features(line)
             if isProse:
                 prose.append(feats)
                 pchunks += labels
@@ -179,7 +148,7 @@ class Model:
             print '\tvectorizing features (pass one) ' + flabel
 
             # Vectorize IOB labels
-            Y = [  IOBs_labels[y]  for  y  in  chunks  ]
+            Y = [  IOB_labels[y]  for  y  in  chunks  ]
 
             # Save list structure to reconstruct after vectorization
             offsets = [ len(sublist) for sublist in fset ]
@@ -257,7 +226,7 @@ class Model:
         print '\tvectorizing features (pass two)'
 
         # Vectorize labels
-        Y = [  labels[y]  for  y  in  Y  ]
+        Y = [  concept_labels[y]  for  y  in  Y  ]
 
         # Vectorize features
         X = self.second_vec.fit_transform(X)
@@ -286,11 +255,11 @@ class Model:
         print 'first pass'
 
         # Get the data and annotations from the Note objects
-        data   = note.txtlist()
+        data   = note.getTokenizedSentences()
 
         # Predict IOB labels
         iobs,_,__ = self.first_predict(data)
-        note.set_iob_labels(iobs)
+        note.setIOBLabels(iobs)
 
 
 
@@ -302,8 +271,8 @@ class Model:
         print 'second pass'
 
         # Get the data and annotations from the Note objects
-        chunks = note.chunked_text()
-        inds   = note.concept_indices()
+        chunks = note.getChunkedText()
+        inds   = note.getConceptIndices()
 
         # Predict concept labels
         retVal = self.second_predict(chunks,inds)
@@ -338,7 +307,7 @@ class Model:
         plinenos = []
         nlinenos = []
         for i,line in enumerate(data):
-            isProse,feats = feat_obj.IOB_features(line)
+            isProse,feats = feat_obj.extract_IOB_features(line)
             if isProse:
                 prose.append(feats)
                 plinenos.append(i)
@@ -402,7 +371,7 @@ class Model:
         prose_iobs    = []
         nonprose_iobs = []
         iobs          = []
-        trans = lambda l: reverse_IOBs_labels[int(l)]
+        trans = lambda l: reverse_IOB_labels[int(l)]
         for sentence in data:
             if utilities.prose_sentence(sentence):
                 prose_iobs.append( plist.pop(0) )
@@ -466,7 +435,7 @@ class Model:
             for ind in inds:
 
                 # Get next concept
-                concept = reverse_labels[o.pop(0)]
+                concept = reverse_concept_labels[o.pop(0)]
 
                 # Get start position (ex. 7th word of line)
                 start = 0

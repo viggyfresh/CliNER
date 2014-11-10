@@ -39,52 +39,15 @@ class FeatureWrapper:
     #
     # input:  A sentence
     # output: A hash table of features
-    def IOB_features(self, sentence):
+    def extract_IOB_features(self, sentence):
 
         # Different features depending on whether sentence is 'prose'
         isProse = prose_sentence(sentence)
 
-        unique =  1 # 20
-
         if isProse:
-            if True:
-                features_list = self.feat_sent.IOB_prose_features(sentence)
-            else:
-                features_list = []
-                for i in range(len(sentence)):
-                    features = {}
-                    for j in range(unique):
-                        features[(''.join(sentence),i,j)] = 1
-                    features_list.append(features)
+            features_list = self.feat_sent.IOB_prose_features(sentence)
         else:
-            if True:
-                features_list = self.feat_sent.IOB_nonprose_features(sentence)
-            else:
-                features_list = []
-                for i in range(len(sentence)):
-                    features = {}
-                    for j in range(unique):
-                        features[(''.join(sentence),i,j)] = 1
-                    features_list.append(features)
-
-
-        '''
-        # Sanity Check (many unique features for each data point)
-        features_list = []
-        for i in range(len(sentence)):
-            features = {}
-            for j in range(unique):
-                features[(''.join(sentence),i,j)] = 1
-            features_list.append(features)
-        '''
-
-
-        '''
-        for f in features_list:
-            print sorted(f.items())
-            print 
-        '''
-
+            features_list = self.feat_sent.IOB_nonprose_features(sentence)
 
         # Return features as well as indication of whether it is prose or not
         return (isProse, features_list)

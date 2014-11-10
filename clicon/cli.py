@@ -163,22 +163,12 @@ def format(annotations, format, out, input):
     # Executable
     runable = os.path.join(BASE_DIR,'clicon/format.py')
 
-    # Must manually check if '.txt' or 'xml'
-    if   input[-3:] == 'xml':
-        flag = '-x'
-    elif input[-3:] == 'txt':
-        flag = '-t'
-    else:
-        print >>sys.stderr, '\n\tError: Input file must be either "txt" or "xml"'
-        print >>sys.stderr, ''
-        exit(2)
-
     # Build command
     cmd = ['python', runable, flag, input]
 
     # Optional arguments
     if annotations:
-        cmd += ['-c', annotations]
+        cmd += ['-a', annotations]
     if out:
         cmd += ['-o',         out]
     if format:

@@ -17,9 +17,9 @@ import glob
 import argparse
 import helper
 
-import sci
 from model import Model
-from note import *
+from notes.note import Note
+
 
 def main():
 
@@ -88,23 +88,25 @@ def main():
 
 
     # For each file, predict concept labels
-    for txt in files:
+    n = len(files)
+    for i,txt in enumerate(sorted(files)):
 
         # Read the data into a Note object
-        note = Note()
-        note.reader(format, txt)
+        note = Note(format)
+        note.read(txt)
 
 
         print '-' * 30
-        print '\n\n\t', txt, '\n'
+        print '\n\t%d of %d' % (i+1,n)
+        print '\t', txt, '\n'
 
 
         # Predict concept labels
         labels = model.predict(note)
 
         # Get predictions in proper format
-        extension = Note.getExtension(format)
-        output = note.writer(format, labels)
+        extension = note.getExtension()
+        output = note.write(labels)
 
         #print output
 

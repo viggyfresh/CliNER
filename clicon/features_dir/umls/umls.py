@@ -168,7 +168,7 @@ def umls_semantic_type_sentence( cache , sentence ):
             return cache.get_map( rawstring )
 
         else:
-            concept = string_lookup( rawstring )
+            concept = SQLookup.string_lookup( rawstring )
 
             if concept:
                 cache.add_map( rawstring , concept )
