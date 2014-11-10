@@ -47,35 +47,29 @@ class WordFeatures:
         # Allow for particular features to be enabled
         for feature in self.enabled_IOB_prose_word_features:
 
-            '''
             if feature == "word":
                 features[(feature, word.lower())] = 1
 
             if feature == "stem_lancaster":
                 st = nltk.stem.LancasterStemmer()
                 features[ (feature, st.stem(word.lower())) ] = 1
-            '''
 
             # Feature: Generic# stemmed word
             if feature == 'Generic#':
                 generic = re.sub('[0-9]','0',word)
                 features[ ('Generic#',generic) ] = 1
 
-            '''
             # Feature: Last two leters of word
             if feature == 'last_two_letters':
                 features[ ('last_two_letters',word[-2:]) ] = 1
-            '''
 
 
-            '''
             if feature == "length":
                 features[(feature, None)] = len(word)
 
             if feature == "stem_porter":
                 st = nltk.stem.PorterStemmer()
                 features[(feature, st.stem(word))] = 1
-            '''
 
 
             if feature == "mitre":

@@ -15,11 +15,12 @@ import os
 import os.path
 import glob
 import argparse
-import helper
+import cPickle as pickle
 
+import helper
 from sets import Set
 from model import Model
-from note import *
+from notes.note import Note
 
 
 def main():
@@ -28,13 +29,13 @@ def main():
     parser.add_argument("-t", 
         dest = "txt", 
         help = "The files that contain the training examples",
-        default = os.path.join(os.getenv('CLICON_DIR'), 'data/concept_assertion_relation_training_data/merged/txt/*')
+        default = os.path.join(os.getenv('CLICON_DIR'), 'data/train/txt/*')
     )
     
     parser.add_argument("-c", 
         dest = "con", 
         help = "The files that contain the labels for the training examples",
-        default = os.path.join(os.getenv('CLICON_DIR'), 'data/concept_assertion_relation_training_data/merged/concept/*')
+        default = os.path.join(os.getenv('CLICON_DIR'), 'data/train/con/*')
     )
 
     parser.add_argument("-m",
@@ -101,9 +102,9 @@ def main():
     # Read the data into a Note object
     notes = []
     for txt, con in training_list:
-        note_tmp = Note()                  # Create Note
-        note_tmp.reader(format, txt, con)  # Read data into Note
-        notes.append(note_tmp)             # Add the Note to the list
+        note_tmp = Note(format)       # Create Note
+        note_tmp.read(txt, con)       # Read data into Note
+        notes.append(note_tmp)        # Add the Note to the list
 
 
     # file names
@@ -113,11 +114,17 @@ def main():
 
 
     # Create a Machine Learning model
-    model = Model(filename = args.model, is_crf=is_crf)
+    model = Model(is_crf=is_crf)
 
 
     # Train the model using the Note's data
     model.train(notes, args.grid)
+
+
+    # Pickle dump
+    print 'pickle dump'
+    with open(args.model, "wb") as m_file:
+        pickle.dump(model, m_file)
 
 
 

@@ -3,7 +3,7 @@
 #                                                                    #
 #  Willie Boag                                      wboag@cs.uml.edu #
 #                                                                    #
-#  Purpose: Script to convert i2b2 <-> xml data format               #
+#  Purpose: Script to convert among different data formats.          #
 ######################################################################
 
 
@@ -18,7 +18,7 @@ import os
 import glob
 
 import helper
-import note
+from notes.note import Note
 
 
 
@@ -39,14 +39,9 @@ def main():
         help = "The files that contain the training examples",
     )
 
-    parser.add_argument("-c",
-        dest = "con",
+    parser.add_argument("-a",
+        dest = "annotations",
         help = "The files that contain the labels for the training examples",
-    )
-
-    parser.add_argument("-x",
-        dest = "xml",
-        help = "The files that contain the aml-annotated data",
     )
 
     parser.add_argument("-o",
@@ -57,7 +52,7 @@ def main():
 
     parser.add_argument("-f",
         dest = "format",
-        help = "Output format (i2b2 or xml?)",
+        help = "Output format (%s)"%str(' or '.join(Note.supportedFormats())),
     )
 
     # Parse the command line arguments
@@ -65,59 +60,81 @@ def main():
 
 
     # Parse arguments
-    txt      = args.txt
-    con      = args.con
-    xml      = args.xml
-    out_file = args.out
-    format   = args.format
+    txt         = args.txt
+    annotations = args.annotations
+    out_file    = args.out
+    format      = args.format
 
 
-    # Ensure format is specified
-    if (not format) or ((format != 'xml') and (format != 'i2b2')):
-        print >>sys.stderr, '\n\tError: Must specify output format (i2b2 or xml)'
-        print >>sys.stderr, ''
+    # Ensure annotations are specified
+    if not txt:
+        print >>sys.stderr, '\n\tError: Must supply text file'
+        print >>sys.stderr
+        exit(1)
+    elif not os.path.exists(txt):
+        print >>sys.stderr, '\n\tError: Given text file does not exist'
+        print >>sys.stderr
         exit(1)
 
-    # Cannot have ambiguous input
-    if (txt and con) and xml:
-        print >>sys.stderr, '\n\tError: Input must be either (i2b2) XOR (xml)\n'
+    # Ensure annotations are specified
+    extensions = Note.supportedFormatExtensions()
+    if not annotations:
+        print >>sys.stderr, '\n\tError: Must supply annotations'
+        print >>sys.stderr
+        exit(2)
+    elif not os.path.exists(txt):
+        print >>sys.stderr, '\n\tError: Given annotation file does not exist'
+        print >>sys.stderr
+        exit(2)
+    elif os.path.splitext(annotations)[1][1:] not in extensions:
+        print >>sys.stderr, '\n\tError: annotation must be a supported format'
+        print >>sys.stderr, '\t\t(.%s)' %str(' or .'.join(extensions) )
+        print >>sys.stderr
         exit(2)
 
-    # If insufficient data is given (must have txt+con OR xml)
-    if (not (txt and con)) and (not xml):
-        print >>sys.stderr, '\n\tError: Must supply either:'
-        print >>sys.stderr,   '\t         1) i2b2 txt & con file'
-        print >>sys.stderr,   '\t         2) xml file\n'
+    # Ensure output format is specified
+    if (not format) or (format not in Note.supportedFormats()):
+        print >>sys.stderr, '\n\tError: Must specify supported output format'
+        print >>sys.stderr, '\t\t(%s)' %str(' or '.join(Note.supportedFormats()))
+        print >>sys.stderr
         exit(3)
 
 
+    # Automatically find the input file format
+    in_extension =  os.path.splitext(annotations)[1][1:]
+    for f,ext in Note.dictOfFormatToExtensions().items():
+        if ext == in_extension:
+            in_format = f
+    
     # Read input data into note object
-    N = note.Note()
-    if xml:
-        N.read_xml(xml)
-    else:
-        N.read_i2b2(txt, con)
- 
+    in_note = Note(in_format)
+    in_note.read(txt,annotations) 
 
-    # Where to output data
-    if out_file:
-        out_f = open(out_file, 'w')
-    else:
-        out_f = sys.stdout
 
+    # Convert data to standard format
+    internal_output = in_note.write_standard()
+    tmp_file = 'tmp_file.txt'
+    with open(tmp_file, 'w') as f:
+        f.write(internal_output)
+
+    #print internal_output
         
-    # Desired output format
-    if format == 'xml':
-        out = N.write_xml()
-    else:
-        # i2b2 format
-        out = N.write_i2b2()
+    # Read internal standard data into new file with given output format
+    out_note = Note(format)
+    out_note.read_standard(txt,tmp_file)
+
 
     # Output data
-    out_f.write(out)
+    out = out_note.write()
+    if out_file:
+        with open(out_file, 'w') as out_f:
+            out_f.write(out)
+    else:
+        sys.stdout.write(out)
 
 
-    # Close output file
+    # Clean up
+    os.remove(tmp_file)
     if out_file:
         out_f.close()
 

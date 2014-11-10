@@ -41,9 +41,8 @@ class SentenceFeatures:
 
 
     # Feature Enabling
-    enabled_IOB_nonprose_sentence_features = frozenset( ['pos', 'prev', 'next', 'prev_3_pos', 'next_3_pos', 'UMLS', 'unigram_context'])
 
-    enabled_concept_features = frozenset( ['pos','prev_3_pos', 'stem_wordnet', 'test_result', 'word_shape', "UMLS"])
+    enabled_concept_features = frozenset( ["UMLS"])
 
 
 
@@ -63,18 +62,22 @@ class SentenceFeatures:
             self.feat_umls = UMLSFeatures()
 
 
+        self.enabled_IOB_nonprose_sentence_features = []
+        #self.enabled_IOB_nonprose_sentence_features.append('pos')
+        #self.enabled_IOB_nonprose_sentence_features.append('pos_context')
+        self.enabled_IOB_nonprose_sentence_features.append('prev')
+        self.enabled_IOB_nonprose_sentence_features.append('next')
+        self.enabled_IOB_nonprose_sentence_features.append('unigram_context')
+        self.enabled_IOB_nonprose_sentence_features.append('UMLS')
 
         self.enabled_IOB_prose_sentence_features = []
         self.enabled_IOB_prose_sentence_features.append('unigram_context')
         self.enabled_IOB_prose_sentence_features.append('pos')
-        #self.enabled_IOB_prose_sentence_features.append('prev_3_pos')
-        #self.enabled_IOB_prose_sentence_features.append('next_3_pos')
+        self.enabled_IOB_prose_sentence_features.append('pos_context')
         self.enabled_IOB_prose_sentence_features.append('prev')
         self.enabled_IOB_prose_sentence_features.append('prev2')
-        #self.enabled_IOB_prose_sentence_features.append('prev3')
         self.enabled_IOB_prose_sentence_features.append('next')
         self.enabled_IOB_prose_sentence_features.append('next2')
-        #self.enabled_IOB_prose_sentence_features.append('next3')
         self.enabled_IOB_prose_sentence_features.append('GENIA')
         self.enabled_IOB_prose_sentence_features.append('UMLS')
 
@@ -103,15 +106,15 @@ class SentenceFeatures:
             for i in range(n):
                 end = min(i, window)
                 unigrams = sentence[i-end:i]
-                for u in unigrams:
-                    features_list[i][('prev_unigrams',u)] = 1
+                for j,u in enumerate(unigrams):
+                    features_list[i][('prev_unigrams-%d'%j,u)] = 1
 
             # Next     unigrams
             for i in range(n):
                 end = min(i + window, n-1)
                 unigrams = sentence[i+1:end+1]
-                for u in unigrams:
-                    features_list[i][('next_unigrams',u)] = 1
+                for j,u in enumerate(unigrams):
+                    features_list[i][('next_unigrams-%d'%j,u)] = 1
 
 
         # Only POS tag once
@@ -129,35 +132,24 @@ class SentenceFeatures:
                     features_list[i].update( { ('pos',pos) : 1} )
 
 
-            # Feature: Previous 3 POSs
-            if feature == 'prev_3_pos':
-                for i in range(len(sentence)):
-                    # Where to begin
-                    if i-3 < 0:
-                        begin = 0
-                    else:
-                        begin = i-3
+            # Feature: POS context
+            if 'pos_context' in self.enabled_IOB_prose_sentence_features:
+                window = 3
+                n = len(sentence)
 
-                    # Go as far back as 3 tokens
-                    pos_features = {}
-                    for p in pos_tagged[begin:i]:
+                # Previous POS
+                for i in range(n):
+                    end = min(i, window)
+                    for j,p in enumerate(pos_tagged[i-end:i]):
                         pos = p[1]
-                        pos_features.update( {('prev_3_pos',pos) : 1} )
-                    
-                    # Update feature dict
-                    features_list[i].update(pos_features)
+                        features_list[i][('prev_pos_context-%d'%j,pos)] = 1
 
-
-            # Feature: Previous 3 POSs
-            if feature == 'next_3_pos':
-                for i in range(len(sentence)):
-                    pos_features = {}
-                    for p in pos_tagged[i:i+3]:
+                # Next POS
+                for i in range(n):
+                    end = min(i + window, n-1)
+                    for j,p in enumerate(pos_tagged[i+1:i+end+1]):
                         pos = p[1]
-                        pos_features.update( {('next_3_pos',pos) : 1} )
-                    
-                    # Update feature dict
-                    features_list[i].update(pos_features)
+                        features_list[i][('prev_pos_context-%d'%j,pos)] = 1
 
 
             # GENIA features
@@ -264,27 +256,20 @@ class SentenceFeatures:
             window = 3
             n = len(sentence)
 
-            #print 
-            #print sentence
-
             # Previous unigrams
             for i in range(n):
                 end = min(i, window)
                 unigrams = sentence[i-end:i]
-                for u in unigrams:
-                    features_list[i][('prev_unigrams',u)] = 1
-                #print '\t', i, '\t', unigrams
-            #print '-'
+                for j,u in enumerate(unigrams):
+                    features_list[i][('prev_unigrams-%d'%j,u)] = 1
 
             # Next     unigrams
             for i in range(n):
                 end = min(i + window, n-1)
                 unigrams = sentence[i+1:end+1]
                 for u in unigrams:
-                    features_list[i][('next_unigrams',u)] = 1
-                #print '\t', i, '\t', unigrams
+                    features_list[i][('next_unigrams-%d'%j,u)] = 1
 
-        #return features_list
 
         # Feature: UMLS Word Features (only use nonprose ones)
         if enabled['UMLS'] and 'UMLS' in self.enabled_IOB_nonprose_sentence_features:
@@ -308,35 +293,24 @@ class SentenceFeatures:
                     features_list[i][ ('pos',pos) ] = 1
 
 
-            # Feature: Previous 3 POSs
-            if feature == 'prev_3_pos':
-                for i in range(len(sentence)):
-                    # Where to begin
-                    if i-3 < 0:
-                        begin = 0
-                    else:
-                        begin = i-3
+            # Feature: POS context
+            if 'pos_context' in self.enabled_IOB_nonprose_sentence_features:
+                window = 3
+                n = len(sentence)
 
-                    # Go as far back as 3 tokens
-                    pos_features = {}
-                    for p in pos_tagged[begin:i]:
+                # Previous POS
+                for i in range(n):
+                    end = min(i, window)
+                    for j,p in enumerate(pos_tagged[i-end:i]):
                         pos = p[1]
-                        pos_features.update( {('prev_3_pos',pos) : 1} )
-                    
-                    # Update feature dict
-                    features_list[i].update(pos_features)
+                        features_list[i][('prev_pos_context-%d'%j,pos)] = 1
 
-
-            # Feature: Previous 3 POSs
-            if feature == 'next_3_pos':
-                for i in range(len(sentence)):
-                    pos_features = {}
-                    for p in pos_tagged[i+1:i+4]:
+                # Next POS
+                for i in range(n):
+                    end = min(i + window, n-1)
+                    for j,p in enumerate(pos_tagged[i+1:i+end+1]):
                         pos = p[1]
-                        pos_features.update( {('next_3_pos',pos) : 1} )
-                    
-                    # Update feature dict
-                    features_list[i].update(pos_features)
+                        features_list[i][('prev_pos_context-%d'%j,pos)] = 1
 
 
 
@@ -386,101 +360,15 @@ class SentenceFeatures:
         for ind in chunk_inds:
             features_list.append( self.feat_word.concept_features_for_chunk(sentence,ind) )
 
-        # FIXME - more closely resembling Harabagiu
-        # NOTE: excludes UMLS features
-        #return features_list
-
-
-        '''
-        # Split the chunked sentence into a list of words for (POS tagger)
-        split_sentence = []
-        for c in sentence:
-            split_sentence += c.split()
-        tags = nltk.pos_tag(split_sentence)
-        '''
-
 
         # Allow for particular features to be enabled
         for feature in self.enabled_concept_features:
 
             # Features: UMLS features
-            # Note: Very slow, doesn't add much when you have lots of training data
             if (feature == "UMLS") and enabled['UMLS']:
                 umls_features = self.feat_umls.concept_features_for_chunks(sentence, chunk_inds)
-                if chunk_inds:
-                    print sentence
-                    print chunk_inds
-                    print umls_features
-                    print
                 for i in range(len(chunk_inds)):
-                    print sentence[chunk_inds[i]]
-                    print umls_features[i]
-                    print '\n\n'
                     features_list[i].update( umls_features[i] )
-
-            continue
-
-            # Feature: Previous POSs
-            if feature == 'pos':
-                for i,ind in enumerate(chunk_inds):
-                    # Find beginning index of chunk
-                    split_ind = 0
-                    for c in sentence[:ind]:
-                        split_ind += len(c.split())
-                    end_ind = split_ind + len(sentence[ind].split())
-
-                    # All words in chunk
-                    for tag in tags[split_ind:end_ind]:
-                        pos = tag[1]
-                        features_list[i][('pos',pos)] = 1
-
-
-            '''
-            # Feature: Previous 3 POSs
-            if feature == 'prev_3_pos':
-                for i,ind in enumerate(chunk_inds):
-                    # Find beginning index of chunk
-                    split_ind = 0
-                    for c in sentence[:ind]:
-                        split_ind += len(c.split())
-
-                    # Three previous words
-                    # FIXME - Should this be ordered or bag of words??
-                    begin = split_ind-3  if  split_ind-3>0  else  0
-                    for tag in tags[begin:split_ind]:
-                        pos = tag[1]
-                        features_list[i][('prev_3_pos',pos)] = 1
-
-
-            # Feature: Previous Chunks's Features
-            if feature == "prev":
-                for i,ind in enumerate(chunk_inds):
-                    if ind == 0:
-                        features_list[i][("prev", "*")] = 1
-                    else:
-                        # Get features of previous chunks
-                        prev_features = self.feat_word.concept_features_for_chunk(sentence,ind-1)
-                        prepend = lambda f: {("prev_"+k[0],k[1]):v for k, v in f.items()}
-                        features_list[i].update( prepend(prev_features) )
-
-
-            # Feature: Next Chunk's Features
-            if feature == "next":
-                for i,ind in enumerate(chunk_inds):
-                    if ind == len(sentence) - 1:
-                        features_list[i][("next", "*")] = 1
-                    else:
-                        # Get features of previous chunks
-                        next_features = self.feat_word.concept_features_for_chunk(sentence,ind+1)
-                        apend = lambda f: {("next_"+k[0],k[1]):v for k, v in f.items()}
-                        features_list[i].update( apend(next_features) )
-            '''
-
-
-        #if pflag:
-        #    for f in features_list:
-        #        print sorted(f.items())
-        #        print 
 
 
         return features_list

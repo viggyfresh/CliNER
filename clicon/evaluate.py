@@ -19,8 +19,8 @@ import glob
 import helper
 from copy import deepcopy
 
-from model import labels
-from note import *
+from note import Note
+from note import concept_labels as labels
 
 def containsSpan(s1, s2):
     return (s1[0] <= s2[0]) and (s2[1] <= s1[1])
