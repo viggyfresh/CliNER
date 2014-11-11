@@ -9,7 +9,7 @@
 
 
 from umls_cache import UmlsCache
-import umls
+import interpret_umls
 
 
 
@@ -100,7 +100,7 @@ class UMLSFeatures:
         #print word
 
         # Feature: UMLS Semantic Types
-        cuis = umls.get_cui(self.umls_lookup_cache , word)
+        cuis = interpret_umls.get_cui(self.umls_lookup_cache , word)
 
         # Add each CUI
         if cuis:
@@ -111,7 +111,7 @@ class UMLSFeatures:
 
 
         # Feature: UMLS Semantic Type (for each word)
-        mapping = umls.umls_semantic_type_word(self.umls_lookup_cache , word )
+        mapping = interpret_umls.umls_semantic_type_word(self.umls_lookup_cache , word )
 
         # Add each semantic type
         if mapping:
@@ -149,7 +149,7 @@ class UMLSFeatures:
 
         # Feature: UMLS semantic type for the sentence
         # a list of the uml semantic of the largest substring(s).
-        sentence_mapping = umls.umls_semantic_type_sentence( self.umls_lookup_cache, sentence )
+        sentence_mapping = interpret_umls.umls_semantic_type_sentence( self.umls_lookup_cache, sentence )
 
         # if there are no mappings
         if not sentence_mapping:
@@ -164,7 +164,7 @@ class UMLSFeatures:
         # Feature: UMLS semantic context
 
         # the umls definition of the largest string the word is in
-        umls_semantic_context_mappings = umls.umls_semantic_context_of_words( self.umls_lookup_cache , sentence )
+        umls_semantic_context_mappings = interpret_umls.umls_semantic_context_of_words( self.umls_lookup_cache , sentence )
 
         # there could be multiple contexts, iterate through the sublist
         for mapping in umls_semantic_context_mappings:
