@@ -38,6 +38,10 @@ class Note_i2b2(AbstractNote):
         return 'con'
 
 
+    def getText(self):
+        return self.text
+
+
     def getTokenizedSentences(self):
         return self.data
 
@@ -234,7 +238,7 @@ class Note_i2b2(AbstractNote):
                 line = filter(lambda x: x in string.printable, line)
 
                 # Add sentence to the data list
-                self.data.append(line.split())
+                self.data.append(line.split(' '))
 
         # TEST - is line_inds correct?
         #print self.line_inds
@@ -245,7 +249,7 @@ class Note_i2b2(AbstractNote):
         #    print '<l>' + ' '.join(line)       + '</l>'
         #    print
         #    i += 1
-        #    if i == 10: exit()
+        #    if i == 13: exit()
 
         # If an accompanying concept file was specified, read it
         if con:

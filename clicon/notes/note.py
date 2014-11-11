@@ -336,14 +336,17 @@ class Note:
             self.concepts.append(tmp)
 
         # Use the classifications to correct all mislabled 'none's
-        for classification in self.classifications:
-            #print "classification:    ", classification
+        for classification in self.derived_note.getClassificationTuples():
+            concept    = classification[0]
+            char_spans = classification[1]
 
             # Assumption - assumes no clustering third pass
-            concept = classification[0]
-            lineno  = classification[1] - 1
-            start   = classification[2]
-            end     = classification[3]            
+            line_inds = self.derived_note.getLineIndices()
+            data      = self.derived_note.getTokenizedSentences()
+            text      = self.derived_note.getText()
+            for span in char_spans:
+                lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span)
+                start,end = tokspan
 
             self.concepts[lineno][start] = concept
             for i in range(start, end):

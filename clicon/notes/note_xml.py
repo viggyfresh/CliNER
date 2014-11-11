@@ -39,6 +39,10 @@ class Note_xml(AbstractNote):
         return 'xml'
 
 
+    def getText(self):
+        return self.text
+
+
     def getTokenizedSentences(self):
         return self.data
 
