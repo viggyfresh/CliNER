@@ -52,7 +52,8 @@ def lineno_and_tokspan(line_inds, data, text, char_span):
     for i,span in enumerate(line_inds):
         if char_span[1] <= span[1]:
 
-            #print "span: ", span
+            print
+            print "span: ", span
 
             # start and end of span relative to sentence
             start = char_span[0] - span[0]
@@ -61,8 +62,8 @@ def lineno_and_tokspan(line_inds, data, text, char_span):
             #print "START: ", start
             #print "END: ", end
 
-            #print "USING span on text: ", text[span[0]:span[1]]
-            #print "USING start and end: ", text[span[0]:span[1]][start:end]
+            print "USING span on text: ~" + text[span[0]:span[1]] + '~'
+            print "USING start and end: ~" + text[span[0]:span[1]][start:end]+'~'
 
             #print "data", data[i]
             tok_span = [0,len(data[i])-1]

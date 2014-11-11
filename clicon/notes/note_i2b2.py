@@ -74,6 +74,9 @@ class Note_i2b2(AbstractNote):
         return retVal
 
 
+    def getLineIndices(self):
+        return self.line_inds
+
 
     def read_standard(self, txt, con=None):
 
@@ -221,9 +224,9 @@ class Note_i2b2(AbstractNote):
             # Original text file
             self.text = f.read()
 
+            i = 0
             for line in self.text.split('\n'):
-                for word in line.split():
-                    end += len(word) + 1
+                end += len(line) + 1
                 self.line_inds.append( (start,end-1) )
                 start = end
 
@@ -233,6 +236,16 @@ class Note_i2b2(AbstractNote):
                 # Add sentence to the data list
                 self.data.append(line.split())
 
+        # TEST - is line_inds correct?
+        #print self.line_inds
+        #i = 0
+        #for line,span in zip(self.data,self.line_inds):
+        #    start,end = span
+        #    print '<t>' + self.text[start:end] + '</t>'
+        #    print '<l>' + ' '.join(line)       + '</l>'
+        #    print
+        #    i += 1
+        #    if i == 10: exit()
 
         # If an accompanying concept file was specified, read it
         if con:

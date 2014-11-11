@@ -65,6 +65,13 @@ def main():
     format = args.format
 
 
+    # Predict
+    predict(files, args.model, args.output, format=format)
+
+
+
+def predict(files, model_path, output_dir, format):
+
     # Must specify output format
     if format not in Note.supportedFormats():
         print >>sys.stderr, '\n\tError: Must specify output format'
@@ -73,12 +80,9 @@ def main():
         exit(1)
 
 
-    # Output directory
-    helper.mkpath(os.path.join(args.output))
-
 
     # Load model
-    model = Model.load(args.model)
+    model = Model.load(model_path)
 
 
     # Tell user if not predicting
@@ -112,7 +116,7 @@ def main():
 
         # Output file
         fname = os.path.splitext(os.path.basename(txt))[0] + '.' + extension
-        out_path = os.path.join(args.output, fname)
+        out_path = os.path.join(output_dir, fname)
 
         # Output the concept predictions
         print '\n\nwriting to: ', out_path

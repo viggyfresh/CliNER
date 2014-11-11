@@ -21,6 +21,8 @@ import nltk.data
 import os.path
 
 
+from utilities_for_notes import lineno_and_tokspan
+
 
 # Master Class
 class Note:
@@ -166,14 +168,24 @@ class Note:
         self.getTokenizedSentences()
         iobs = [ ['O' for tok in sent] for sent in self.data ]
 
+        print self.derived_note.getClassificationTuples()
+        line_inds = self.derived_note.getLineIndices()
+        data = self.derived_note.data
+        text = self.derived_note.text
+
         # Add 'B's and 'I's from concept spans
         for classification in self.derived_note.getClassificationTuples():
-            _,lineno,start,end = classification
+            concept,char_spans = classification
 
-            # Update concept tokens to 'B's and 'I's
-            iobs[lineno-1][start] = 'B'
-            for i in range(start+1,end+1):
-                iobs[lineno-1][i] = 'I'
+            # Each span (could be noncontiguous span)
+            for span in char_spans:
+                lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span)
+                start,end = tokspan
+
+                # Update concept tokens to 'B's and 'I's
+                iobs[lineno][start] = 'B'
+                for i in range(start+1,end+1):
+                    iobs[lineno][i] = 'I'
 
         # Memoize for next call
         self.iob_labels = iobs
