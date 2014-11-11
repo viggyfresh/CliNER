@@ -118,7 +118,9 @@ class Note:
         """
         Purpose: Call derived object's reader
         """
-        return self.derived_note.read(txt_file, con_file)
+        retVal = self.derived_note.read(txt_file, con_file)
+        self.getIOBLabels()
+        return retVal
 
     def write(self, con_file=None):
         """
@@ -139,6 +141,7 @@ class Note:
         Purpose: Every note must be able to read from standard forat
         """
         self.derived_note.read_standard(txt,con)
+        self.getIOBLabels()
 
 
 
