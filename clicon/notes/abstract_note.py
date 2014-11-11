@@ -70,6 +70,13 @@ class AbstractNote:
         raise Exception('Must define selector for derived class')
 
 
+    def getLineIndices(self):
+        """
+        Purpose: Return a list of (start,end) char index pairs (one per line)
+        """
+        raise Exception('Must define selector for derived class')
+
+
     def read_standard(self, txt, con=None):
         """
         Purpose: Every note must be able to read from standardized forat

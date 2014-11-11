@@ -99,6 +99,13 @@ def main():
     print '\n', training_list, '\n'
 
 
+    # Train the model
+    train(training_list, args.model, format, is_crf=is_crf, grid=args.grid)
+
+
+
+def train(training_list, model_path, format, is_crf=True, grid=False):
+
     # Read the data into a Note object
     notes = []
     for txt, con in training_list:
@@ -118,12 +125,12 @@ def main():
 
 
     # Train the model using the Note's data
-    model.train(notes, args.grid)
+    model.train(notes, grid)
 
 
     # Pickle dump
     print 'pickle dump'
-    with open(args.model, "wb") as m_file:
+    with open(model_path, "wb") as m_file:
         pickle.dump(model, m_file)
 
 
