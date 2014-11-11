@@ -34,7 +34,7 @@ class Note_semeval(AbstractNote):
         self.word_tokenizer = WordTokenizer()
 
         # Internal representation natural for i2b2 format
-        self.text = []
+        self.text = ''
         self.data            = []  # list of list of tokens
         self.line_inds = []
         self.classifications = []

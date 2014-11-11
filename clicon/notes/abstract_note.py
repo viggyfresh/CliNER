@@ -56,6 +56,13 @@ class AbstractNote:
         raise Exception('Must define write() for derived class')
 
 
+    def getText(self):
+        """
+        Purpose: Return the verabitm string of text from text file
+        """
+        raise Exception('Must define selector for derived class')
+
+
     def getTokenizedSentences(self):
         """
         Purpose: Return a list of list of tokens (list of list of strings)
