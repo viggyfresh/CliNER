@@ -27,10 +27,10 @@ from read_config import enabled_modules
 # Import feature modules
 enabled = enabled_modules()
 if enabled['GENIA']:
-    from genia.genia_features import GeniaFeatures
+    from genia_dir.genia_features import GeniaFeatures
 
 if enabled['UMLS']:
-    from umls.umls_features import UMLSFeatures
+    from umls_dir.umls_features import UMLSFeatures
 
 from word_features import WordFeatures
 
