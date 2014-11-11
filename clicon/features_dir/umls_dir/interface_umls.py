@@ -1,18 +1,33 @@
+#
+# Interface to UMLS Databases and concept trie
+#
+#
+#
+
+
 import copy 
 import sqlite3
 import create_sqliteDB
 import os 
 
-WINDOW_SIZE = 7 
+import create_trie
+
+
+
+
+############################################
+###          Setups / Handshakes         ###
+############################################
+
 
 #connect to UMLS database 
 def SQLConnect():
-
-    #try to connect to the sqlite database. Make one otherwise
+    #try to connect to the sqlite database.
     db_path = os.path.join( os.environ['CLICON_DIR'], "umls_tables/umls.db")
     if( os.path.isfile( db_path ) ):
         print "\ndb exists" 
     else:
+        # Database does not exit. Make one.
         print "\ndb doesn't exist"
         create_sqliteDB.create_db() 
 
@@ -20,60 +35,46 @@ def SQLConnect():
     return db.cursor()
 
 
-#used in SQlookup, I made this global so SQLConnect is only called once. 
+
+
+############################################
+###      Global reource connections      ###
+############################################
+
+
+# Global database connection
 c = SQLConnect()
 
-#searchs umls database for the semantic type of a string 
-def SQlookup( c , string ):
+# Global trie
+trie = create_trie.create_trie()
 
-    #queries database and finds first semantic type match, returns a 1 when a match is found. 
-    c.execute( "SELECT sty FROM MRCON a, MRSTY b WHERE a.cui = b.cui AND str = ?; " , (string,) )
 
-    #returns a tuple with the match or None if there was  no match.  
-    #return c.fetchone() 
-    return c.fetchall() 
 
-#returns the semantic type of a word 
+
+############################################
+###           Query Operations           ###
+############################################
+
+
 def string_lookup( string ):
-    
+    """ Get sty for a given string """
     try:
-        return SQlookup( c ,  string )
-
+        c.execute( "SELECT sty FROM MRCON a, MRSTY b WHERE a.cui = b.cui AND str = ?; " , (string,) )
+        return c.fetchall()
     except sqlite3.ProgrammingError, e:
-
         return []
 
 
-
-# get concept for a given string.
 def cui_lookup( string ):
-
+    """ get cui for a given string """
     try:
         # Get cuis
         c.execute( "SELECT cui FROM MRCON WHERE str = ?;" , (string,) )
         return c.fetchall() 
-
     except sqlite3.ProgrammingError, e:
         return []
 
 
-def hypernyms_lookup( string ):
-
-    #print 'hypernym lookup is unacceptably slow'
-    return []
-
-    c.execute( "SELECT CUI FROM MRCON WHERE STR = ? LIMIT 1 ;" , (string,) )
-
-    cui = c.fetchone()
-
-    if cui == None:
-        return None
-    else:
-        c.execute( "SELECT CUI2 FROM MRREL WHERE CUI1 = ? AND REL = 'PAR' LIMIT 5 ;" , (cui[0],) )
-        result = c.fetchone()
-        if not result:
-            return None
-        else:
-            return result
-
-
+def concept_exists(string):
+    """ Fast query for set membership in trie """
+    return string in trie
