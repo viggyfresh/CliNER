@@ -171,7 +171,6 @@ class Note:
         self.getTokenizedSentences()
         iobs = [ ['O' for tok in sent] for sent in self.data ]
 
-        print self.derived_note.getClassificationTuples()
         line_inds = self.derived_note.getLineIndices()
         data = self.derived_note.data
         text = self.derived_note.text
