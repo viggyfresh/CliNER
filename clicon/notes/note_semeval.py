@@ -21,7 +21,7 @@ from copy import copy
 import os.path
 
 
-from utilities_for_notes import concept_cmp, SentenceTokenizer, WordTokenizer
+from utilities_for_notes import concept_cmp, SentenceTokenizer, WordTokenizer, lno_and_tokspan__to__char_span
 from abstract_note       import AbstractNote
 
 
@@ -56,6 +56,9 @@ class Note_semeval(AbstractNote):
     def getClassificationTuples(self):
         return self.classifications
 
+
+    def getLineIndices(self):
+        return self.line_inds
 
     def read_standard(self, txt, con=None):
 
@@ -245,11 +248,30 @@ class Note_semeval(AbstractNote):
 
         # If given labels to write, use them. Default to self.classifications
         if labels != None:
-            classifications = labels
+            # Translate token-level annotations to character offsets
+            classifications = []
+            for classification in labels:
+                inds = self.line_inds
+                data = self.data
+                text = self.text
+                
+                # FIXME - Assumes that token-level does not have noncontig
+                concept = classification[0]
+                lno     = classification[1] - 1
+                start   = classification[2]
+                end     = classification[3]
+                tokspan = start,end
+
+                # Get character offset span                
+                span = lno_and_tokspan__to__char_span(inds,data,text,lno,tokspan)
+                classifications.append( (concept,span) )
+
         elif self.classifications != None:
             classifications = self.classifications
         else:
             raise Exception('Cannot write concept file: must specify labels')
+
+        exit()
 
         # return value
         retStr = ''

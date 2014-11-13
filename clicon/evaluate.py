@@ -19,8 +19,8 @@ import glob
 import helper
 from copy import deepcopy
 
-from note import Note
-from note import concept_labels as labels
+from notes.note import Note
+from notes.note import concept_labels as labels
 
 def containsSpan(s1, s2):
     return (s1[0] <= s2[0]) and (s2[1] <= s1[1])
@@ -342,7 +342,7 @@ def main():
     # List of medical text
     txt_files = glob.glob(args.txt)
     txt_files_map = helper.map_files(txt_files)
-    wildcard = '*.' + Note.getExtension(format)
+    wildcard = '*.' + Note.dictOfFormatToExtensions()[format]
 
 
     # List of gold data
@@ -385,13 +385,13 @@ def main():
     for txt, annotations, gold in files:
 
         # Read predictions and gols standard data                                
-        cnote = Note()
-        rnote = Note()
-        cnote.reader(format, txt, annotations)
-        rnote.reader(format, txt,        gold)
+        cnote = Note(format)
+        rnote = Note(format)
+        cnote.read(txt, annotations)
+        rnote.read(txt,        gold)
 
-        referenceSpans = getConceptSpans(rnote.boundaries, rnote.conlist())
-        predictedSpans = getConceptSpans(cnote.boundaries, cnote.conlist())
+        referenceSpans = getConceptSpans(rnote.getIOBLabels(), rnote.conlist())
+        predictedSpans = getConceptSpans(cnote.getIOBLabels(), cnote.conlist())
 
         #TO DO: i need to generate a cumulative total accross all of the files
         #modify my functions slightly and have it return the number of true positive and etc...

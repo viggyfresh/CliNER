@@ -52,6 +52,7 @@ class AbstractNote:
     def write(self, labels=None):
         """
         Purpose: Abstract method for writing data to file
+        @param labels. A list of (concept,lineo,start_tok,end_tok) tuples
         """
         raise Exception('Must define write() for derived class')
 

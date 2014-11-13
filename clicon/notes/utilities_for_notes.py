@@ -106,6 +106,68 @@ def lineno_and_tokspan(line_inds, data, text, char_span):
 
 
 
+# Helper function
+def lno_and_tokspan__to__char_span(line_inds, data, text, lineno, tokspan):
+    """ File character offsets => line number and index into line """
+
+    start,end = line_inds[lineno]
+
+    dataWithEmpty= text[start:end].replace('\n',' ').replace('\t',' ').split(' ')
+
+    print 'start: ', start
+    print 'end:   ', end
+    print 'dataWith: ', dataWithEmpty
+    print
+    print 'data:     ', data[lineno]
+    print '\n\n\n'
+
+    tokPosRelToSent = []
+    count = 0
+    for string in dataWithEmptyChars:
+        if string != '':
+            tokPosRelToSent.append((count, count + len(string)-1))
+            count += len(string) + 1
+        else:  # empty string
+            count += 1
+
+    #print tokPosRelToSent
+    #print tokPosRelToSent[startTok:endTok+1]
+
+    startOfTokRelToText = tokPosRelToSent[startTok][0] + start
+    endOfTokRelToText   = tokPosRelToSent[  endTok][1] + start
+
+    #print '---' + self.text[endOfTokRelToText-3:endOfTokRelToText+4] + '---'
+
+    #print startOfTokRelToText, '  ', endOfTokRelToText
+
+    # Heuristc / Hack for determining when to include extra space
+    if (    self.text[endOfTokRelToText  ].isalpha()) and \
+       (not self.text[endOfTokRelToText+1].isalpha()) :
+               endOfTokRelToText += 1
+
+    #print startOfTokRelToText, '  ', endOfTokRelToText
+    #print '\n'
+
+    if line not in spans:
+        spans[line] = (self.fileName + ".text||Disease_Disorder||CUI-less||" + str(startOfTokRelToText) + "||" +  str(endOfTokRelToText))
+    else:
+        spans[line] += ("\n" + self.fileName + ".text||Disease_Disorder||CUI-less||" + str(startOfTokRelToText) + "||" +  str(endOfTokRelToText))
+
+
+    print lineno
+    print tokspan
+    
+    line = data[lineno]
+
+    print line
+
+    print
+
+    return 0,0
+
+
+
+
 # Break file into sentences.
 class SentenceTokenizer:
 

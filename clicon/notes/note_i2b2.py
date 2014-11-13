@@ -22,7 +22,7 @@ import nltk.data
 import os.path
 
 from abstract_note import AbstractNote
-from utilities_for_notes import classification_cmp
+from utilities_for_notes import classification_cmp, lineno_and_tokspan
 
 
 class Note_i2b2(AbstractNote):
@@ -43,7 +43,7 @@ class Note_i2b2(AbstractNote):
 
 
     def getTokenizedSentences(self):
-        return self.data
+        return map(lambda s: (' '.join(s)).split(), self.data)
 
 
     def getClassificationTuples(self):
@@ -84,71 +84,13 @@ class Note_i2b2(AbstractNote):
 
     def read_standard(self, txt, con=None):
 
-        # Helper function
-        def lineno_and_tokspan(char_span):
-            """ File character offsets => line number and index into line """
-            for i,span in enumerate(self.line_inds):
-                if char_span[1] <= span[1]:
-
-                    #print "span: ", span
-
-                    # start and end of span relative to sentence
-                    start = char_span[0] - span[0]
-                    end   = char_span[1] - span[0]
-
-                    #print "START: ", start
-                    #print "END: ", end
-
-                    #print "USING span on self.text: ", self.text[span[0]:span[1]]
-                    #print "USING start and end: ", self.text[span[0]:span[1]][start:end]
-
-                    #print "self.data", self.data[i]
-                    tok_span = [0,len(self.data[i])-1]
-                    char_count = 0
-
-                    dataWithEmptyChars = re.split(" |\n|\t", self.text[span[0]:span[1] + 1])
-
-                    index = 0
-                    for j,tok in enumerate(dataWithEmptyChars):
-                        if char_count > end:
-                            tok_span[1] = index -1
-                            break
-                        elif char_count == start:
-                            tok_span[0] = index
-                        char_count += len(tok) + 1
-                        if len(tok) > 0:
-                           index += 1
-                        #print '\t',j, '\t', tok, '(', char_count, ')'
-
-                    #print start, end
-                    #print tok_span
-                    #print text[span[0]:span[1]]
-                    #print self.data[i][tok_span[0]:tok_span[1]]
-                    #print
-
-                    # return line number AND token span
-                    #print "LINE: ", i
-                    #print "TOK SPAN: ", tok_span
-                    #print self.data[i]
-                    #print tok_span
-
-                    #print "USING char_span on self.text: ", self.text[char_span[0]:char_span[1]]
-                    #print "USING tok_span on self.data[i]", self.data[i][tok_span[0]], self.data[i][tok_span[1]]
-                    #print "USING char_span on self.text: ", self.text[char_span[0]], self.text[char_span[1]]
-
-
-                    return (i, tuple(tok_span))
-
-            return None
-
-
         start = 0
         end = 0
 
         with open(txt) as f:
 
             # Get entire file
-            text = f.read()
+            text = f.read().strip('\n')
             self.text = text
 
             # Split into lines
@@ -226,7 +168,7 @@ class Note_i2b2(AbstractNote):
         with open(txt) as f:
 
             # Original text file
-            self.text = f.read()
+            self.text = f.read().strip('\n')
 
             i = 0
             for line in self.text.split('\n'):
