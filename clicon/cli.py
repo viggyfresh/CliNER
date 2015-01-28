@@ -18,8 +18,9 @@ import sys
 import subprocess
 import glob
 
-from note import Note
+sys.path.append( os.environ['CLICON_DIR'] + "/clicon/notes" )
 
+from note import Note
 
 @click.group()
 def clicon():
