@@ -1,5 +1,5 @@
 ######################################################################
-#  CliCon - format.py                                                #
+#  CliNER - format.py                                                #
 #                                                                    #
 #  Willie Boag                                      wboag@cs.uml.edu #
 #                                                                    #
@@ -105,10 +105,10 @@ def main():
     for f,ext in Note.dictOfFormatToExtensions().items():
         if ext == in_extension:
             in_format = f
-    
+
     # Read input data into note object
     in_note = Note(in_format)
-    in_note.read(txt,annotations) 
+    in_note.read(txt,annotations)
 
 
     # Convert data to standard format
@@ -118,7 +118,7 @@ def main():
         f.write(internal_output)
 
     #print internal_output
-        
+
     # Read internal standard data into new file with given output format
     out_note = Note(format)
     out_note.read_standard(txt,tmp_file)

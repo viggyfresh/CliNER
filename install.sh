@@ -1,7 +1,7 @@
 #
 # install.sh
 #
-# Purpose: This is a demo that will install CliCon and it's package dependencies
+# Purpose: This is a demo that will install CliNER and it's package dependencies
 #
 # Note: This does not download/install:
 #        1) i2b2 data
@@ -17,7 +17,7 @@ function install_python_dependencies {
         #echo -e "\n\nmodule: $m\n\n"
 
         # Install module if necessary
-        python $CLICON_DIR/clicon/is_installed.py $m
+        python $CLINER_DIR/cliner/is_installed.py $m
         if [[ $? != 0 ]] ; then
             echo "installing $m"
             pip install -U $m &>> $log
@@ -40,7 +40,7 @@ function get_genia {
     old_path=$(pwd)
 
     # Get sources
-    cd $CLICON_DIR/clicon/features_dir/genia
+    cd $CLINER_DIR/cliner/features_dir/genia
     wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.1.tar.gz &>> $log
     tar xzvf geniatagger-3.0.1.tar.gz &>> $log
     rm geniatagger-3.0.1.tar.gz
@@ -59,12 +59,12 @@ function get_genia {
     fi
 
     # Set config file location of tagger
-    if [[ ! -f "$CLICON_DIR/config.txt" ]] ; then
-        echo -e "\tWarning: Could not update config.txt because CLICON_DIR must be an absolute path\n"
+    if [[ ! -f "$CLINER_DIR/config.txt" ]] ; then
+        echo -e "\tWarning: Could not update config.txt because CLINER_DIR must be an absolute path\n"
         cd $old_path
         return
     fi
-    config_file="$CLICON_DIR/config.txt"
+    config_file="$CLINER_DIR/config.txt"
     out_tmp="out.tmp.txt"
     echo "GENIA $(pwd)/geniatagger" > $out_tmp
     while read line ; do
@@ -86,22 +86,22 @@ resources=$?
 if [[ $resources -eq 0 ]] ; then
 
 
-    # CLICON_DIR must be defined before proceeding
-    if [[ "$CLICON_DIR" = "" ]] ; then
+    # CLINER_DIR must be defined before proceeding
+    if [[ "$CLINER_DIR" = "" ]] ; then
 
-        echo -e "\n\tYou must define the CLICON_DIR evironment variable to run this script"
-        echo -e   "\tRecommendation: 'cd' to the directory containing this script and execute 'export CLICON_DIR=\$(pwd)'\n"
+        echo -e "\n\tYou must define the CLINER_DIR evironment variable to run this script"
+        echo -e   "\tRecommendation: 'cd' to the directory containing this script and execute 'export CLINER_DIR=\$(pwd)'\n"
 
     else
 
         # Installation log
-        log="$CLICON_DIR/installation_log.txt"
+        log="$CLINER_DIR/installation_log.txt"
 
 
         # Create virtual environment
         echo "creating virtual environment"
-        virtualenv venv_clicon --system-site-packages &>> $log
-        source venv_clicon/bin/activate
+        virtualenv venv_cliner --system-site-packages &>> $log
+        source venv_cliner/bin/activate
         echo -e "virtual environment enabled\n"
 
 
@@ -113,19 +113,19 @@ if [[ $resources -eq 0 ]] ; then
         get_genia
 
 
-        # Install 'clicon' script for command line usage
+        # Install 'cliner' script for command line usage
         setup_output="setup_output.txt"
-        echo "Building executable 'clicon' script"
+        echo "Building executable 'cliner' script"
         python setup.py install &> $setup_output
         success=$?
-        echo -e "'clicon' script built\n"
+        echo -e "'cliner' script built\n"
 
 
         # Successful
         if [[ $success == 0 ]] ; then
-            echo "CliCon successfully installed"
+            echo "CliNER successfully installed"
         else
-            echo -e "CliCon installation failure\n"
+            echo -e "CliNER installation failure\n"
             echo "---------------------FAILURE-------------------------"
             cat $setup_output
             echo "-----------------------------------------------------"

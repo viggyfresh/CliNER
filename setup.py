@@ -26,20 +26,20 @@ test_requirements = [
 ]
 
 setup(
-    name='clicon',
+    name='cliner',
     version='0.1dev',
     description='A tool for clinical concept extraction.',
     long_description=readme + '\n\n' + history,
-    url='https://github.com/mitmedg/CliCon',
+    url='https://github.com/mitmedg/CliNER',
     packages=[
-        'clicon',
+        'cliner',
     ],
-    package_dir={'clicon':
-                 'clicon'},
+    package_dir={'cliner':
+                 'cliner'},
     include_package_data=True,
     install_requires=requirements,
     zip_safe=False,
-    keywords='clicon',
+    keywords='cliner',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
@@ -55,6 +55,6 @@ setup(
     tests_require=test_requirements,
     entry_points='''
         [console_scripts]
-        clicon=clicon.cli:clicon
+        cliner=cliner.cli:cliner
     ''',
 )

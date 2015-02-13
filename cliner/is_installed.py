@@ -1,5 +1,5 @@
 ######################################################################
-#  CliCon - is_installed.py                                          #
+#  CliNER - is_installed.py                                          #
 #                                                                    #
 #  Willie Boag                                      wboag@cs.uml.edu #
 #                                                                    #
@@ -19,9 +19,9 @@ def main():
         exit(2)
 
 
-    # Modules used by clicon (package name -> module name)
-    module2import = { 'scipy'           : 'import scipy'      , 
-                      'numpy'           : 'import numpy'      , 
+    # Modules used by cliner (package name -> module name)
+    module2import = { 'scipy'           : 'import scipy'      ,
+                      'numpy'           : 'import numpy'      ,
                       'nose'            : 'import nose'       ,
                       'nltk'            : 'import nltk'       ,
                       'python-crfsuite' : 'import pycrfsuite' ,
