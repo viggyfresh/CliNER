@@ -20,7 +20,7 @@ Installation
 
 ::
 
-    user@your-machine:~$ git clone https://github.com/mitmedg/CliNER.git
+    user@your-machine:~$ git clone https://github.com/text-machine-lab/CliNER.git
         Cloning into 'CliNER'...
         remote: Counting objects: 1296, done.
         remote: Compressing objects: 100% (503/503), done.
