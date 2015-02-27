@@ -5,10 +5,10 @@
 #
 
 
-import copy 
+import copy
 import sqlite3
 import create_sqliteDB
-import os 
+import os
 
 import create_trie
 
@@ -20,16 +20,16 @@ import create_trie
 ############################################
 
 
-#connect to UMLS database 
+#connect to UMLS database
 def SQLConnect():
     #try to connect to the sqlite database.
-    db_path = os.path.join( os.environ['CLICON_DIR'], "umls_tables/umls.db")
+    db_path = os.path.join( os.environ['CLINER_DIR'], "umls_tables/umls.db")
     if( os.path.isfile( db_path ) ):
-        print "\ndb exists" 
+        print "\ndb exists"
     else:
         # Database does not exit. Make one.
         print "\ndb doesn't exist"
-        create_sqliteDB.create_db() 
+        create_sqliteDB.create_db()
 
     db = sqlite3.connect( db_path )
     return db.cursor()
@@ -70,7 +70,7 @@ def cui_lookup( string ):
     try:
         # Get cuis
         c.execute( "SELECT cui FROM MRCON WHERE str = ?;" , (string,) )
-        return c.fetchall() 
+        return c.fetchall()
     except sqlite3.ProgrammingError, e:
         return []
 

@@ -77,7 +77,7 @@ def evaluate(referenceSpans, predictedSpans, exactMatch=False, reportSeperately=
     #TO DO: figure out how to report concepts seperately and have it work with reporting together as well.
 
     measuresForClasses = {classKey:deepcopy(measures) for classKey in dict.fromkeys(classes)}
-                                                                                 
+
     falseNegs = []
 
     for line in referenceSpans:
@@ -169,7 +169,7 @@ def evaluate(referenceSpans, predictedSpans, exactMatch=False, reportSeperately=
                     for predictedSpan in predictedSpans[line]:
                         classinPredSpan = predictedSpans[line][predictedSpan]
 
-                        #FIND LONGEST OVERLAP                                                                                                                     
+                        #FIND LONGEST OVERLAP
                         if predictedSpan[0] >= span[0] and predictedSpan[0] <= span[1] \
                            or predictedSpan[1] >= span[0] and predictedSpan[1] <= span[1]:
 
@@ -217,7 +217,7 @@ def evaluate(referenceSpans, predictedSpans, exactMatch=False, reportSeperately=
         return confusion
 
 def displayMatrix(out, name, confusion):
-    # Display the confusion matrix                                                                                                                                
+    # Display the confusion matrix
     print >>out, ""
     print >>out, ""
     print >>out, ""
@@ -233,7 +233,7 @@ def displayMatrix(out, name, confusion):
     print >>out, ""
 
 
-    # Compute the analysis stuff                                                                                                                                  
+    # Compute the analysis stuff
     precision = []
     recall = []
     specificity = []
@@ -272,7 +272,7 @@ def displayMatrix(out, name, confusion):
 
 def generateResultsForExactSpans(truePositive, falseNegative, falsePositive):
 
-    #convert to float implicitly incase of any truncation                        
+    #convert to float implicitly incase of any truncation
     truePositive = float(truePositive)
     flaseNegative = float(falseNegative)
     falsePositive = float(falsePositive)
@@ -281,7 +281,7 @@ def generateResultsForExactSpans(truePositive, falseNegative, falsePositive):
     precision = truePositive / (truePositive + falsePositive)
     fScore = (2*truePositive) / (2*truePositive + falseNegative + falsePositive)
 
-    #convert to percent                                                          
+    #convert to percent
     return {"Recall":(recall * 100), "Precision":(precision * 100), "F Score":(fScore * 100)}
 
 
@@ -292,19 +292,19 @@ def main():
     parser.add_argument("-t",
         help = "Text files that were used to generate predictions",
         dest = "txt",
-        default = os.path.join(os.getenv('CLICON_DIR'), 'data/test_data/*')
+        default = os.path.join(os.getenv('CLINER_DIR'), 'data/test_data/*')
     )
 
     parser.add_argument("-c",
         help = "The directory that contains predicted concept files organized into subdirectories for svm, lin, srf",
         dest = "con",
-        default = os.path.join(os.getenv('CLICON_DIR'), 'data/test_predictions/')
+        default = os.path.join(os.getenv('CLINER_DIR'), 'data/test_predictions/')
     )
 
     parser.add_argument("-r",
         help = "The directory that contains reference gold standard concept files",
         dest = "ref",
-        default = os.path.join(os.getenv('CLICON_DIR'), 'data/reference_standard_for_test_data/concepts/')
+        default = os.path.join(os.getenv('CLINER_DIR'), 'data/reference_standard_for_test_data/concepts/')
     )
 
     parser.add_argument("-f",
@@ -337,7 +337,7 @@ def main():
         print >>sys.stderr,   '\tAvailable formats: ', ' | '.join(Note.supportedFormats())
         print >>sys.stderr, ''
         exit(1)
-    
+
 
     # List of medical text
     txt_files = glob.glob(args.txt)
@@ -362,8 +362,8 @@ def main():
             files.append((txt_files_map[k], pred_files_map[k], ref_files_map[k]))
 
 
-    # txt          <- medical text                                               
-    # annotations  <- predictions                                                
+    # txt          <- medical text
+    # annotations  <- predictions
     # gold         <- gold standard
 
 
@@ -384,7 +384,7 @@ def main():
 
     for txt, annotations, gold in files:
 
-        # Read predictions and gols standard data                                
+        # Read predictions and gols standard data
         cnote = Note(format)
         rnote = Note(format)
         cnote.read(txt, annotations)

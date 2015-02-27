@@ -1,4 +1,4 @@
-#database.py creates a .db file for performing umls searches. 
+#database.py creates a .db file for performing umls searches.
 import marisa_trie
 import sys
 import os
@@ -7,7 +7,7 @@ import cPickle as pickle
 
 
 
-def create_trie(): 
+def create_trie():
 
     """
     create_trie()
@@ -18,7 +18,7 @@ def create_trie():
     """
 
     # Is trie already built & pickled?
-    prefix = os.environ['CLICON_DIR']
+    prefix = os.environ['CLINER_DIR']
     filename = os.path.join( prefix, 'umls_tables/umls-concept.trie' )
     try:
         t = pickle.load( open( filename , "rb" ) ) ;
@@ -27,34 +27,34 @@ def create_trie():
         pass
 
 
-    print "\ncreating concept-trie" 
+    print "\ncreating concept-trie"
 
     #load data in files.
-    print "opening file" 
+    print "opening file"
     try:
-        mrcon_path = os.path.join(os.environ['CLICON_DIR'],'umls_tables/MRCON')
-        MRCON_TABLE = open( mrcon_path , "r" ) 
+        mrcon_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRCON')
+        MRCON_TABLE = open( mrcon_path , "r" )
     except IOError:
-        print "\nNo file to use for creating MRCON table\n" 
-        conn.close() 
-        sys.exit() 
+        print "\nNo file to use for creating MRCON table\n"
+        conn.close()
+        sys.exit()
 
 
     print "reading file"
-    MRCON_TABLE = MRCON_TABLE.read()  
-    MRCON_TABLE = MRCON_TABLE.split( '\n' ) 
+    MRCON_TABLE = MRCON_TABLE.read()
+    MRCON_TABLE = MRCON_TABLE.split( '\n' )
 
-    #data that will be inserted into tables. 
-    MRCON_DATA = [] 
+    #data that will be inserted into tables.
+    MRCON_DATA = []
 
-    print "parsing file" 
+    print "parsing file"
 
-    #parse and store the data from the files. 
+    #parse and store the data from the files.
     for line in MRCON_TABLE:
         MRCON_DATA.append( tuple(line.split('|')) )
 
     #insert data onto database
-    print "inserting data" 
+    print "inserting data"
     concepts = []
     for line in MRCON_DATA:
         if len(line) < 6: continue
@@ -69,12 +69,12 @@ def create_trie():
 
         #print type(concept)
         concepts.append(concept)
-        
 
-    print "creating trie" 
+
+    print "creating trie"
     t = marisa_trie.Trie(concepts)
 
-    print "concept-trie created" 
+    print "concept-trie created"
 
 
     # Pickle trie

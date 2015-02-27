@@ -26,22 +26,22 @@ from notes.note import Note
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-t", 
-        dest = "txt", 
+    parser.add_argument("-t",
+        dest = "txt",
         help = "The files that contain the training examples",
-        default = os.path.join(os.getenv('CLICON_DIR'), 'data/train/txt/*')
+        default = os.path.join(os.getenv('CLINER_DIR'), 'data/train/txt/*')
     )
-    
-    parser.add_argument("-c", 
-        dest = "con", 
+
+    parser.add_argument("-c",
+        dest = "con",
         help = "The files that contain the labels for the training examples",
-        default = os.path.join(os.getenv('CLICON_DIR'), 'data/train/con/*')
+        default = os.path.join(os.getenv('CLINER_DIR'), 'data/train/con/*')
     )
 
     parser.add_argument("-m",
         dest = "model",
         help = "Path to the model that should be generated",
-        default = os.path.join(os.getenv('CLICON_DIR'), 'models/run.model')
+        default = os.path.join(os.getenv('CLINER_DIR'), 'models/run.model')
     )
 
     parser.add_argument("-f",
@@ -88,7 +88,7 @@ def main():
     # Collect training data file paths
     txt_files_map = helper.map_files(txt_files) # ex. {'record-13': 'record-13.con'}
     con_files_map = helper.map_files(con_files)
-    
+
     training_list = []                          # ex. training_list =  [ ('record-13.txt', 'record-13.con') ]
     for k in txt_files_map:
         if k in con_files_map:

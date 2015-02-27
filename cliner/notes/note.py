@@ -62,7 +62,7 @@ class Note:
         if Note.supported_formats: return Note.supported_formats
 
         # Note files
-        cands = os.listdir(os.path.join(os.getenv('CLICON_DIR'),'clicon/notes'))
+        cands = os.listdir(os.path.join(os.getenv('CLINER_DIR'),'cliner/notes'))
         notes = filter(lambda f:f.startswith('note_'), cands)
         notes = filter(lambda f:  f.endswith('.py'  ), notes)
 
@@ -84,7 +84,7 @@ class Note:
     @staticmethod
     def dictOfFormatToExtensions():
         # Memoized?
-        if Note.dict_of_format_to_extensions: 
+        if Note.dict_of_format_to_extensions:
             return Note.dict_of_format_to_extensions
 
         # Get each format's extension
@@ -109,8 +109,8 @@ class Note:
     ##################################################################
 
     def getExtension(self):
-        """ 
-        Purpose: returns the filename extension for a given data format 
+        """
+        Purpose: returns the filename extension for a given data format
         """
         return self.derived_note.getExtension()
 
@@ -243,8 +243,8 @@ class Note:
 
             # Add last phrase
             if phrase: line.append(phrase)
-            
-            # Add line from file 
+
+            # Add line from file
             self.text_chunks.append(line)
 
         return self.text_chunks

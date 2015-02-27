@@ -25,34 +25,34 @@ def main():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-i", 
-        dest = "input", 
-        help = "The input files to predict", 
-        default = os.path.join(os.getenv('CLICON_DIR'), 'data/test_data/*')
+    parser.add_argument("-i",
+        dest = "input",
+        help = "The input files to predict",
+        default = os.path.join(os.getenv('CLINER_DIR'), 'data/test_data/*')
     )
 
-    parser.add_argument("-o", 
-        dest = "output", 
-        help = "The directory to write the output", 
-        default = os.path.join(os.getenv('CLICON_DIR'), 'data/test_predictions')
+    parser.add_argument("-o",
+        dest = "output",
+        help = "The directory to write the output",
+        default = os.path.join(os.getenv('CLINER_DIR'), 'data/test_predictions')
     )
 
     parser.add_argument("-m",
         dest = "model",
         help = "The model to use for prediction",
-        default = os.path.join(os.getenv('CLICON_DIR'), 'models/run.model')
+        default = os.path.join(os.getenv('CLINER_DIR'), 'models/run.model')
     )
 
     parser.add_argument("-f",
         dest = "format",
-        help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )", 
+        help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )",
         default = 'i2b2'
     )
 
     parser.add_argument("-crf",
         dest = "with_crf",
         help = "Specify where to find crfsuite",
- 
+
       default = None
     )
 

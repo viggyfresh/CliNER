@@ -16,14 +16,14 @@ import os
 #
 # enabled_modules
 #
-# @return dictionary of (name,resource path) pairs.  
+# @return dictionary of (name,resource path) pairs.
 #
 #   ex. {'UMLS': None, 'GENIA': 'genia/geniatagger-3.0.1/geniatagger'}
 #
 def enabled_modules():
 
     # Open config file
-    filename = os.path.join( os.getenv('CLICON_DIR'), 'config.txt' )
+    filename = os.path.join( os.getenv('CLINER_DIR'), 'config.txt' )
     f = open(filename, 'r')
 
     specs = {}

@@ -18,12 +18,12 @@ import sys
 import subprocess
 import glob
 
-sys.path.append( os.environ['CLICON_DIR'] + "/clicon/notes" )
+sys.path.append( os.environ['CLINER_DIR'] + "/cliner/notes" )
 
 from note import Note
 
 @click.group()
-def clicon():
+def cliner():
     pass
 
 
@@ -31,11 +31,11 @@ supported_formats_help = "Data format ( " + ' | '.join(Note.supportedFormats()) 
 
 
 # Train
-@clicon.command()
+@cliner.command()
 @click.option('--annotations'   , help='Concept files for training.'  )
 @click.option('--model'         , help='Model output by train.'       )
 @click.option('--format'        , help=supported_formats_help         )
-@click.option('--grid/--no-grid', help='Flag that enables grid search', 
+@click.option('--grid/--no-grid', help='Flag that enables grid search',
               default=False)
 @click.option('--crf/--no-crf'  , help='Flag that enables crfsuite'   ,
               default=True)
@@ -49,12 +49,12 @@ def train(annotations, model, format, grid, crf, input):
         exit(1)
 
     # Base directory
-    BASE_DIR = os.environ.get('CLICON_DIR')
+    BASE_DIR = os.environ.get('CLINER_DIR')
     if not BASE_DIR:
-        raise Exception('Environment variable CLICON_DIR must be defined')
+        raise Exception('Environment variable CLINER_DIR must be defined')
 
     # Executable
-    runable = os.path.join(BASE_DIR, 'clicon/train.py')
+    runable = os.path.join(BASE_DIR, 'cliner/train.py')
 
     # Build command
     cmd = ['python', runable, '-t', input]
@@ -78,7 +78,7 @@ def train(annotations, model, format, grid, crf, input):
 
 
 # Predict
-@clicon.command()
+@cliner.command()
 @click.option('--out'   , help='The directory to write the output')
 @click.option('--model' , help='Model used to predict on files'   )
 @click.option('--format', help=supported_formats_help             )
@@ -86,12 +86,12 @@ def train(annotations, model, format, grid, crf, input):
 def predict(model, out, format, input):
 
     # Base directory
-    BASE_DIR = os.environ.get('CLICON_DIR')
+    BASE_DIR = os.environ.get('CLINER_DIR')
     if not BASE_DIR:
-        raise Exception('Environment variable CLICON_DIR must be defined')
+        raise Exception('Environment variable CLINER_DIR must be defined')
 
     # Executable
-    runable = os.path.join(BASE_DIR,'clicon/predict.py')
+    runable = os.path.join(BASE_DIR,'cliner/predict.py')
 
     # Build command
     cmd = ['python', runable, '-i', input]
@@ -112,7 +112,7 @@ def predict(model, out, format, input):
 
 
 # Evaluate
-@clicon.command()
+@cliner.command()
 @click.option('--predictions', help='Directory where predictions  are stored.')
 @click.option('--gold'       , help='Directory where gold standard is stored.')
 @click.option('--out'        , help='Output file'                             )
@@ -121,12 +121,12 @@ def predict(model, out, format, input):
 def evaluate(predictions, gold, out, format, input):
 
     # Base directory
-    BASE_DIR = os.environ.get('CLICON_DIR')
+    BASE_DIR = os.environ.get('CLINER_DIR')
     if not BASE_DIR:
-        raise Exception('Environment variable CLICON_DIR must be defined')
+        raise Exception('Environment variable CLINER_DIR must be defined')
 
     # Executable
-    runable = os.path.join(BASE_DIR,'clicon/evaluate.py')
+    runable = os.path.join(BASE_DIR,'cliner/evaluate.py')
 
     # Build command
     cmd = ['python', runable, '-t', input]
@@ -149,7 +149,7 @@ def evaluate(predictions, gold, out, format, input):
 
 
 # Format
-@clicon.command()
+@cliner.command()
 @click.option('--annotations', help='Concept files for training.')
 @click.option('--format'     , help=supported_formats_help       )
 @click.option('--out'        , help='File to write the output.'  )
@@ -157,12 +157,12 @@ def evaluate(predictions, gold, out, format, input):
 def format(annotations, format, out, input):
 
     # Base directory
-    BASE_DIR = os.environ.get('CLICON_DIR')
+    BASE_DIR = os.environ.get('CLINER_DIR')
     if not BASE_DIR:
-        raise Exception('Environment variable CLICON_DIR must be defined')
+        raise Exception('Environment variable CLINER_DIR must be defined')
 
     # Executable
-    runable = os.path.join(BASE_DIR,'clicon/format.py')
+    runable = os.path.join(BASE_DIR,'cliner/format.py')
 
     # Build command
     cmd = ['python', runable, flag, input]
@@ -182,6 +182,6 @@ def format(annotations, format, out, input):
 
 
 if __name__ == '__main__':
-    clicon()
+    cliner()
 
 
