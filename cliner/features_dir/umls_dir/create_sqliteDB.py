@@ -4,8 +4,6 @@ import os
 import sys
 import os
 
-os.environ['CLINER_DIR'] = "/data1/cliner_build/CliNER"
-
 def create_db():
 
     print "\ncreating umls.db"
