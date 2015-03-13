@@ -4,6 +4,8 @@ import os
 import sys
 import os
 
+os.environ['CLINER_DIR'] = "/data1/cliner_build/CliNER"
+
 def create_db():
 
     print "\ncreating umls.db"
@@ -16,7 +18,7 @@ def create_db():
     #load data in files.
     try:
         mrsty_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRSTY')
-        MRSTY_TABLE = open( mrsty_path, "r" )
+        MRSTY_TABLE_FILE = open( mrsty_path, "r" )
     except IOError:
         print "\nNo file to use for creating MRSTY table\n"
         conn.close()
@@ -24,7 +26,7 @@ def create_db():
 
     try:
         mrcon_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRCON')
-        MRCON_TABLE = open( mrcon_path , "r" )
+        MRCON_TABLE_FILE = open( mrcon_path , "r" )
     except IOError:
         print "\nNo file to use for creating MRCON table\n"
         conn.close()
@@ -32,65 +34,49 @@ def create_db():
 
     try:
         mrrel_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRREL')
-        MRREL_TABLE = open( mrrel_path , "r" )
+        MRREL_TABLE_FILE = open( mrrel_path , "r" )
     except IOError:
         print "\nNo file to use for creating MRREL table\n"
         conn.close()
         sys.exit()
 
-    print "reading files"
-
-    MRSTY_TABLE = MRSTY_TABLE.read()
-    MRSTY_TABLE = MRSTY_TABLE.split('\n')
-
-    MRCON_TABLE = MRCON_TABLE.read()
-    MRCON_TABLE = MRCON_TABLE.split( '\n' )
-
-    MRREL_TABLE = MRREL_TABLE.read()
-    MRREL_TABLE = MRREL_TABLE.split( '\n' )
-
-    #data that will be inserted into tables.
-    MRTSY_DATA = []
-    MRCON_DATA = []
-    MRREL_DATA = []
-
-    c = conn.cursor()
-
-    print "parsing files"
-
-    #parse and store the data from the files.
-    for line in MRSTY_TABLE:
-        MRTSY_DATA.append( tuple(line.split('|')) )
-    for line in MRCON_TABLE:
-        MRCON_DATA.append( tuple(line.split('|')) )
-    for line in MRREL_TABLE:
-        MRREL_DATA.append( tuple(line.split('|')) )
-
     print "creating tables"
+    c = conn.cursor()
 
     #create tables.
     c.execute( "CREATE TABLE MRCON( CUI, LAT, TS, LUI, STT, SUI, STR, LRL, EMPTY ) ;" )
     c.execute( "CREATE TABLE MRSTY( CUI, TUI, STY, EMPTY ) ;" )
     c.execute( "CREATE TABLE MRREL( CUI1, REL, CUI2, RELA, SAB, SL, MG, EMPTY ) ;" )
 
-    print "inserting data"
+    print "inserting data into MRSTY table"
+    for line in MRSTY_TABLE_FILE:
 
-    #insert data onto database
-    for line in MRCON_DATA:
         try:
-            c.execute( "INSERT INTO MRCON( CUI, LAT, TS, LUI, STT, SUI, STR, LRL, EMPTY ) values ( ?, ?, ? ,?, ?,?,?,?,?);", line )
+            c.execute( "INSERT INTO MRCON( CUI, LAT, TS, LUI, STT, SUI, STR, LRL, EMPTY ) values ( ?, ?, ? ,?, ?,?,?,?,?);", tuple(line[0:-1].split('|')) )
         except sqlite3.ProgrammingError:
             continue
-    for line in MRTSY_DATA:
+
+    MRSTY_TABLE_FILE.close()
+
+    print "inserting data into MRCON table"
+    for line in MRCON_TABLE_FILE:
+
         try:
-            c.execute( "INSERT INTO MRSTY( CUI, TUI, STY, EMPTY) values( ?, ?, ?, ?)" , line )
+            c.execute( "INSERT INTO MRSTY( CUI, TUI, STY, EMPTY) values( ?, ?, ?, ?)" , tuple(line[0:-1].split('|')) )
         except sqlite3.ProgrammingError:
             continue
-    for line in MRREL_DATA:
+    
+    MRCON_TABLE_FILE.close()
+
+    print "inserting data into MRREL table"
+    for line in MRREL_TABLE_FILE:
+        
         try:
-            c.execute( "INSERT INTO MRREL(  CUI1, REL, CUI2, RELA, SAB, SL, MG, EMPTY ) values( ?, ?, ?, ?,?, ? ,? ,? )" , line )
+            c.execute( "INSERT INTO MRREL(  CUI1, REL, CUI2, RELA, SAB, SL, MG, EMPTY ) values( ?, ?, ?, ?,?, ? ,? ,? )" , tuple(line[0:-1].split('|')) )
         except sqlite3.ProgrammingError:
             continue
+
+    MRREL_TABLE_FILE.close()
 
     print "creating indices"
 
@@ -109,4 +95,7 @@ def create_db():
 
     #close connection
     conn.close()
+
+if __name__ == "__main__":
+    create_db()
 
