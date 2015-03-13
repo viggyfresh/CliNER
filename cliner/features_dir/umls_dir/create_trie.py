@@ -39,27 +39,18 @@ def create_trie():
         conn.close()
         sys.exit()
 
-
-    print "reading file"
-    MRCON_TABLE = MRCON_TABLE.read()
-    MRCON_TABLE = MRCON_TABLE.split( '\n' )
-
-    #data that will be inserted into tables.
-    MRCON_DATA = []
-
-    print "parsing file"
-
-    #parse and store the data from the files.
-    for line in MRCON_TABLE:
-        MRCON_DATA.append( tuple(line.split('|')) )
+    print "inserting data into concept-trie"
 
     #insert data onto database
     print "inserting data"
     concepts = []
-    for line in MRCON_DATA:
-        if len(line) < 6: continue
+    for line in MRCON_TABLE:
 
-        concept = line[6]
+	l = tuple(line[0:-1].split('|'))
+
+        if len(l) < 6: continue
+
+        concept = l[6]
 
         # Ignore non-ascii
         try:
@@ -70,12 +61,10 @@ def create_trie():
         #print type(concept)
         concepts.append(concept)
 
-
     print "creating trie"
     t = marisa_trie.Trie(concepts)
 
     print "concept-trie created"
-
 
     # Pickle trie
     pickle.dump( t, open( filename, "wb" ) )
