@@ -50,7 +50,7 @@ def create_db():
     for line in MRSTY_TABLE_FILE:
 
         try:
-            c.execute( "INSERT INTO MRCON( CUI, LAT, TS, LUI, STT, SUI, STR, LRL, EMPTY ) values ( ?, ?, ? ,?, ?,?,?,?,?);", tuple(line[0:-1].split('|')) )
+            c.execute( "INSERT INTO MRSTY( CUI, TUI, STY, EMPTY) values( ?, ?, ?, ?)" , tuple(line[0:-1].split('|')) )
         except sqlite3.ProgrammingError:
             continue
 
@@ -60,7 +60,7 @@ def create_db():
     for line in MRCON_TABLE_FILE:
 
         try:
-            c.execute( "INSERT INTO MRSTY( CUI, TUI, STY, EMPTY) values( ?, ?, ?, ?)" , tuple(line[0:-1].split('|')) )
+            c.execute( "INSERT INTO MRCON( CUI, LAT, TS, LUI, STT, SUI, STR, LRL, EMPTY ) values ( ?, ?, ? ,?, ?,?,?,?,?);", tuple(line[0:-1].split('|')) )
         except sqlite3.ProgrammingError:
             continue
     
