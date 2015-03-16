@@ -140,13 +140,14 @@ Please email wboag@cs.uml.edu with your installation questions.
         * scikit-learn (version 0.14)
         * scipy
         * python-crfsuite
+        * marisa-trie
         * nltk  (AND run the NLTK downloader)
 
 
     ::
 
         (venv_cliner)user@your-machine:~/CliNER$ sudo apt-get install python-pip python-virtualenv python-dev g++ gfortran libopenblas-dev liblapack-dev -y
-        (venv_cliner)user@your-machine:~/CliNER$ pip install nose numpy scikit-learn scipy nltk python-crfsuite
+        (venv_cliner)user@your-machine:~/CliNER$ pip install nose numpy scikit-learn scipy nltk python-crfsuite marisa-trie
         (venv_cliner)user@your-machine:~/CliNER$ python -m nltk.downloader maxent_treebank_pos_tagger wordnet
 
 
