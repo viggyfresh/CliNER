@@ -187,13 +187,15 @@ Please email wboag@cs.uml.edu with your installation questions.
 
         1. First you must download the sources for GENIA. Do that with ``wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.1.tar.gz``
 
-        2. In order to compile the sources, you may need to edit a C++ so that it has an additional include directive. This should be able to be accomplished by enterring the geniatagger-3.0.1/ directory and running ``echo "$(sed '1i#include <cstdlib>' morph.cpp)" > morph.cpp``
+        2. Untar the file ``tar xzvf geniatagger-3.0.1`` and enter the new directory ``cd geniatagger-3.0.1``.
 
-        3. Compile GENIA. Just run ``make``
+        3. In order to compile the sources, you may need to edit a C++ so that it has an additional include directive. This should be able to be accomplished by enterring the geniatagger-3.0.1/ directory and running ``echo "$(sed '1i#include <cstdlib>' morph.cpp)" > morph.cpp``
 
-        4. If you do not have any errors, then the tagger has been built successfully. If there were compile errors, try to resolve them (it'd be one of those "well it works for me" scenarios).
+        4. Compile GENIA. Just run ``make``
 
-        5. Set the file "$CLINER_DIR/config.txt" so that the line that has "GENIA None" is replaced with "GENIA <path-to-geniatagger-3.0.1/geniatagger>'. This file is how CliNER is able to find and run the tagger.
+        5. If you do not have any errors, then the tagger has been built successfully. If there were compile errors, try to resolve them (it'd be one of those "well it works for me" scenarios).
+
+        6. Set the file "$CLINER_DIR/config.txt" so that the line that has "GENIA None" is replaced with "GENIA <path-to-geniatagger-3.0.1/geniatagger>'. This file is how CliNER is able to find and run the tagger.
 
 
 
