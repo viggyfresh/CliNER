@@ -17,7 +17,7 @@ from notes.note import concept_labels, reverse_concept_labels, IOB_labels, rever
 
 
 class Model:
-    
+
     @staticmethod
     def load(filename='awesome.model'):
         with open(filename, 'rb') as model:
@@ -78,7 +78,7 @@ class Model:
         ###############
 
         # Get the data and annotations from the Note objects
-        chunks  = [  note.getChunkedText()     for  note  in  notes  ] 
+        chunks  = [  note.getChunkedText()     for  note  in  notes  ]
         indices = [  note.getConceptIndices()  for  note  in  notes  ]
         conlist = [  note.getConceptLabels()   for  note  in  notes  ]
 
@@ -162,7 +162,7 @@ class Model:
 
 
             print '\ttraining classifiers (pass one) ' + flabel
-            
+
             # CRF needs reconstructed lists
             if self.crf_enabled:
                 X = list(X)
@@ -240,7 +240,7 @@ class Model:
 
 
 
-        
+
     # Model::predict()
     #
     # @param note. A Note object that contains the data
@@ -299,7 +299,7 @@ class Model:
 
         # Create object that is a wrapper for the features
         feat_obj = features.FeatureWrapper(data)
- 
+
 
         # separate prose and nonprose data
         prose    = []
@@ -391,7 +391,7 @@ class Model:
 
     def second_predict(self, data, inds_list):
 
-        # If first pass predicted no concepts, then skip 
+        # If first pass predicted no concepts, then skip
         # NOTE: Special case because SVM cannot have empty input
         if sum([ len(inds) for inds in inds_list ]) == 0:
             return []
@@ -447,7 +447,7 @@ class Model:
 
                 # Classification token
                 classifications.append( (concept,lineno+1,start,start+length-1) )
-        
+
         # Return classifications
         return classifications
 
