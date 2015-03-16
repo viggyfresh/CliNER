@@ -337,6 +337,26 @@ class WordFeatures:
         return re.search(regex, word)
 
     def is_date(self, word):
+        """
+        is_date()
+
+        Purpose: Checks if word is a date.
+
+        @param word. A string.
+        @return the matched object if it is a date, otherwise None.
+
+        >>> wf = WordFeatures()
+        >>> wf.is_date("2015-03-1") is not None
+        True
+        >>> wf.is_date("2014-02-19") is not None
+        True
+        >>> wf.is_date("03-27-1995") is not None
+        True    
+        >>> wf.is_date("201") is not None
+        False
+        >>> wf.is_date("0") is not None
+        False   
+        """
         regex= r'^(\d\d\d\d-\d\d-\d|\d\d?-\d\d?-\d\d\d\d?|\d\d\d\d-\d\d?-\d\d?)$'
         return re.search(regex,word)
 
