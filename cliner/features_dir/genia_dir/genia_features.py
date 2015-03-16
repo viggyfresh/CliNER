@@ -24,7 +24,7 @@ class GeniaFeatures:
         """
 
         # Filter out nonprose sentences
-        prose = [ sent  for  sent  in  data  if  utilities.prose_sentence(sent) ]
+        prose = [ sent  for  sent  in  data  if  utilities.is_prose_sentence(sent) ]
 
         # Process prose sentences with GENIA tagger
         self.GENIA_features = iter(interface_genia.genia(tagger, prose))

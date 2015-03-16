@@ -16,7 +16,7 @@ import nltk
 import re
 
 from wordshape import getWordShapes
-from utilities import prose_sentence
+from utilities import is_prose_sentence
 
 from sentence_features import SentenceFeatures
 
@@ -42,7 +42,7 @@ class FeatureWrapper:
     def extract_IOB_features(self, sentence):
 
         # Different features depending on whether sentence is 'prose'
-        isProse = prose_sentence(sentence)
+        isProse = is_prose_sentence(sentence)
 
         if isProse:
             features_list = self.feat_sent.IOB_prose_features(sentence)

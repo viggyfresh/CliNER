@@ -9,12 +9,21 @@
 
 import re
 
+def is_prose_sentence(sentence):
 
-# prose_sentence()
-#
-# input:  A sentence
-# output: Boolean yes/no
-def prose_sentence(sentence):
+    """
+    is_prose_sentence()
+
+    Purpose: Determine if a sentence of text is 'prose'
+
+    @param sentence A list of words
+    @return         A boolean
+
+    >>> is_prose_sentence(['Admission', 'Date', ':'])
+    False
+    >>> is_prose_sentence(['Hello', 'World', '.'])
+    True
+    """
 
     # Empty sentence is not prose
     if not sentence:
@@ -26,7 +35,7 @@ def prose_sentence(sentence):
         return False
     elif len(sentence) <= 5:
         return False
-    elif at_least_half_nonprose(sentence):
+    elif is_at_least_half_nonprose(sentence):
         return True
     else:
         return False
@@ -37,9 +46,9 @@ def prose_sentence(sentence):
 #
 # input:  A sentence
 # output: A bollean yes/no
-def at_least_half_nonprose(sentence):
+def is_at_least_half_nonprose(sentence):
 
-    count = len(  [ w  for  w  in  sentence  if prose_word(w) ]  )
+    count = len(  [ w  for  w  in  sentence  if is_prose_word(w) ]  )
 
     if count >= len(sentence)/2:
         return True
@@ -52,7 +61,7 @@ def at_least_half_nonprose(sentence):
 #
 # input:  A word
 # output: Boolean yes/no
-def prose_word(word):
+def is_prose_word(word):
 
     # Punctuation
     for punc in ".?,!:\"'":
