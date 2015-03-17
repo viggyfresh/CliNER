@@ -42,12 +42,20 @@ def is_prose_sentence(sentence):
 
 
 
-# at_least_half_nonprose()
-#
-# input:  A sentence
-# output: A bollean yes/no
 def is_at_least_half_nonprose(sentence):
+    """
+    is_at_least_half_nonprose(sentence)
 
+    Purpose: Checks if at least half of the sentence is considered to be 'prose'
+
+    @param sentence. A list of words
+    @return          A boolean
+
+    >>> is_at_least_half_nonprose(['1','2','and','some','words'])
+    True
+    >>> is_at_least_half_nonprose(['1', '2', '3', '4', 'and', 'some', 'words'])   
+    False
+    """
     count = len(  [ w  for  w  in  sentence  if is_prose_word(w) ]  )
 
     if count >= len(sentence)/2:
@@ -56,13 +64,20 @@ def is_at_least_half_nonprose(sentence):
         return False
 
 
-
-# prose_word()
-#
-# input:  A word
-# output: Boolean yes/no
 def is_prose_word(word):
+    """
+    is_prose_word(word)
 
+    Purpose: Checks if the given word is 'prose'
+
+    @param word. A word
+    @return      A boolean
+
+    >>> is_prose_word('word')
+    True
+    >>> is_prose_word('99') 
+    False
+    """
     # Punctuation
     for punc in ".?,!:\"'":
         if punc in word:
@@ -78,4 +93,3 @@ def is_prose_word(word):
 
     # Else
     return True
-
