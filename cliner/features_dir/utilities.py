@@ -8,7 +8,18 @@
 
 
 import re
+import cPickle as pickle
 
+def load_pickled_obj(path_to_pickled_obj):
+
+    data = ""
+
+    with open(path_to_pickled_obj, "rb") as f:
+
+        for line in f:
+            data += line
+
+        return pickle.loads(data)
 
 # prose_sentence()
 #

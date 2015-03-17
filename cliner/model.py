@@ -19,17 +19,9 @@ class Model:
     @staticmethod
     def load(filename='awesome.model'):
 
-        with open(filename, 'rb') as model:
-
-            data = ""
-
-            # this is faster than just doing a pickle.load()
-            for line in model:
-                data += line
-
-            model = pickle.loads(data)
-
+        model = utilities.load_pickled_obj(filename)
         model.filename = filename
+
         return model
 
 
