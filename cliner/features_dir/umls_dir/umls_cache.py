@@ -1,12 +1,19 @@
 import cPickle as pickle
+import sys
 import os
+
+sys.path.append((os.environ["CLINER_DIR"] + "/cliner/features_dir"))
+
+from utilities import load_pickled_obj
 
 class UmlsCache:
     def __init__(self):
         try:
             prefix = os.environ['CLINER_DIR']
             self.filename = os.path.join( prefix, 'umls_tables/umls_cache' )
-            self.cache = pickle.load( open( self.filename , "rb" ) ) ;
+
+            self.cache = load_pickled_obj(self.filename)
+
         except IOError:
             self.cache = {}
 

@@ -12,6 +12,9 @@ from BeautifulSoup import BeautifulSoup
 
 import helper
 
+sys.path.append((os.environ["CLINER_DIR"] + "/cliner/features_dir"))
+
+from utilities import load_pickled_obj
 
 
 class UmlsSimilarity:
@@ -24,8 +27,7 @@ class UmlsSimilarity:
         # Read data
         self.filename = os.path.join(cache_dir, 'url.cache')
         try:
-            with open(self.filename,'r') as f:
-                self.cache = pickle.load(f)
+            self.cache = load_pickled_obj(self.filename)
         except IOError:
             self.cache = {}
 

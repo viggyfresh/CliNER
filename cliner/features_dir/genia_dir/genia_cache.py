@@ -1,12 +1,18 @@
 import cPickle as pickle
 import os
+import sys
+
+sys.path.append((os.environ["CLINER_DIR"] + "/cliner/features_dir"))
+
+from utilities import load_pickled_obj
+
 
 class GeniaCache:
     def __init__(self):
         try:
             prefix = os.path.dirname(__file__)
             self.filename = os.path.join( prefix, 'genia_cache' )
-            self.cache = pickle.load( open( self.filename , "rb" ) ) ;
+            self.cache = load_pickled_obj(self.filename)
         except IOError:
             self.cache = {}
 

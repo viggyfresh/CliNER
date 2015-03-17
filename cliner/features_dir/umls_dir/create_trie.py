@@ -4,8 +4,9 @@ import sys
 import os
 import cPickle as pickle
 
+sys.path.append((os.environ["CLINER_DIR"] + "/cliner/features_dir"))
 
-
+from utilities import load_pickled_obj
 
 def create_trie():
 
@@ -21,7 +22,7 @@ def create_trie():
     prefix = os.environ['CLINER_DIR']
     filename = os.path.join( prefix, 'umls_tables/umls-concept.trie' )
     try:
-        t = pickle.load( open( filename , "rb" ) ) ;
+        t = load_pickled_obj(filename)
         return t
     except IOError:
         pass
