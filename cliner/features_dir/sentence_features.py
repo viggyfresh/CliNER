@@ -10,8 +10,8 @@
 __author__ = 'Willie Boag'
 __date__   = 'Apr. 27, 2014'
 
-import utilities
-import re
+from utilities import load_pos_tagger
+
 from wordshape import getWordShapes
 
 # What modules are available
@@ -27,8 +27,6 @@ if enabled['UMLS']:
     from umls_dir.umls_features import UMLSFeatures
 
 from word_features import WordFeatures
-
-
 
 
 class SentenceFeatures:
@@ -75,7 +73,7 @@ class SentenceFeatures:
         self.enabled_IOB_prose_sentence_features.append('GENIA')
         self.enabled_IOB_prose_sentence_features.append('UMLS')
 
-        self.nltk_tagger = utilities.load_pos_tagger()
+        self.nltk_tagger = load_pos_tagger()
 
 
     # IOB_prose_features()

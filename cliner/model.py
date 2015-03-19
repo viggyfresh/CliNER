@@ -1,16 +1,12 @@
 from __future__ import with_statement
 
-import os
-import cPickle as pickle
-import helper
-import sys
-
 from sklearn.feature_extraction  import DictVectorizer
+
+from features_dir.features import FeatureWrapper
+from features_dir.utilities import load_pickled_obj, prose_sentence
 
 from machine_learning import sci
 from machine_learning import crf
-
-from features_dir import features, utilities
 
 from notes.note import concept_labels, reverse_concept_labels, IOB_labels, reverse_IOB_labels
 
@@ -19,7 +15,7 @@ class Model:
     @staticmethod
     def load(filename='awesome.model'):
 
-        model = utilities.load_pickled_obj(filename)
+        model = load_pickled_obj(filename)
         model.filename = filename
 
         return model
@@ -111,7 +107,7 @@ class Model:
 
 
         # Create object that is a wrapper for the features
-        feat_obj = features.FeatureWrapper(data)
+        feat_obj = FeatureWrapper(data)
 
 
         # Parition into prose v. nonprose
@@ -215,7 +211,7 @@ class Model:
         print '\textracting  features (pass two)'
 
         # Create object that is a wrapper for the features
-        feat_o = features.FeatureWrapper()
+        feat_o = FeatureWrapper()
 
         # Extract features
         X = [ feat_o.concept_features(s,inds) for s,inds in zip(data,inds_list) ]
@@ -297,8 +293,7 @@ class Model:
 
 
         # Create object that is a wrapper for the features
-        feat_obj = features.FeatureWrapper(data)
-
+        feat_obj = FeatureWrapper(data)
 
         # separate prose and nonprose data
         prose    = []
@@ -372,7 +367,7 @@ class Model:
         iobs          = []
         trans = lambda l: reverse_IOB_labels[int(l)]
         for sentence in data:
-            if utilities.prose_sentence(sentence):
+            if prose_sentence(sentence):
                 prose_iobs.append( plist.pop(0) )
                 prose_iobs[-1] = map(trans, prose_iobs[-1])
                 iobs.append( prose_iobs[-1] )
@@ -398,7 +393,7 @@ class Model:
 
 
         # Create object that is a wrapper for the features
-        feat_o = features.FeatureWrapper()
+        feat_o = FeatureWrapper()
 
 
         print '\textracting  features (pass two)'
