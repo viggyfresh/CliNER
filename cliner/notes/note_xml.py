@@ -88,6 +88,9 @@ class Note_xml(AbstractNote):
         return retVal
 
 
+    def getLineIndices(self):
+        return self.line_inds
+
 
     def read(self, txt, con=None):
 
@@ -136,16 +139,16 @@ class Note_xml(AbstractNote):
                         if match:
 
                             con = match.group(1)
-                            
+
                             # begin tag
                             if con[0] != '/':
-                                # store data 
+                                # store data
                                 concept = con
                                 start_ind = i
 
                             # end tag
                             else:
-                                # store data 
+                                # store data
                                 tup = (concept,lineno+1,start_ind,i-1)
                                 self.classifications.append(tup)
 
@@ -161,9 +164,9 @@ class Note_xml(AbstractNote):
 
         """
         Note_xml::write()
-        
+
         Purpose: Write the concept predictions in xml format
-        
+
         @param  labels. A list of predictions of labels for the given text.
         @return         A string for the xml-annotated file
         """

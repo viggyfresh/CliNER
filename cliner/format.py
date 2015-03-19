@@ -20,8 +20,7 @@ import glob
 import helper
 from notes.note import Note
 
-
-
+temp_dest = os.path.join(os.environ["CLINER_DIR"], "cliner")
 
 def create_filename(odir, bfile, extension):
     fname = os.path.basename(bfile) + extension
@@ -113,7 +112,9 @@ def main():
 
     # Convert data to standard format
     internal_output = in_note.write_standard()
-    tmp_file = 'tmp_file.txt'
+
+    tmp_file = os.path.join(temp_dest, 'tmp_file.txt')
+
     with open(tmp_file, 'w') as f:
         f.write(internal_output)
 

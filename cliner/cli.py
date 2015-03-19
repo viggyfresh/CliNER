@@ -165,7 +165,7 @@ def format(annotations, format, out, input):
     runable = os.path.join(BASE_DIR,'cliner/format.py')
 
     # Build command
-    cmd = ['python', runable, flag, input]
+    cmd = ['python', runable, "-t", input]
 
     # Optional arguments
     if annotations:

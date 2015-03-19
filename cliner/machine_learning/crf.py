@@ -12,10 +12,9 @@ import os
 
 import pycrfsuite
 
-
 count = 0
 
-
+tmp_dest = os.path.join(os.environ["CLINER_DIR"], "cliner/machine_learning")
 
 def format_features(rows, labels=None):
 
@@ -126,7 +125,8 @@ def train(X, Y, do_grid):
 
 
     # Train the model
-    tmp_file = 'clicon-crf-tmp.txt'
+    tmp_file = os.path.join(temp_dest, 'clicon-crf-tmp.txt')
+
     trainer.train(tmp_file)
 
 
@@ -150,9 +150,9 @@ def predict(clf, X):
     # Format features fot crfsuite
     feats = format_features(X)
 
-
     # Dump the model into a temp file
-    tmp_file = 'clicon-crf-tmp.txt'
+    tmp_file = os.path.join(tmp_dest, 'clicon-crf-tmp.txt')
+
     with open(tmp_file, 'wb') as f:
         f.write(clf)
 
@@ -173,7 +173,7 @@ def predict(clf, X):
         yseq = [ int(n) for n in tagger.tag(xseq) ]
         retVal += list(yseq)
         Y.append(list(yseq))
-    
+
     # Sanity Check detection: feature & label predictions
     #with open('a','w') as f:
     #    for x,y in zip(xseq,Y):
