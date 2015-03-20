@@ -12,10 +12,6 @@ __date__   = 'Jan. 27, 2014'
 
 
 
-import nltk
-import re
-
-from wordshape import getWordShapes
 from utilities import prose_sentence
 
 from sentence_features import SentenceFeatures
@@ -60,14 +56,14 @@ class FeatureWrapper:
     #         An list of indices into the sentence for each important chunk
     # output: A list of hash tables of features
     def concept_features(self, sentence, chunk_inds):
-        
+
         # FIXME - move all of this work to SentenceFeatures object
 
         '''
         # VERY basic feature set for sanity check tests during development
         features_list = []
         for i,ind in enumerate(chunk_inds):
-            features = {('phrase',sentence[ind]) : 1} 
+            features = {('phrase',sentence[ind]) : 1}
             features_list.append(features)
         return features_list
         '''

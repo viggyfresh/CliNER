@@ -31,7 +31,7 @@ Installation
 
 **CliNER Dependencies Diagnosis**
 
-We know that software installation can be a major hassle. We hate it too. That's why why made the 'install' directory. This directory contains diagnostic tools to determine what is causing the system installation to fail. We hope you'll never have to use it. To run the full suite of checks, run:
+We know that software installation can be a major hassle. We hate it too. That's why why made the 'install' directory. This directory contains diagnostic tools to determine what is causing the system installation to fail. We hope you'll never have to use it. To run the full suite of checks, do:
 
     ::
 
