@@ -28,21 +28,24 @@ def main():
 
     # 2. Python dependencies
     status = dependencies.check_python_dependencies_installed()
-    if status == 0:
+    if all(status):
         print '\ngood: all Python dependencies installed'
-    elif status == 1:
+    if status[0] == False:
         print '\nWARNING: Auxillary Python dependencies NOT installed'
         dependencies.display_status(dependencies.auxiliary)
-    else:
+    if status[1] == False:
         print '\nERROR: Required Python dependencies NOT installed'
         dependencies.display_status(dependencies.required)
+    if status[2] == False:
+        print '\nERROR: Required nltk data NOT downloaded'
+        dependencies.display_status(dependencies.nltk_data)
     print
 
 
-    # 3. GENIA Tagger
+    # 3. GENIA Tagger (optional)
 
 
-    # 4. UMLS tables
+    # 4. UMLS tables (optional)
 
 
 

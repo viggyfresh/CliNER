@@ -25,6 +25,10 @@ auxiliary = {
              'nose'        : 'import nose'
             }
 
+nltk_data = {
+            'maxent_treebank_pos_tagger' : 'import nltk ; nltk.pos_tag([])' ,
+            'punkt'                      : 'import nltk ; s = nltk.stem.LancasterStemmer()'
+            }
 
 
 def main():
@@ -37,19 +41,24 @@ def main():
     display_status(auxiliary)
     print
 
+    print '\nNLTK DATA'
+    display_status(nltk_data)
+    print
+
 
 
 
 def display_status(module2import):
     ''' Iterate through dictionary and display in pretty format '''
     installed = status_report(module2import)
-    print '\t|  module-name  |   status    |'
-    print '\t|' + '-'*15 + '|' + '-' * 13 + '|'
+    print '\t|\t module-name\t    |   status    |'
+    print '\t|' + '-'*27 + '|' + '-' * 13 + '|'
     for module in installed.keys():
         if installed[module]:
-            print '\t|%-15s|  installed  |' % module
+            print '\t|%-27s|  installed  |' % module
         else:
-            print '\t|%-15s|    ERROR    |'   % module
+            print '\t|%-27s|    ERROR    |'   % module
+
 
 
 
@@ -78,6 +87,8 @@ def status_report(module2import):
             installed[module] = True
         except ImportError:
             installed[module] = False
+        except LookupError:
+            installed[module] = False
 
     return installed
 
@@ -90,24 +101,31 @@ def check_python_dependencies_installed():
 
     Purpose: Determine whether all necesarry python modules are installed
 
-    @return either 0, 1, or 2:
-            0 <- everything is installed
-            1 <- missing some auxiliary modules
-            2 <- missing some required modules
+    @return a list of three booleans:
+              1) The first  boolean indicates all auxiliary success
+              2) The second boolean indicates all required  success
+              2) The third  boolean indicates all nltk data success
     '''
 
-    # Missing required modules?
-    required_modules = status_report(required)
-    if not all(required_modules.values()):
-        return 2
+    status = [True,True,True]
 
     # Missing auxiliary modules?
     auxiliary_modules = status_report(auxiliary)
     if not all(auxiliary_modules.values()):
-        return 1
+        status[0] = False
+
+    # Missing required modules?
+    required_modules = status_report(required)
+    if not all(required_modules.values()):
+        status[1] = False
+
+    # Missing required modules?
+    nltk_data_modules = status_report(nltk_data)
+    if not all(nltk_data_modules.values()):
+        status[2] = False
 
     # Successful
-    return 0
+    return status
 
 
 
