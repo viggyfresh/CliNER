@@ -29,9 +29,21 @@ Installation
         Resolving deltas: 100% (812/812), done.
 
 
+**CliNER Dependencies Diagnosis**
+
+We know that software installation can be a major hassle. We hate it too. That's why why made the 'install' directory. This directory contains diagnostic tools to determine what is causing the system installation to fail. To run the full suite of checks, run:
+
+    ::
+
+        user@your-machine:~$ python install/diagnose.py
+
+Good luck!
+
+
+
 **Using an installation script**
 
-Linux users can use an installation script to download and install all the components of this project, including third-party dependencies. Note that it can not get tools and data that require special use agreements (including the i2b2 data and the UMLS tables), which have to be obtained separately.
+Linux users can use an installation script to download and install all the components of this project, including third-party dependencies. Note that it cannot get tools and data that require special use agreements (including the i2b2 data and the UMLS tables), which have to be obtained separately.
 
 The following packages need to be on the system for the script to work:
 
