@@ -16,11 +16,12 @@ __date__   = 'Jan. 27, 2014'
 
 import os
 import sys
-from commands import getstatusoutput
+import tempfile
 
+from commands import getstatusoutput
 from genia_cache import GeniaCache
 
-
+tmp_dir = os.path.join(os.environ["CLINER_DIR"], "cliner/tmp_files_dir")
 
 def genia(geniatagger, data):
 
@@ -48,7 +49,9 @@ def genia(geniatagger, data):
     if uncached:
         # write list to file and then feed it to GENIA
         genia_dir = os.path.dirname(geniatagger)
-        out = os.path.join(genia_dir,'clicon_genia_tmp_file.txt')
+
+        out = tempfile.mkstemp(dir=tmp_dir, suffix="genia_temp")[1]
+
         with open(out, 'w') as f:
             for line in uncached: f.write(line + '\n')
 
@@ -92,7 +95,7 @@ def genia(geniatagger, data):
                        'GENIA-POS'     : tag[2] ,
                        'GENIA-chunktag': tag[3] ,
                        'GENIA-NEtag'   : tag[4] }
- 
+
             linefeats.append(output)
 
         retlist.append(linefeats)
