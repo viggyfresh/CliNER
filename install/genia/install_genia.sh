@@ -7,10 +7,10 @@
 
 # Installation log
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-log="$DIR/log_installation.txt"
+log="$GENIA_DIR/log_installation.txt"
 echo "" > $log
 
-echo -e "\nSee genia installation details at: \n\t$DIR/log_installation.txt\n"
+echo -e "\nSee genia installation details at: \n\t$GENIA_DIR/log_installation.txt\n"
 
 
 

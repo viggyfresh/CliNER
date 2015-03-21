@@ -6,11 +6,11 @@
 
 
 # Installation log
-DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-log="$DIR/log_installation.txt"
+DEPENDENCIES_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+log="$DEPENDENCIES_DIR/log_installation.txt"
 echo "" > $log
 
-echo -e "\nSee python dependency details at: \n\t$DIR/log_installation.txt\n"
+echo -e "\nSee python dependency details at: \n\t$DEPENDENCIES_DIR/log_installation.txt\n"
 
 
 # Virtual Environment
