@@ -17,8 +17,8 @@ echo -e "\nSee python dependency details at: \n\t$DIR/log_installation.txt\n"
 source $CLINER_DIR/install/virtualenv/create_virtualenv.sh
 
 
-#modules=(nltk python-crfsuite nose numpy scipy scikit-learn)
-modules=(nltk python-crfsuite numpy scipy scikit-learn)
+#modules=(nltk python-crfsuite nose numpy scipy scikit-learn marisa-trie)
+modules=(nltk python-crfsuite numpy scipy scikit-learn marisa-trie)
 for m in ${modules[@]} ; do
 
     echo -e "\nmodule: $m"

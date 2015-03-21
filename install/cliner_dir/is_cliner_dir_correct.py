@@ -22,7 +22,7 @@ def is_cliner_dir_correct():
 
     # Is CLINER_DIR set?
     base = os.getenv('CLINER_DIR')
-    if base == None:
+    if (base == None) or (base == ''):
         return False
 
     # Is CLINER_DIR set correctly?

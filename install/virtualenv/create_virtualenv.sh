@@ -16,8 +16,10 @@ if [[ ! $VIRTUAL_ENV ]] ; then
     else
         old=$(pwd)
         cd $CLINER_DIR
-        virtualenv --no-site-packages venv_cliner
+        virtualenv venv_cliner > /dev/null
         source venv_cliner/bin/activate
         cd $old
+    fi
+
 fi
 
