@@ -1,5 +1,5 @@
 ######################################################################
-#  CliNER - clinerdir.py                                             #
+#  CliNER - is_cliner_dir_correct.py                                 #
 #                                                                    #
 #  Willie Boag                                      wboag@cs.uml.edu #
 #                                                                    #
@@ -10,7 +10,7 @@
 import os
 
 
-def is_clinerdir_set():
+def is_cliner_dir_correct():
 
     '''
     is_clinerdir_set()
@@ -27,22 +27,14 @@ def is_clinerdir_set():
 
     # Is CLINER_DIR set correctly?
     path = os.path.join(base, 'README.rst')
-    with open(path, 'r') as f:
-        lines = f.readlines()
-        if len(lines) < 2: return False
-        return lines[1].strip() == 'CliNER'
-
-
-
-def main():
-    if not is_clinerdir_set():
-        print '\nERROR: CLINER_DIR not set correctly'
-        print '\tthis should be set to path of cloned github directory'
-        print "\tex. 'export CLINER_DIR=/home/wboag/CliNER'\n"
-    else:
-        print '\ngood: CLINER_DIR set correctly\n'
-
+    try:
+        with open(path, 'r') as f:
+            lines = f.readlines()
+            if len(lines) < 2: return False
+            return lines[1].strip() == 'CliNER'
+    except IOError:
+        return False
 
 
 if __name__ == '__main__':
-    main()
+    exit(not is_cliner_dir_correct())

@@ -43,23 +43,23 @@ Good luck!
 
 **Using an installation script**
 
-Linux users can use an installation script to download and install all the components of this project, including third-party dependencies. Note that it cannot get tools and data that require special use agreements (including the i2b2 data and the UMLS tables), which have to be obtained separately.
+Linux users can use an installation script to install this project. Note that it cannot get tools and data that require special use agreements (namely, i2b2 data and the UMLS tables), which have to be obtained separately.
 
-The following packages need to be on the system for the script to work:
+To invoke the script, ensure you are in a bash terminal (zsh will not work). Next, ``cd`` into the ``CliNER`` directory:
+
+::
+
+    user@your-machine:~$ cd CliNER
+    user@your-machine:~/CliNER$ source install.sh
+
+
+The script begins with a diagnostic to see what needs to be installed. If the script fails, you should ensure the following systems are installed on your system:
 
 ::
 
     python-pip
     python-virtualenv
     python-dev
-
-
-
-
-Some of python modules used by CliNER have the following dependencies, which also need to be installed on the system:
-
-::
-
     g++
     gfortran
     libopenblas-dev
@@ -81,17 +81,7 @@ Although the script is able to build python dependencies via pip, this is a slow
     scikit-learn (version 0.14)
 
 
-To invoke the script, ensure you are running a bash shell. Next, ``cd`` into the ``CliNER`` directory:
-
-::
-
-    user@your-machine:~$ cd CliNER
-    user@your-machine:~/CliNER$ source install.sh
-
-
 If the installation script encounters issues, please see the README section corresponding to the failure message.
-
-If you opt not to use the provided script, you must follow the steps described below, starting with setting up virtual environments and environment variables. Not terribly difficult (we hope!).
 
 Please email wboag@cs.uml.edu with your installation questions.
 
