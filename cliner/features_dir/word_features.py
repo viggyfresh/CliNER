@@ -12,14 +12,15 @@
 __author__ = 'Willie Boag'
 __date__   = 'Apr 27, 2014'
 
-
-
-import nltk
 import re
+import os
+import sys
+
 from wordshape import getWordShapes
-    
+from nltk import LancasterStemmer, PorterStemmer
 
-
+lancaster_st = LancasterStemmer()
+porter_st = PorterStemmer()
 
 class WordFeatures:
 
@@ -43,7 +44,7 @@ class WordFeatures:
 
         # Feature: <dummy>
         features = {('dummy', None): 1}  # always have >0 dimensions
-  
+
         # Allow for particular features to be enabled
         for feature in self.enabled_IOB_prose_word_features:
 
@@ -51,8 +52,7 @@ class WordFeatures:
                 features[(feature, word.lower())] = 1
 
             if feature == "stem_lancaster":
-                st = nltk.stem.LancasterStemmer()
-                features[ (feature, st.stem(word.lower())) ] = 1
+                features[ (feature, lancaster_st.stem(word.lower())) ] = 1
 
             # Feature: Generic# stemmed word
             if feature == 'Generic#':
@@ -68,8 +68,7 @@ class WordFeatures:
                 features[(feature, None)] = len(word)
 
             if feature == "stem_porter":
-                st = nltk.stem.PorterStemmer()
-                features[(feature, st.stem(word))] = 1
+                features[(feature, porter_st.stem(word))] = 1
 
 
             if feature == "mitre":
@@ -129,7 +128,7 @@ class WordFeatures:
 
         """
         concept_features_for_word()
- 
+
         @param  word. A word to generate features for
         @return       A dictionary of features
         """
@@ -216,7 +215,7 @@ class WordFeatures:
 
         """
         concept_features_for_chunk()
- 
+
         @param  word. A chunk from the sentence
         @return       A dictionary of features
         """
@@ -230,10 +229,6 @@ class WordFeatures:
 
         return features
 
-        # Stemmer
-        st = nltk.stem.PorterStemmer()
-
-
         # Context windows
         for feature in self.enabled_concept_features:
 
@@ -242,7 +237,7 @@ class WordFeatures:
                 if ind != 0:
                     prev_ind = ind - 1
                     prev_chunk = sentence[prev_ind].split()
-                    prev_word = st.stem( prev_chunk[-1] )
+                    prev_word = porter_st.stem( prev_chunk[-1] )
                     features[ ('prev_word_stem',prev_word) ] = 1
                 else:
                     features[ ('prev_word_stem','<START>') ] = 1
@@ -252,7 +247,7 @@ class WordFeatures:
                 if ind != len(sentence)-1:
                     next_ind = ind + 1
                     next_chunk = sentence[next_ind].split()
-                    next_word = st.stem( next_chunk[0] )
+                    next_word = porter_st.stem( next_chunk[0] )
                     features[ ('next_word_stem',next_word) ] = 1
                 else:
                     features[ ('next_word_stem','<END>') ] = 1
