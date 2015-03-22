@@ -14,12 +14,7 @@ __author__ = 'Willie Boag'
 __date__   = 'Nov. 6, 2014'
 
 
-
-import re
 import string
-from copy import copy
-import nltk.data
-import os.path
 
 from abstract_note import AbstractNote
 from utilities_for_notes import classification_cmp, lineno_and_tokspan
@@ -155,7 +150,7 @@ class Note_i2b2(AbstractNote):
     def read(self, txt, con=None):
         """
         Note_i2b2::read()
-       
+
         @param txt. A file path for the tokenized medical record
         @param con. A file path for the i2b2 annotated concepts for txt
         """
@@ -235,7 +230,7 @@ class Note_i2b2(AbstractNote):
             classifications = list(set(classifications))
 
             # Concept file does not guarantee ordering by line number
-            self.classifications = sorted(classifications, 
+            self.classifications = sorted(classifications,
                                           cmp=classification_cmp)
 
 
@@ -243,9 +238,9 @@ class Note_i2b2(AbstractNote):
 
         """
         Note_i2b2::write()
-        
+
         Purpose: Return the given concept label predictions in i2b2 format
-        
+
         @param  labels. A list of classifications
         @return         A string of i2b2-concept-file-formatted data
         """
@@ -274,7 +269,7 @@ class Note_i2b2(AbstractNote):
                 raise('Classification label "none" should never happen')
 
             concept = classification[0]
-            lineno  = classification[1] 
+            lineno  = classification[1]
             start   = classification[2]
             end     = classification[3]
 
@@ -293,7 +288,7 @@ class Note_i2b2(AbstractNote):
             # The text string of words that has been classified
             datum = text[start]
             for j in range(start, end):
-                datum += " " + text[j+1] 
+                datum += " " + text[j+1]
 
             # Line:TokenNumber of where the concept starts and ends
             idx1 = "%d:%d" % (lineno, start)

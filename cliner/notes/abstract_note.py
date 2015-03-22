@@ -14,16 +14,6 @@ __author__ = 'Willie Boag'
 __date__   = 'Nov. 6, 2014'
 
 
-
-import re
-import string
-from copy import copy
-import nltk.data
-import os.path
-
-
-
-
 # Abstract Note (to be inherited from)
 class AbstractNote:
 
