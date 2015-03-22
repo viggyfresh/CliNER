@@ -2,11 +2,6 @@
 import marisa_trie
 import sys
 import os
-import cPickle as pickle
-
-sys.path.append((os.environ["CLINER_DIR"] + "/cliner/features_dir"))
-
-from utilities import load_pickled_obj
 
 def create_trie():
 
@@ -22,8 +17,11 @@ def create_trie():
     prefix = os.environ['CLINER_DIR']
     filename = os.path.join( prefix, 'umls_tables/umls-concept.trie' )
     try:
-        t = load_pickled_obj(filename)
+
+        t = marisa_trie.Trie().load(filename)
+
         return t
+
     except IOError:
         pass
 
@@ -68,7 +66,8 @@ def create_trie():
     print "concept-trie created"
 
     # Pickle trie
-    pickle.dump( t, open( filename, "wb" ) )
+
+    t.save(filename)
 
     return t
 
