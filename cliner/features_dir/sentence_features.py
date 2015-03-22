@@ -17,7 +17,6 @@ from wordshape import getWordShapes
 # What modules are available
 from read_config import enabled_modules
 
-
 # Import feature modules
 enabled = enabled_modules()
 if enabled['GENIA']:
@@ -28,6 +27,7 @@ if enabled['UMLS']:
 
 from word_features import WordFeatures
 
+nltk_tagger = load_pos_tagger()
 
 class SentenceFeatures:
 
@@ -41,6 +41,7 @@ class SentenceFeatures:
     # Instantiate an Sentence object
     def __init__(self, data):
 
+
         # Word-level features module
         self.feat_word = WordFeatures()
 
@@ -48,6 +49,8 @@ class SentenceFeatures:
         if data and enabled['GENIA']:
             tagger = enabled['GENIA']
             self.feat_genia = GeniaFeatures(tagger,data)
+
+
 
         # Only create UMLS cache if module is available
         if enabled['UMLS']:
@@ -73,8 +76,6 @@ class SentenceFeatures:
         self.enabled_IOB_prose_sentence_features.append('GENIA')
         self.enabled_IOB_prose_sentence_features.append('UMLS')
 
-        self.nltk_tagger = load_pos_tagger()
-
 
     # IOB_prose_features()
     #
@@ -87,7 +88,6 @@ class SentenceFeatures:
         # Get a feature set for each word in the sentence
         for i,word in enumerate(sentence):
             features_list.append(self.feat_word.IOB_prose_features(sentence[i]))
-
 
         # Feature: Bag of Words unigram conext (window=3)
         if 'unigram_context' in self.enabled_IOB_prose_sentence_features:
@@ -110,7 +110,7 @@ class SentenceFeatures:
 
         # Only POS tag once
         if 'pos' in self.enabled_IOB_prose_sentence_features:
-            pos_tagged = self.nltk_tagger.tag(sentence)
+            pos_tagged = nltk_tagger.tag(sentence)
 
         # Allow for particular features to be enabled
         for feature in self.enabled_IOB_prose_sentence_features:
@@ -210,11 +210,9 @@ class SentenceFeatures:
                 else:
                     ngram_features[i][("next2", "*")] = 1
 
-
         merged = lambda d1, d2: dict(d1.items() + d2.items())
         features_list = [merged(features_list[i], ngram_features[i])
             for i in range(len(features_list))]
-
 
         '''
         for f in features_list:
@@ -271,7 +269,7 @@ class SentenceFeatures:
         #return features_list
 
         if 'pos' in self.enabled_IOB_nonprose_sentence_features:
-            pos_tagged = self.nltk_tagger.tag(sentence)
+            pos_tagged = nltk_tagger.tag(sentence)
 
         # Allow for particular features to be enabled
         for feature in self.enabled_IOB_nonprose_sentence_features:
