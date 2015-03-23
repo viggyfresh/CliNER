@@ -53,7 +53,7 @@ def is_at_least_half_nonprose(sentence):
 
     >>> is_at_least_half_nonprose(['1','2','and','some','words'])
     True
-    >>> is_at_least_half_nonprose(['1', '2', '3', '4', 'and', 'some', 'words'])   
+    >>> is_at_least_half_nonprose(['1', '2', '3', '4', 'and', 'some', 'words', '5'])   
     False
     """
     count = len(  [ w  for  w  in  sentence  if is_prose_word(w) ]  )
