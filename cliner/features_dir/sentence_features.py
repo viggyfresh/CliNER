@@ -84,12 +84,14 @@ class SentenceFeatures:
 
 
 
-    # IOB_prose_features()
-    #
-    # input:  A sentence
-    # output: A list of hash tables of features
     def IOB_prose_features(self, sentence):
+        """
+        IOB_prose_features
 
+        @param sentence. A list of strings
+        @return          A list of dictionaries of features
+
+        """
         features_list = []
 
         # Get a feature set for each word in the sentence
@@ -236,14 +238,15 @@ class SentenceFeatures:
         return features_list
 
 
-
-    # IOB_nonprose_features()
-    #
-    # input:  A sentence
-    # output: A hash table of features
     def IOB_nonprose_features(self, sentence):
-
-
+        """
+        IOB_nonprose_features
+        
+        @param sentence. A list of strings
+        @return          A list of dictionaries of features
+        
+        """
+        
         # Get a feature set for each word in the sentence
         features_list = []
         for i,word in enumerate(sentence):
