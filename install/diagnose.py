@@ -19,14 +19,21 @@ from dependencies.status_report import nltk_data as dependencies_nltk_data
 
 
 
+# Helper
+def back(p):
+    return os.path.dirname(p)
+
+
+
 def main():
 
 
     # 1. CLINER_DIR environment variable
     if not is_cliner_dir_correct():
+	base = back(back(os.path.abspath(__file__)))
         print '\nERROR: CLINER_DIR not set correctly'
         print '\tthis should be set to path of cloned github directory'
-        print "\tex. 'export CLINER_DIR=/home/wboag/CliNER'\n"
+        print "\t   'export CLINER_DIR=%s'\n" % base
     else:
         print '\ngood: CLINER_DIR set correctly\n'
 
