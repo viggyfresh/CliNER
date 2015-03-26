@@ -15,6 +15,7 @@ import os
 import os.path
 import glob
 import argparse
+import sys
 import cPickle as pickle
 
 import helper
