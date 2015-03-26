@@ -16,7 +16,7 @@ source $BASE_DIR/install/cliner_dir/set_cliner_dir.sh
 source $BASE_DIR/install/dependencies/install_python_dependencies.sh
 
 # install 'cliner' command
-bash $BASE_DIR/intall/build/build_cliner.sh
+bash $BASE_DIR/install/build_cliner/build_cliner.sh
 
 # genia tagger
-bash $BASE_DIR/intall/genia/install_genia.sh
+bash $BASE_DIR/install/genia/install_genia.sh
