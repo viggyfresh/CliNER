@@ -12,16 +12,17 @@
 import os
 
 
-
-#
-# enabled_modules
-#
-# @return dictionary of (name,resource path) pairs.
-#
-#   ex. {'UMLS': None, 'GENIA': 'genia/geniatagger-3.0.1/geniatagger'}
-#
 def enabled_modules():
+    """
+    enabled_modules()
 
+    @return a dictionary of {name, resource} pairs.
+
+    ex. {'UMLS': None, 'GENIA': 'genia/geniatagger-3.0.1/geniatagger'}
+
+    >>> enabled_modules() is not None
+    True
+    """
     # Open config file
     filename = os.path.join( os.getenv('CLINER_DIR'), 'config.txt' )
     f = open(filename, 'r')
