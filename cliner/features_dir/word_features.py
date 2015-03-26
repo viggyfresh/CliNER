@@ -46,15 +46,15 @@ class WordFeatures:
 
         >>> wf = WordFeatures()
         >>> wf.IOB_prose_features('test')
-        {('length', None): 4, ('last_two_letters', 'st'): 1, ('word_shape', 'LOWERif wordShaper =='): 1, ('word_shape', 'ALL-LOWER'): 1, ('stem_porter', 'test'): 1, ('word', 'test'): 1, ('word_shape', 'WT-x'): 1, ('mitre', 'CAPSMIX'): 1, ('Generic#', 'test'): 1, ('stem_lancaster', 'test'): 1, ('word_shape', 'xxxx'): 1, ('dummy', None): 1, ('mitre', 'ALPHANUM'): 1}
+        {('length', None): 4, ('last_two_letters', 'st'): 1, ('word_shape', 'LOWERif wordShaper =='): 1, ('word_shape', 'ALL-LOWER'): 1, ('stem_porter', u'test'): 1, ('word', 'test'): 1, ('word_shape', 'WT-x'): 1, ('mitre', 'CAPSMIX'): 1, ('Generic#', 'test'): 1, ('stem_lancaster', 'test'): 1, ('word_shape', 'xxxx'): 1, ('dummy', None): 1, ('mitre', 'ALPHANUM'): 1}
         >>> wf.IOB_prose_features('TEST')
-        {('length', None): 4, ('word_shape', 'ALL-UPPER'): 1, ('last_two_letters', 'ST'): 1, ('mitre', 'INITCAP'): 1, ('stem_porter', 'TEST'): 1, ('word_shape', 'XXXX'): 1, ('word_shape', 'CAPITALIZED'): 1, ('word_shape', 'WT-X'): 1, ('mitre', 'CAPSMIX'): 1, ('mitre', 'ALLCAPS'): 1, ('Generic#', 'TEST'): 1, ('stem_lancaster', 'test'): 1, ('word', 'test'): 1, ('dummy', None): 1, ('mitre', 'ALPHANUM'): 1}
+        {('length', None): 4, ('word_shape', 'ALL-UPPER'): 1, ('last_two_letters', 'ST'): 1, ('mitre', 'INITCAP'): 1, ('stem_porter', u'TEST'): 1, ('word_shape', 'XXXX'): 1, ('word_shape', 'CAPITALIZED'): 1, ('word_shape', 'WT-X'): 1, ('mitre', 'CAPSMIX'): 1, ('mitre', 'ALLCAPS'): 1, ('Generic#', 'TEST'): 1, ('stem_lancaster', 'test'): 1, ('word', 'test'): 1, ('dummy', None): 1, ('mitre', 'ALPHANUM'): 1}
         >>> wf.IOB_prose_features(' ')
-        {('word_shape', ' '): 1, ('length', None): 1, ('stem_porter', ' '): 1, ('mitre', 'NOVOWELS'): 1, ('last_two_letters', ' '): 1, ('word_shape', 'OTHER'): 1, ('stem_lancaster', ' '): 1, ('word_shape', 'WT- :1'): 1, ('word_shape', 'SYMBOL'): 1, ('dummy', None): 1, ('word', ' '): 1, ('Generic#', ' '): 1, ('mitre', 'PUNCTUATION'): 1}
+        {('word_shape', ' '): 1, ('length', None): 1, ('stem_porter', u' '): 1, ('mitre', 'NOVOWELS'): 1, ('last_two_letters', ' '): 1, ('word_shape', 'OTHER'): 1, ('stem_lancaster', ' '): 1, ('word_shape', 'WT- :1'): 1, ('word_shape', 'SYMBOL'): 1, ('dummy', None): 1, ('word', ' '): 1, ('Generic#', ' '): 1, ('mitre', 'PUNCTUATION'): 1}
         >>> wf.IOB_prose_features('MiXeD')
-        {('length', None): 5, ('stem_porter', 'MiX'): 1, ('stem_lancaster', 'mix'): 1, ('mitre', 'INITCAP'): 1, ('word_shape', 'OTHER'): 1, ('word_shape', 'CAPITALIZED'): 1, ('last_two_letters', 'eD'): 1, ('mitre', 'CAPSMIX'): 1, ('word_shape', 'WT-XxXxX'): 1, ('word', 'mixed'): 1, ('dummy', None): 1, ('mitre', 'ALPHANUM'): 1, ('word_shape', 'XxXxX'): 1, ('Generic#', 'MiXeD'): 1}
+        {('length', None): 5, ('stem_porter', u'MiX'): 1, ('stem_lancaster', 'mix'): 1, ('mitre', 'INITCAP'): 1, ('word_shape', 'OTHER'): 1, ('word_shape', 'CAPITALIZED'): 1, ('last_two_letters', 'eD'): 1, ('mitre', 'CAPSMIX'): 1, ('word_shape', 'WT-XxXxX'): 1, ('word', 'mixed'): 1, ('dummy', None): 1, ('mitre', 'ALPHANUM'): 1, ('word_shape', 'XxXxX'): 1, ('Generic#', 'MiXeD'): 1}
         >>> wf.IOB_prose_features('31415')
-        {('length', None): 5, ('mitre', 'REALNUM'): 1, ('word_shape', 'CARDINAL5PLUS'): 1, ('word_shape', 'WT-d'): 1, ('mitre', 'HASDIGIT'): 1, ('mitre', 'FIVEDIGIT'): 1, ('word_shape', 'ALL-DIGITS'): 1, ('word', '31415'): 1, ('mitre', 'NATURALNUM'): 1, ('Generic#', '00000'): 1, ('word_shape', 'ddddd'): 1, ('last_two_letters', '15'): 1, ('stem_porter', '31415'): 1, ('dummy', None): 1, ('stem_lancaster', '31415'): 1, ('mitre', 'NOVOWELS'): 1, ('mitre', 'ALPHANUM'): 1}
+        {('length', None): 5, ('mitre', 'REALNUM'): 1, ('word_shape', 'CARDINAL5PLUS'): 1, ('word_shape', 'WT-d'): 1, ('mitre', 'HASDIGIT'): 1, ('mitre', 'FIVEDIGIT'): 1, ('word_shape', 'ALL-DIGITS'): 1, ('word', '31415'): 1, ('mitre', 'NATURALNUM'): 1, ('Generic#', '00000'): 1, ('word_shape', 'ddddd'): 1, ('last_two_letters', '15'): 1, ('stem_porter', u'31415'): 1, ('dummy', None): 1, ('stem_lancaster', '31415'): 1, ('mitre', 'NOVOWELS'): 1, ('mitre', 'ALPHANUM'): 1}
         """
         # Feature: <dummy>
         features = {('dummy', None): 1}  # always have >0 dimensions
@@ -422,7 +422,7 @@ class WordFeatures:
         @return      the matched object if it is a measurement, otherwise None.
 
         >>> wf = WordFeatures()
-        >>> wf.is_measurement('1 unit') is not None
+        >>> wf.is_measurement('10units') is not None
         True
         >>> wf.is_measurement('7 units') is not None
         True
@@ -430,7 +430,7 @@ class WordFeatures:
         True
         >>> wf.is_measurement('300 L') is not None
         True
-        >>> wf.is_measurement('20ml') is not None
+        >>> wf.is_measurement('20mL') is not None
         True
         >>> wf.is_measurement('400000 dL') is not None
         True
@@ -441,7 +441,7 @@ class WordFeatures:
         >>> wf.is_measurement('units') is not None
         True
         """
-        regex = r"^[0-9]*(unit(s)|cc|L|mL|dL)$"
+        regex = r"^[0-9]*( )?(unit(s)|cc|L|mL|dL)$"
         return re.search(regex, word)
 
     def is_directive(self, word):
@@ -519,7 +519,7 @@ class WordFeatures:
         >>> wf.is_volume('ml') is not None
         True
         """
-        regex = r"^[0-9]*(ml|mL|dL)$"
+        regex = r"^[0-9]*( )?(ml|mL|dL)$"
         return re.search(regex, word)
 
     def is_weight(self, word):
@@ -547,7 +547,7 @@ class WordFeatures:
         >>> wf.is_weight('grams') is not None
         True
         """
-        regex = r"^[0-9]*(mg|g|mcg|milligrams|grams)$"
+        regex = r"^[0-9]*( )?(mg|g|mcg|milligrams|grams)$"
         return re.search(regex, word)
 
     def is_size(self, word):
@@ -564,7 +564,7 @@ class WordFeatures:
         True
         >>> wf.is_size('10 cm') is not None   
         True
-        >>> wf.is_size('36 millimeters ') is not None   
+        >>> wf.is_size('36 millimeters') is not None   
         True
         >>> wf.is_size('423 centimeters') is not None   
         True
@@ -575,7 +575,7 @@ class WordFeatures:
         >>> wf.is_size('millimeters') is not None  
         True
         """
-        regex = r"^[0-9]*(mm|cm|millimeters|centimeters)$"
+        regex = r"^[0-9]*( )?(mm|cm|millimeters|centimeters)$"
         return re.search(regex, word)
 
     def is_prognosis_location(self, word):
