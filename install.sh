@@ -7,16 +7,16 @@
 #
 
 # 'install' directory
-INSTALL_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+BASE_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 # set CLINER_INSTALL_DIR variable
-source $INSTALL_DIR/cliner_dir/set_cliner_dir.sh
+source $BASE_DIR/install/cliner_dir/set_cliner_dir.sh
 
 # python dependencies (use source because of virtualenv)
-source $INSTALL_DIR/dependencies/install_python_dependencies.sh
+source $BASE_DIR/install/dependencies/install_python_dependencies.sh
 
 # install 'cliner' command
-bash $INSTALL_DIR/build/build_cliner.sh
+bash $BASE_DIR/intall/build/build_cliner.sh
 
 # genia tagger
-bash $INSTALL_DIR/genia/install_genia.sh
+bash $BASE_DIR/intall/genia/install_genia.sh
