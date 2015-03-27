@@ -15,14 +15,9 @@ __date__   = 'Nov. 6, 2014'
 
 
 import re
-import string
-from copy import copy
-import nltk.data
 import os.path
 
-
 from utilities_for_notes import lineno_and_tokspan
-
 
 # Master Class
 class Note:
