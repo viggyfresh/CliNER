@@ -586,6 +586,16 @@ class WordFeatures:
 
         @param word. A string.
         @return      the matched object if it is a prognosis location, otherwise None.
+
+        >>> wf = WordFeatures()
+        >>> wf.is_prognosis_location('c9-c5') is not None
+        True
+        >>> wf.is_prognosis_location('C5-C9') is not None
+        True
+        >>> wf.is_prognosis_location('test') is not None
+        False
+        >>> wf.is_prognosis_location('c-9-C5') is not None
+        False
         """
         regex = r"^(c|C)[0-9]+(-(c|C)[0-9]+)*$"
         return re.search(regex, word)
@@ -598,6 +608,20 @@ class WordFeatures:
 
         @param word. A string
         @return      the matched object if it has problem form, otheriwse None.
+
+        >>> wf = WordFeatures()
+        >>> wf.has_problem_form('prognosis') is not None
+        True
+        >>> wf.has_problem_form('diagnosis') is not None
+        True
+        >>> wf.has_problem_form('diagnostic') is not None
+        True
+        >>> wf.has_problem_form('arachnophobic') is not None
+        True
+        >>> wf.has_problem_form('test') is not None
+        False
+        >>> wf.has_problem_form('ice') is not None
+        False
         """
         regex = r".*(ic|is)$"
         return re.search(regex, word)
