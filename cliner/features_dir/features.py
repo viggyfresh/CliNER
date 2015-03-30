@@ -59,11 +59,6 @@ class FeatureWrapper:
 
 
 
-    # concept_features()
-    #
-    # input:  A sentence/line from a medical text file (list of chunks)
-    #         An list of indices into the sentence for each important chunk
-    # output: A list of hash tables of features
     def concept_features(self, sentence, chunk_inds):
         """
         concept_features()
