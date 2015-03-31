@@ -42,6 +42,9 @@ class FeatureWrapper:
         @param sentence. A list of chunks
         @return          tuple: boolean (Prose or not), a list of dictionaries of features
 
+        >>> fw = FeatureWrapper()
+        >>> fw.extract_IOB_features(['this', 'is', 'a' 'test']) is not None
+        True
         """
         # Different features depending on whether sentence is 'prose'
         isProse = is_prose_sentence(sentence)
@@ -64,6 +67,9 @@ class FeatureWrapper:
         @param chunk_inds. a list of important indices of the sentence
         @return            a list of dictionaries of features
 
+        >>> fw = FeatureWrapper()
+        >>> fw.concept_features(['this', 'is', 'an', 'important', 'test'], [3, 4]) is not None
+        True
         """
         # FIXME - move all of this work to SentenceFeatures object
 
