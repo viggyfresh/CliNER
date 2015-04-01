@@ -104,7 +104,7 @@ class WordFeatures:
 
         >>> wf = WordFeatures()
         >>> wf.IOB_nonprose_features('test') is not None
-        True  
+        True
         """
         
         features = {}
@@ -149,7 +149,7 @@ class WordFeatures:
 
         >>> wf = WordFeatures()
         >>> wf.concept_features_for_word('test') is not None
-        True  
+        True
         """
 
         features = {}
