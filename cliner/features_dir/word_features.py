@@ -36,12 +36,19 @@ class WordFeatures:
         pass
 
 
-    # IOB_prose_features_for_word()
-    #
-    # input:  A single word
-    # output: A dictionary of features
     def IOB_prose_features(self, word):
+        """
+        IOB_prose_features()
+        
+        Purpose: Creates a dictionary of prose  features for the given word.
+        
+        @param word. A string
+        @return      A dictionary of features
 
+        >>> wf = WordFeatures()
+        >>> wf.IOB_prose_features('test') is not None
+        True
+        """
         # Feature: <dummy>
         features = {('dummy', None): 1}  # always have >0 dimensions
 
@@ -85,15 +92,20 @@ class WordFeatures:
         return features
 
 
-
-
-
-    # IOB_nonprose_features_for_word()
-    #
-    # input:  A single word
-    # output: A dictionary of features
     def IOB_nonprose_features(self, word):
+        """
+        IOB_nonprose_features()
+        
+        Purpose: Creates a dictionary of nonprose features for the given word.
+        
+        @param word. A string
+        @return      A dictionary of features
 
+        >>> wf = WordFeatures()
+        >>> wf.IOB_nonprose_features('test') is not None
+        True
+        """
+        
         features = {}
 
         # Feature: The word, itself
@@ -123,14 +135,20 @@ class WordFeatures:
 
 
 
-
+    # Note: most of this function is currently commented out so the doctests should be fixed if this is ever changed
     def concept_features_for_word(self, word):
 
         """
         concept_features_for_word()
 
+        Purpose: Creates a dictionary of concept features for the given word.
+ 
         @param  word. A word to generate features for
         @return       A dictionary of features
+
+        >>> wf = WordFeatures()
+        >>> wf.concept_features_for_word('test') is not None
+        True
         """
 
         features = {}
@@ -209,8 +227,7 @@ class WordFeatures:
         return features
 
 
-
-
+    #FIXME The documentation for this is incorrect, not 100% sure how it works.
     def concept_features_for_chunk(self, sentence, ind):
 
         """
@@ -218,6 +235,7 @@ class WordFeatures:
 
         @param  word. A chunk from the sentence
         @return       A dictionary of features
+
         """
 
         features = {'dummy':1}
@@ -281,6 +299,19 @@ class WordFeatures:
 
     # Try to get QANN features
     def QANN_features(self, word):
+        """
+        QANN_features()
+
+        Purpose: Creates a dictionary of QANN features for the given word. 
+
+        @param word. A string
+        @return      A dictionary of features
+        
+        >>> wf = WordFeatures()
+        >>> wf.QANN_features('test') is not None
+        True
+        """
+                                                                      
         features = {}
 
         # Feature: test result
@@ -315,48 +346,282 @@ class WordFeatures:
 
         return features
 
-
+    # note: make spaces optional?
+    # Check about the documentation for this.
     def is_test_result(self, context):
-        # note: make spaces optional?
+        """
+        is_test_result()
+
+        Purpose: Checks if the context is a test result.
+
+        @param context. A string.
+        @return         it returns the matching object of '[blank] was positive/negative' or None if it cannot find it.
+                        otherwise, it will return True.
+
+        >>> wf = WordFeatures()
+        >>> print wf.is_test_result('test was 10%')
+        True
+        >>> print wf.is_test_result('random string of words')
+        None
+        >>> print wf.is_test_result('Test')
+        None
+        >>> print wf.is_test_result('patient less than 30')
+        True
+        >>> print wf.is_test_result(' ')
+        None
+        """
         regex = r"^[A-Za-z]+( )*(-|--|:|was|of|\*|>|<|more than|less than)( )*[0-9]+(%)*"
         if not re.search(regex, context):
             return re.search(r"^[A-Za-z]+ was (positive|negative)", context)
         return True
 
     def is_measurement(self, word):
-        regex = r"^[0-9]*(unit(s)|cc|L|mL|dL)$"
+        """
+        is_measurement()
+
+        Purpose: Checks if the word is a measurement.
+
+        @param word. A string.
+        @return      the matched object if it is a measurement, otherwise None.
+
+        >>> wf = WordFeatures()
+        >>> wf.is_measurement('10units') is not None
+        True
+        >>> wf.is_measurement('7 units') is not None
+        True
+        >>> wf.is_measurement('10cc') is not None
+        True
+        >>> wf.is_measurement('300 L') is not None
+        True
+        >>> wf.is_measurement('20mL') is not None
+        True
+        >>> wf.is_measurement('400000 dL') is not None
+        True
+        >>> wf.is_measurement('30000') is not None
+        False
+        >>> wf.is_measurement('20dl') is not None
+        False
+        >>> wf.is_measurement('units') is not None
+        True
+        """
+        regex = r"^[0-9]*( )?(unit(s)|cc|L|mL|dL)$"
         return re.search(regex, word)
 
     def is_directive(self, word):
+        """
+        is_directive()
+
+        Purpose: Checks if the word is a directive.
+
+        @param word. A string.
+        @return      the matched object if it is a directive, otherwise None.
+
+        >>> wf = WordFeatures()
+        >>> wf.is_directive('q.abc') is not None
+        True
+        >>> wf.is_directive('qAD') is not None 
+        True
+        >>> wf.is_directive('PRM') is not None 
+        True
+        >>> wf.is_directive('bid') is not None 
+        True
+        >>> wf.is_directive('prm') is not None 
+        True
+        >>> wf.is_directive('p.abc') is not None 
+        True
+        >>> wf.is_directive('qABCD') is not None 
+        False
+        >>> wf.is_directive('BID') is not None 
+        False
+        """
         regex = r"^(q\..*|q..|PRM|bid|prm|p\..*)$"
         return re.search(regex, word)
 
     def is_date(self, word):
+        """
+        is_date()
+
+        Purpose: Checks if word is a date.
+
+        @param word. A string.
+        @return      the matched object if it is a date, otherwise None.
+
+        >>> wf = WordFeatures()
+        >>> wf.is_date('2015-03-1') is not None
+        True
+        >>> wf.is_date('2014-02-19') is not None
+        True
+        >>> wf.is_date('03-27-1995') is not None
+        True
+        >>> wf.is_date('201') is not None
+        False
+        >>> wf.is_date('0') is not None
+        False
+        """
         regex= r'^(\d\d\d\d-\d\d-\d|\d\d?-\d\d?-\d\d\d\d?|\d\d\d\d-\d\d?-\d\d?)$'
         return re.search(regex,word)
 
     def is_volume(self, word):
-        regex = r"^[0-9]*(ml|mL|dL)$"
+        """
+        is_volume()
+
+        Purpose: Checks if word is a volume. 
+
+        @param word. A string.
+        @return      the matched object if it is a volume, otherwise None.
+
+        >>> wf = WordFeatures()
+        >>> wf.is_volume('9ml') is not None
+        True
+        >>> wf.is_volume('10 mL') is not None
+        True
+        >>> wf.is_volume('552 dL') is not None
+        True
+        >>> wf.is_volume('73') is not None
+        False
+        >>> wf.is_volume('ml') is not None
+        True
+        """
+        regex = r"^[0-9]*( )?(ml|mL|dL)$"
         return re.search(regex, word)
 
     def is_weight(self, word):
-        regex = r"^[0-9]*(mg|g|mcg|milligrams|grams)$"
+        """
+        is_weight()
+
+        Purpose: Checks if word is a weight.
+
+        @param word. A string.
+        @return      the matched object if it is a weight, otherwise None.
+
+        >>> wf = WordFeatures()
+        >>> wf.is_weight('1mg') is not None
+        True
+        >>> wf.is_weight('10 g') is not None 
+        True
+        >>> wf.is_weight('78 mcg') is not None  
+        True
+        >>> wf.is_weight('10000 milligrams') is not None  
+        True
+        >>> wf.is_weight('14 grams') is not None  
+        True
+        >>> wf.is_weight('-10 g') is not None  
+        False
+        >>> wf.is_weight('grams') is not None
+        True
+        """
+        regex = r"^[0-9]*( )?(mg|g|mcg|milligrams|grams)$"
         return re.search(regex, word)
 
     def is_size(self, word):
-        regex = r"^[0-9]*(mm|cm|millimeters|centimeters)$"
+        """
+        is_size()
+
+        Purpose: Checks if the word is a size.
+
+        @param word. A string.
+        @return      the matched object if it is a weight, otheriwse None.
+
+        >>> wf = WordFeatures()
+        >>> wf.is_size('1mm') is not None
+        True
+        >>> wf.is_size('10 cm') is not None   
+        True
+        >>> wf.is_size('36 millimeters') is not None   
+        True
+        >>> wf.is_size('423 centimeters') is not None   
+        True
+        >>> wf.is_size('328') is not None   
+        False
+        >>> wf.is_size('22 meters') is not None   
+        False
+        >>> wf.is_size('millimeters') is not None  
+        True
+        """
+        regex = r"^[0-9]*( )?(mm|cm|millimeters|centimeters)$"
         return re.search(regex, word)
 
     def is_prognosis_location(self, word):
+        """
+        is_prognosis_location()
+
+        Purpose: Checks if the word is a prognosis location
+
+        @param word. A string.
+        @return      the matched object if it is a prognosis location, otherwise None.
+
+        >>> wf = WordFeatures()
+        >>> wf.is_prognosis_location('c9-c5') is not None
+        True
+        >>> wf.is_prognosis_location('C5-C9') is not None
+        True
+        >>> wf.is_prognosis_location('test') is not None
+        False
+        >>> wf.is_prognosis_location('c-9-C5') is not None
+        False
+        """
         regex = r"^(c|C)[0-9]+(-(c|C)[0-9]+)*$"
         return re.search(regex, word)
 
     def has_problem_form(self, word):
+        """
+        has_problem_form()
+
+        Purpose: Checks if the word has problem form.
+
+        @param word. A string
+        @return      the matched object if it has problem form, otheriwse None.
+
+        >>> wf = WordFeatures()
+        >>> wf.has_problem_form('prognosis') is not None
+        True
+        >>> wf.has_problem_form('diagnosis') is not None
+        True
+        >>> wf.has_problem_form('diagnostic') is not None
+        True
+        >>> wf.has_problem_form('arachnophobic') is not None
+        True
+        >>> wf.has_problem_form('test') is not None
+        False
+        >>> wf.has_problem_form('ice') is not None
+        False
+        """
         regex = r".*(ic|is)$"
         return re.search(regex, word)
 
-    # checks for a definitive classification at the word level
     def get_def_class(self, word):
+        """
+        get_def_class()
+
+        Purpose: Checks for a definitive classification at the word level.
+
+        @param word. A string
+        @return      1 if the word is a test term,
+                     2 if the word is a problem term,
+                     3 if the word is a treatment term,
+                     0 otherwise.
+        >>> wf = WordFeatures();
+        >>> wf.get_def_class('eval')
+        1
+        >>> wf.get_def_class('rate') 
+        1
+        >>> wf.get_def_class('tox') 
+        1
+        >>> wf.get_def_class('swelling') 
+        2
+        >>> wf.get_def_class('mass') 
+        2
+        >>> wf.get_def_class('broken') 
+        2
+        >>> wf.get_def_class('therapy') 
+        3
+        >>> wf.get_def_class('vaccine') 
+        3
+        >>> wf.get_def_class('treatment') 
+        3
+        >>> wf.get_def_class('unrelated') 
+        0
+        """ 
         test_terms = {
             "eval", "evaluation", "evaluations",
             "sat", "sats", "saturation",
@@ -394,7 +659,7 @@ class WordFeatures:
             "dose", "doses",
             "shot", "shots",
             "medication", "medicine",
-            "treament", "treatments"
+            "treatment", "treatments"
         }
         if word.lower() in test_terms:
             return 1

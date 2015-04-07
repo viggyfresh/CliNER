@@ -11,6 +11,7 @@ import re
 import cPickle as pickle
 import os
 
+
 # used as a default path for stashing pos tagger.
 pos_tagger_path = os.path.join( os.environ['CLINER_DIR'], "cliner/features_dir/nltk_tagger.p")
 
@@ -64,11 +65,24 @@ def load_pos_tagger(path_to_obj=pos_tagger_path):
 
     return tagger
 
-# prose_sentence()
-#
-# input:  A sentence
-# output: Boolean yes/no
-def prose_sentence(sentence):
+def is_prose_sentence(sentence):
+    """
+    is_prose_sentence()
+
+    Purpose: Determine if a sentence of text is 'prose'
+
+    @param sentence A list of words
+    @return         A boolean
+
+    >>> is_prose_sentence(['Admission', 'Date', ':'])
+    False
+    >>> is_prose_sentence(['Hello', 'World', '.'])
+    True
+    >>> is_prose_sentence(['What', 'do', 'you', 'think', '?'])
+    True
+    >>> is_prose_sentence(['Short', 'sentence'])
+    False
+    """
 
     # Empty sentence is not prose
     if not sentence:
@@ -80,20 +94,32 @@ def prose_sentence(sentence):
         return False
     elif len(sentence) <= 5:
         return False
-    elif at_least_half_nonprose(sentence):
+    elif is_at_least_half_nonprose(sentence):
         return True
     else:
         return False
 
 
 
-# at_least_half_nonprose()
-#
-# input:  A sentence
-# output: A bollean yes/no
-def at_least_half_nonprose(sentence):
+def is_at_least_half_nonprose(sentence):
+    """
+    is_at_least_half_nonprose(sentence)
 
-    count = len(  [ w  for  w  in  sentence  if prose_word(w) ]  )
+    Purpose: Checks if at least half of the sentence is considered to be 'nonprose'
+
+    @param sentence. A list of words
+    @return          A boolean
+
+    >>> is_at_least_half_nonprose(['1','2','and','some','words'])
+    True
+    >>> is_at_least_half_nonprose(['1', '2', '3', '4', 'and', 'some', 'words', '5'])   
+    False
+    >>> is_at_least_half_nonprose(['word'])
+    True
+    >>> is_at_least_half_nonprose([' '])
+    True
+    """
+    count = len(  [ w  for  w  in  sentence  if is_prose_word(w) ]  )
 
     if count >= len(sentence)/2:
         return True
@@ -101,13 +127,24 @@ def at_least_half_nonprose(sentence):
         return False
 
 
+def is_prose_word(word):
+    """
+    is_prose_word(word)
 
-# prose_word()
-#
-# input:  A word
-# output: Boolean yes/no
-def prose_word(word):
+    Purpose: Checks if the given word is 'prose'
 
+    @param word. A word
+    @return      A boolean
+
+    >>> is_prose_word('word')
+    True
+    >>> is_prose_word('99') 
+    False
+    >>> is_prose_word('question?')
+    False
+    >>> is_prose_word('ALLCAPS')
+    False
+    """
     # Punctuation
     for punc in ".?,!:\"'":
         if punc in word:
@@ -123,6 +160,9 @@ def prose_word(word):
 
     # Else
     return True
+<<<<<<< HEAD
 
 
 #EOF
+=======
+>>>>>>> doctests
