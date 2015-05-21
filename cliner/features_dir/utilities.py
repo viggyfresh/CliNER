@@ -112,7 +112,7 @@ def is_at_least_half_nonprose(sentence):
 
     >>> is_at_least_half_nonprose(['1','2','and','some','words'])
     True
-    >>> is_at_least_half_nonprose(['1', '2', '3', '4', 'and', 'some', 'words', '5'])   
+    >>> is_at_least_half_nonprose(['1', '2', '3', '4', 'and', 'some', 'words', '5'])
     False
     >>> is_at_least_half_nonprose(['word'])
     True
@@ -138,7 +138,7 @@ def is_prose_word(word):
 
     >>> is_prose_word('word')
     True
-    >>> is_prose_word('99') 
+    >>> is_prose_word('99')
     False
     >>> is_prose_word('question?')
     False
@@ -160,9 +160,7 @@ def is_prose_word(word):
 
     # Else
     return True
-<<<<<<< HEAD
 
 
 #EOF
 =======
->>>>>>> doctests
