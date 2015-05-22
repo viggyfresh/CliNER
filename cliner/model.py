@@ -3,7 +3,7 @@ from __future__ import with_statement
 from sklearn.feature_extraction  import DictVectorizer
 
 from features_dir.features import FeatureWrapper
-from features_dir.utilities import load_pickled_obj, prose_sentence
+from features_dir.utilities import load_pickled_obj, is_prose_sentence
 
 from machine_learning import sci
 from machine_learning import crf
@@ -367,7 +367,7 @@ class Model:
         iobs          = []
         trans = lambda l: reverse_IOB_labels[int(l)]
         for sentence in data:
-            if prose_sentence(sentence):
+            if is_prose_sentence(sentence):
                 prose_iobs.append( plist.pop(0) )
                 prose_iobs[-1] = map(trans, prose_iobs[-1])
                 iobs.append( prose_iobs[-1] )
