@@ -131,7 +131,10 @@ class Note_i2b2(AbstractNote):
                     # FIXME - For now, treat non-contiguous spans as separate
                     for span in span_inds:
                         # Add the classification to the Note object
-                        l,(start,end) = lineno_and_tokspan(span)
+                        l,(start,end) = lineno_and_tokspan(self.line_inds,
+                                                           self.data,
+                                                           self.text,
+                                                           span)
                         #print 'span:   ', span
                         #print 'lineno: ', l
                         #print 'start:  ', start
