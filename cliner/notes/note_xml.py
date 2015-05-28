@@ -104,7 +104,12 @@ class Note_xml(AbstractNote):
 
         # Read in the medical text
         with open(txt) as f:
-            for line in f:
+
+            # Get entire file
+            text = f.read()
+            self.text = text
+
+            for line in text.split('\n'):
 
                 # Keep track of line's character offsets
                 for word in line.split():
