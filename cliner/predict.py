@@ -34,7 +34,7 @@ def main():
     parser.add_argument("-o",
         dest = "output",
         help = "The directory to write the output",
-        default = os.path.join(os.getenv('CLINER_DIR'), 'data/test_predictions')
+        default = os.path.join(os.getenv('CLINER_DIR'), 'data/predictions')
     )
 
     parser.add_argument("-m",

@@ -298,7 +298,7 @@ def main():
     parser.add_argument("-c",
         help = "The directory that contains predicted concept files organized into subdirectories for svm, lin, srf",
         dest = "con",
-        default = os.path.join(os.getenv('CLINER_DIR'), 'data/test_predictions/')
+        default = os.path.join(os.getenv('CLINER_DIR'), 'data/predictions/')
     )
 
     parser.add_argument("-r",
