@@ -27,7 +27,7 @@ auxiliary = {
 
 nltk_data = {
             'maxent_treebank_pos_tagger' : 'import nltk ; nltk.pos_tag([])' ,
-            'punkt'                      : 'import nltk ; s = nltk.stem.LancasterStemmer()'
+            'punkt'                      : 'import nltk ; s = nltk.stem.LancasterStemmer(); nltk.data.load("tokenizers/punkt/english.pickle")'
             }
 
 
