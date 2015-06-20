@@ -22,7 +22,7 @@ from notes.note import Note
 
 import tempfile
 
-tmp_dir = os.path.join(os.environ["CLINER_DIR"], "cliner/tmp_files_dir")
+tmp_dir = os.path.join(os.environ["CLINER_DIR"], "misc/tmp_files_dir")
 
 def create_filename(odir, bfile, extension):
     fname = os.path.basename(bfile) + extension
