@@ -14,7 +14,7 @@ import pycrfsuite
 
 count = 0
 
-tmp_dir = os.path.join(os.environ["CLINER_DIR"], "misc/tmp_files_dir")
+tmp_dir = '/tmp'
 
 def format_features(rows, labels=None):
 
@@ -126,7 +126,6 @@ def train(X, Y, do_grid):
 
     # Train the model
     tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="crf_temp")[1]
-
     trainer.train(tmp_file)
 
 
@@ -152,7 +151,6 @@ def predict(clf, X):
 
     # Dump the model into a temp file
     tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="crf_temp")[1]
-
     with open(tmp_file, 'wb') as f:
         f.write(clf)
 
