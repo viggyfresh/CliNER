@@ -125,14 +125,15 @@ def train(X, Y, do_grid):
 
 
     # Train the model
-    tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="crf_temp")[1]
+    os_handle,tmp_file = tempfile.mkstemp(dir=tmp_dir)
     trainer.train(tmp_file)
 
 
     # Read the trained model into a string
     model = ''
-    with open(tmp_file, 'rb') as f:
+    with open(tmp_file, 'r') as f:
         model = f.read()
+    os.close(os_handle)
 
 
     # Remove the temporary file
@@ -150,15 +151,14 @@ def predict(clf, X):
     feats = format_features(X)
 
     # Dump the model into a temp file
-    tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="crf_temp")[1]
-    with open(tmp_file, 'wb') as f:
+    os_handle,tmp_file = tempfile.mkstemp(dir=tmp_dir)
+    with open(tmp_file, 'w') as f:
         f.write(clf)
-
+    os.close(os_handle)
 
     # Create the Tagger object
     tagger = pycrfsuite.Tagger()
     tagger.open(tmp_file)
-
 
     # Remove the temp file
     os.remove(tmp_file)

@@ -50,8 +50,6 @@ class SentenceFeatures:
             tagger = enabled['GENIA']
             self.feat_genia = GeniaFeatures(tagger,data)
 
-
-
         # Only create UMLS cache if module is available
         if enabled['UMLS']:
             self.feat_umls = UMLSFeatures()

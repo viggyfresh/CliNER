@@ -52,8 +52,7 @@ def main():
     parser.add_argument("-crf",
         dest = "with_crf",
         help = "Specify where to find crfsuite",
-
-      default = None
+        default = None
     )
 
     args = parser.parse_args()

@@ -115,10 +115,10 @@ def main():
     # Convert data to standard format
     internal_output = in_note.write_standard()
 
-    tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="format_temp")[1]
-
+    os_handle,tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="format_temp")
     with open(tmp_file, 'w') as f:
         f.write(internal_output)
+    os.close(os_handle)
 
     #print internal_output
 
