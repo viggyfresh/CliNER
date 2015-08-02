@@ -61,6 +61,7 @@ The script begins with a diagnostic to see what needs to be installed. If the sc
     python-virtualenv
     python-dev
     g++
+    make
     gfortran
     libopenblas-dev
     liblapack-dev
@@ -239,7 +240,15 @@ Please email wboag@cs.uml.edu with your installation questions.
 
     [this section is under construction]
 
+Deploying with Vagrant
+--------
 
+With Vagrant and a type-2 hypervisor (such as the free VirtualBox) installed on
+the system, running "vagrant up" will deploy a virtual machine and painlessly
+install/build CliNER. 
+
+The access ip is listed during deployment (usually 127.0.0.1:2222).
+The username/password is vagrant/vagrant.  
 
 Usage Examples
 --------
