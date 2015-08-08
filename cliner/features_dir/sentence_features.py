@@ -12,7 +12,8 @@ __date__   = 'Apr. 27, 2014'
 
 from utilities import load_pos_tagger
 
-from wordshape import getWordShapes
+# Not needed
+#from wordshape import getWordShapes
 
 # What modules are available
 from read_config import enabled_modules
@@ -25,7 +26,7 @@ if enabled['GENIA']:
 if enabled['UMLS']:
     from umls_dir.umls_features import UMLSFeatures
 
-from word_features import WordFeatures
+import word_features as feat_word
 
 nltk_tagger = load_pos_tagger()
 
@@ -41,9 +42,6 @@ class SentenceFeatures:
     # Instantiate an Sentence object
     def __init__(self, data):
 
-
-        # Word-level features module
-        self.feat_word = WordFeatures()
 
         # Only run GENIA tagger if module is available
         if data and enabled['GENIA']:
@@ -88,7 +86,7 @@ class SentenceFeatures:
 
         # Get a feature set for each word in the sentence
         for i,word in enumerate(sentence):
-            features_list.append(self.feat_word.IOB_prose_features(sentence[i]))
+            features_list.append(feat_word.IOB_prose_features(sentence[i]))
 
         # Feature: Bag of Words unigram conext (window=3)
         if 'unigram_context' in self.enabled_IOB_prose_sentence_features:
@@ -237,7 +235,7 @@ class SentenceFeatures:
         # Get a feature set for each word in the sentence
         features_list = []
         for i,word in enumerate(sentence):
-            word_feats = self.feat_word.IOB_nonprose_features(sentence[i])
+            word_feats = feat_word.IOB_nonprose_features(sentence[i])
             features_list.append( word_feats )
 
 
@@ -347,7 +345,7 @@ class SentenceFeatures:
         # Get a feature set for each word in the sentence
         features_list = []
         for ind in chunk_inds:
-            features_list.append( self.feat_word.concept_features_for_chunk(sentence,ind) )
+            features_list.append( feat_word.concept_features_for_chunk(sentence,ind) )
 
 
         # Allow for particular features to be enabled

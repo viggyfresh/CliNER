@@ -133,7 +133,7 @@ class Note:
 
     def read_standard(self, txt, con=None):
         """
-        Purpose: Every note must be able to read from standard forat
+        Purpose: Every note must be able to read from standard format
         """
         self.derived_note.read_standard(txt,con)
         self.getIOBLabels()
@@ -159,7 +159,7 @@ class Note:
         Purpose: return a list of list of IOB labels
         """
 
-        # Only comput if not already memoized
+        # Only compute if not already memoized
         if self.iob_labels: return self.iob_labels
 
         # Build list of proper dimensions (1:1 with self.data)
