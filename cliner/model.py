@@ -2,7 +2,8 @@ from __future__ import with_statement
 
 from sklearn.feature_extraction  import DictVectorizer
 
-from features_dir.features import FeatureWrapper
+import features_dir.features as feat_obj
+
 from features_dir.utilities import load_pickled_obj, is_prose_sentence
 
 from machine_learning import sci
@@ -104,27 +105,12 @@ class Model:
         """
 
         print '\textracting  features (pass one)'
-
-
-        # Create object that is a wrapper for the features
-        feat_obj = FeatureWrapper(data)
-
+        
 
         # Parition into prose v. nonprose
-        prose    = []
-        nonprose = []
-        pchunks = []
-        nchunks = []
-        for line,labels in zip(data,Y):
-            isProse,feats = feat_obj.extract_IOB_features(line)
-            if isProse:
-                prose.append(feats)
-                pchunks += labels
-            else:
-                nonprose.append(feats)
-                nchunks += labels
-
-
+        prose,pchunks    = feat_obj.IOB_prose_features(data, Y)
+        nonprose,nchunks = feat_obj.IOB_nonprose_features(data, Y)
+        
         # Classify both prose & nonprose
         flabels    = ['prose'             , 'nonprose'             ]
         fsets      = [prose               , nonprose               ]
@@ -210,11 +196,8 @@ class Model:
 
         print '\textracting  features (pass two)'
 
-        # Create object that is a wrapper for the features
-        feat_o = FeatureWrapper()
-
         # Extract features
-        X = [ feat_o.concept_features(s,inds) for s,inds in zip(data,inds_list) ]
+        X = [ feat_obj.concept_features(s,inds) for s,inds in zip(data,inds_list) ]
         X = reduce(concat, X)
 
 
@@ -292,22 +275,9 @@ class Model:
         print '\textracting  features (pass one)'
 
 
-        # Create object that is a wrapper for the features
-        feat_obj = FeatureWrapper(data)
-
         # separate prose and nonprose data
-        prose    = []
-        nonprose = []
-        plinenos = []
-        nlinenos = []
-        for i,line in enumerate(data):
-            isProse,feats = feat_obj.extract_IOB_features(line)
-            if isProse:
-                prose.append(feats)
-                plinenos.append(i)
-            else:
-                nonprose.append(feats)
-                nlinenos.append(i)
+        prose, plinenos    = feat_obj.IOB_prose_features(data) 
+        nonprose, nlinenos = feat_obj.IOB_nonprose_features(data) 
 
 
         # Classify both prose & nonprose
@@ -392,15 +362,11 @@ class Model:
             return []
 
 
-        # Create object that is a wrapper for the features
-        feat_o = FeatureWrapper()
-
-
         print '\textracting  features (pass two)'
 
 
         # Extract features
-        X = [ feat_o.concept_features(s,inds) for s,inds in zip(data,inds_list) ]
+        X = [ feat_obj.concept_features(s,inds) for s,inds in zip(data,inds_list) ]
         X = reduce(concat, X)
 
 
