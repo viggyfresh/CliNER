@@ -1,5 +1,5 @@
 ######################################################################
-#  CliCon - word_features.py                                         #
+#  CliNER - word_features.py                                         #
 #                                                                    #
 #  Willie Boag                                      wboag@cs.uml.edu #
 #                                                                    #
@@ -20,274 +20,53 @@ from nltk import LancasterStemmer, PorterStemmer
 lancaster_st = LancasterStemmer()
 porter_st = PorterStemmer()
 
+def feature_word(word):
+    return {('word', word.lower()): 1}
 
-enabled_IOB_prose_word_features = frozenset( ['Generic#', 'last_two_letters', 'word', 'length', 'mitre', 'stem_porter', 'stem_lancaster', 'word_shape', 'metric_unit' ] )
+def feature_stem_lancaster(word):
+    return {('stem_lancaster', lancaster_st.stem(word.lower())): 1}
 
-enabled_IOB_nonprose_word_features = frozenset( ['word', 'word_shape', 'mitre', 'QANN' ] )
+def feature_generic(word):
+    generic = re.sub('[0-9]', '0', word)
+    return {('Generic#', generic): 1}
 
-#enabled_concept_features = frozenset( ['word', 'prefix', 'stem_porter', 'stem_lancaster', 'previous_word_stem', 'next_word_stem'] )
-enabled_concept_features = frozenset( ['word', 'prefix', 'stem_porter', 'stem_lancaster', 'previous_word_stem', 'next_word_stem', 'word_shape', 'metric_unit', 'mitre', 'directive', 'date'] )
+def feature_last_two_letters(word):
+    return {('last_two_letters', word[-2:]): 1}
 
+def feature_length(word):
+    return {('length', None): len(word)}
 
-def IOB_prose_features(word):
-    """
-    IOB_prose_features()
-    
-    Purpose: Creates a dictionary of prose  features for the given word.
-    
-    @param word. A string
-    @return      A dictionary of features
+def feature_stem_porter(word):
+    return {('stem_porter', porter_st.stem(word)): 1}
 
-    >>> IOB_prose_features('test') is not None
-    True
-    """
-    # Feature: <dummy>
-    features = {('dummy', None): 1}  # always have >0 dimensions
-
-    # Allow for particular features to be enabled
-    for feature in enabled_IOB_prose_word_features:
-
-        if feature == "word":
-            features[(feature, word.lower())] = 1
-
-        if feature == "stem_lancaster":
-            features[ (feature, lancaster_st.stem(word.lower())) ] = 1
-
-        # Feature: Generic# stemmed word
-        if feature == 'Generic#':
-            generic = re.sub('[0-9]','0',word)
-            features[ ('Generic#',generic) ] = 1
-
-        # Feature: Last two leters of word
-        if feature == 'last_two_letters':
-            features[ ('last_two_letters',word[-2:]) ] = 1
-
-
-        if feature == "length":
-            features[(feature, None)] = len(word)
-
-        if feature == "stem_porter":
-            features[(feature, porter_st.stem(word))] = 1
-
-
-        if feature == "mitre":
-            for f in mitre_features:
-                if re.search(mitre_features[f], word):
-                    features[(feature, f)] = 1
-
-        if feature == "word_shape":
-            wordShapes = getWordShapes(word)
-            for shape in wordShapes:
-                features[(feature, shape)] = 1
-
-
-    return features
-
-
-def IOB_nonprose_features(word):
-    """
-    IOB_nonprose_features()
-    
-    Purpose: Creates a dictionary of nonprose features for the given word.
-    
-    @param word. A string
-    @return      A dictionary of features
-
-    >>> IOB_nonprose_features('test') is not None
-    True
-    """
-    
+def feature_mitre(word):
     features = {}
-
-    # Feature: The word, itself
-    features[('word', word.lower())] = 1
-
-    # Allow for particular features to be enabled
-    for feature in enabled_IOB_nonprose_word_features:
-
-        # Feature: Mitre
-        if feature == "mitre":
-            for f in mitre_features:
-                if re.search(mitre_features[f], word):
-                    features[('mitre', f)] = 1
-
-        # Feature: Word Shape
-        if feature == "word_shape":
-            wordShapes = getWordShapes(word)
-            for shape in wordShapes:
-                features[('word_shape', shape)] = 1
-
-        # Feature: QANN features
-        if feature == 'QANN':
-            qann_feats = QANN_features(word)
-            features.update(qann_feats)
-
+    for f in mitre_features:
+        if re.search(mitre_features[f], word):
+            features[('mitre', f)] = 1
     return features
 
-
-
-# Note: most of this function is currently commented out so the doctests should be fixed if this is ever changed
-def concept_features_for_word(word):
-
-    """
-    concept_features_for_word()
-
-    Purpose: Creates a dictionary of concept features for the given word.
-
-    @param  word. A word to generate features for
-    @return       A dictionary of features
-
-    >>> concept_features_for_word('test') is not None
-    True
-    """
-
+def feature_word_shape(word):
     features = {}
-
-    # Allow for particular features to be enabled
-    for feature in enabled_concept_features:
-
-        # Feature: Uncased Word
-        if feature == "word":
-            features[ ("word",word.lower()) ] = 1
-
-
-        '''
-        # Feature: Porter Stem
-        if feature == "stem_porter":
-            st = nltk.stem.PorterStemmer()
-            features[ ("stem_poter", st.stem(word)) ] = 1
-
-        # Feature: Lancaster Stem
-        if feature == "stem_lancaster":
-            st = nltk.stem.LancasterStemmer()
-            features[ ("stem_lancaster", st.stem(word)) ] = 1
-        '''
-
-        '''
-        # Feature: First Four Letters
-        if feature == "prefix":
-            prefix = word[:4].lower()
-            features[ ("prefix",prefix) ] = 1
-        '''
-
-        '''
-        # Use: None
-        # Feature: Length
-        if feature == "length":
-            features[ ("length",None) ] = len(word)
-        '''
-
-        # Feature: Metric Unit
-        if feature == "metric_unit":
-            unit = None
-            if is_weight(word):
-                unit = 'weight'
-            elif is_size(word):
-                unit = 'size'
-            elif is_volume(word):
-                unit = 'volume'
-            features[('metric_unit',unit)] = 1
-
-        '''
-        # Feature: Date
-        if feature == 'date':
-            if self.is_date(word):
-                features[('date',None)] = 1
-
-        # Feature: Directive
-        if feature == 'directive':
-            if self.is_directive(word):
-                features[('directive',None)] = 1
-
-        # Feature: Mitre
-        if feature == "mitre":
-            for f in self.mitre_features:
-                if re.search(self.mitre_features[f], word):
-                    features[('mitre', f)] = 1
-
-        # Feature: Word Shape
-        if feature == "word_shape":
-            wordShapes = getWordShapes(word)
-            for shape in wordShapes:
-                features[('word_shape', shape)] = 1
-        '''
-
-
-
+    wordShapes = getWordShapes(word)
+    for shape in wordShapes:
+        features[('word_shape', shape)] = 1
     return features
 
+def feature_metric_unit(word):
+    unit = None
+    if is_weight(word):
+        unit = 'weight'
+    elif is_size(word):
+        unit = 'size'
+    elif is_volume(word):
+        unit = 'volume'
+    return {('metric_unit', unit): 1}
 
-#FIXME The documentation for this is incorrect, not 100% sure how it works.
-def concept_features_for_chunk(sentence, ind):
+def feature_prefix(word):
+    prefix = word[:4].lower()
+    return {("prefix", prefix): 1}
 
-    """
-    concept_features_for_chunk()
-
-    @param  word. A chunk from the sentence
-    @return       A dictionary of features
-
-    """
-
-    features = {'dummy':1}
-
-    # Word-level features for each word of the chunk
-    for w in sentence[ind].split():
-        word_features = concept_features_for_word(w)
-        features.update(word_features)
-
-    return features
-
-    # Context windows
-    for feature in enabled_concept_features:
-
-        # Feature: Previous word
-        if feature == "previous_word_stem":
-            if ind != 0:
-                prev_ind = ind - 1
-                prev_chunk = sentence[prev_ind].split()
-                prev_word = porter_st.stem( prev_chunk[-1] )
-                features[ ('prev_word_stem',prev_word) ] = 1
-            else:
-                features[ ('prev_word_stem','<START>') ] = 1
-
-        # Feature: Previous word
-        if feature == "next_word_stem":
-            if ind != len(sentence)-1:
-                next_ind = ind + 1
-                next_chunk = sentence[next_ind].split()
-                next_word = porter_st.stem( next_chunk[0] )
-                features[ ('next_word_stem',next_word) ] = 1
-            else:
-                features[ ('next_word_stem','<END>') ] = 1
-
-
-    return features
-
-
-
-
-mitre_features = {
-    "INITCAP": r"^[A-Z].*$",
-    "ALLCAPS": r"^[A-Z]+$",
-    "CAPSMIX": r"^[A-Za-z]+$",
-    "HASDIGIT": r"^.*[0-9].*$",
-    "SINGLEDIGIT": r"^[0-9]$",
-    "DOUBLEDIGIT": r"^[0-9][0-9]$",
-    "FOURDIGITS": r"^[0-9][0-9][0-9][0-9]$",
-    "NATURALNUM": r"^[0-9]+$",
-    "REALNUM": r"^[0-9]+.[0-9]+$",
-    "ALPHANUM": r"^[0-9A-Za-z]+$",
-    "HASDASH": r"^.*-.*$",
-    "PUNCTUATION": r"^[^A-Za-z0-9]+$",
-    "PHONE1": r"^[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$",
-    "PHONE2": r"^[0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$",
-    "FIVEDIGIT": r"^[0-9][0-9][0-9][0-9][0-9]",
-    "NOVOWELS": r"^[^AaEeIiOoUu]+$",
-    "HASDASHNUMALPHA": r"^.*[A-z].*-.*[0-9].*$ | *.[0-9].*-.*[0-9].*$",
-    "DATESEPERATOR": r"^[-/]$",
-}
-
-# Try to get QANN features
 def QANN_features(word):
     """
     QANN_features()
@@ -334,6 +113,155 @@ def QANN_features(word):
     if is_weight(word):         features[('weight',     None)] = 1
 
     return features
+
+def feature_prev_word_stem(sentence, ind):
+    if ind != 0:
+        prev_ind = ind - 1
+        prev_chunk = sentence[prev_ind].split()
+        prev_word = porter_st.stem( prev_chunk[-1] )
+        return {('prev_word_stem', prev_word): 1}
+    else:
+        return {('prev_word_stem', '<START>'): 1}
+
+def feature_next_word_stem(sentence, ind):
+    if ind != len(sentence)-1:
+        next_ind = ind + 1
+        next_chunk = sentence[next_ind].split()
+        next_word = porter_st.stem( next_chunk[0] )
+        return {('next_word_stem', next_word): 1}
+    else:
+        return {('next_word_stem', '<END>'): 1}
+
+
+enabled_IOB_prose_word_features = frozenset( [feature_generic, feature_last_two_letters, feature_word, feature_length, feature_stem_porter, feature_mitre, feature_stem_lancaster, feature_word_shape, feature_metric_unit] )
+
+def IOB_prose_features(word):
+    """
+    IOB_prose_features()
+    
+    Purpose: Creates a dictionary of prose  features for the given word.
+    
+    @param word. A string
+    @return      A dictionary of features
+
+    >>> IOB_prose_features('test') is not None
+    True
+    """
+
+    # Feature: <dummy>
+    features = {('dummy', None): 1}  # always have >0 dimensions
+
+    # Extract all enabled features
+    for feature in enabled_IOB_prose_word_features:
+        current_feat = feature(word)
+        features.update(current_feat)
+
+    return features
+
+
+enabled_IOB_nonprose_word_features = frozenset( [feature_word, feature_word_shape, feature_mitre, QANN_features] )
+
+def IOB_nonprose_features(word):
+    """
+    IOB_nonprose_features()
+    
+    Purpose: Creates a dictionary of nonprose features for the given word.
+    
+    @param word. A string
+    @return      A dictionary of features
+
+    >>> IOB_nonprose_features('test') is not None
+    True
+    """
+    
+    # Feature: <dummy>
+    features = {('dummy', None): 1}  # always have >0 dimensions
+
+    # Extract all enabled features
+    for feature in enabled_IOB_nonprose_word_features:
+        current_feat = feature(word)
+        features.update(current_feat)
+
+    return features
+
+
+enabled_word_concept_features = frozenset( [feature_word, feature_prefix, feature_stem_porter, feature_stem_lancaster, feature_word_shape, feature_metric_unit, feature_mitre] )
+
+# Note: most of this function is currently commented out so the doctests should be fixed if this is ever changed
+def concept_features_for_word(word):
+
+    """
+    concept_features_for_word()
+
+    Purpose: Creates a dictionary of concept features for the given word.
+
+    @param  word. A word to generate features for
+    @return       A dictionary of features
+
+    >>> concept_features_for_word('test') is not None
+    True
+    """
+
+    features = {}
+
+    # extract all selected features
+    for feature in enabled_word_concept_features:
+        current_feat = feature(word)
+        features.update(current_feat)
+
+    return features
+
+
+enabled_chunk_concept_features = frozenset( [ feature_prev_word_stem, feature_next_word_stem] )
+
+def concept_features_for_chunk(sentence, ind):
+
+    """
+    concept_features_for_chunk()
+
+    @param  sentence    A sentence that has been chunked into vectors
+            ind         The index of the concept in question within the sentence vector
+    @return             A dictionary of features
+
+    """
+
+    features = {'dummy':1}
+
+    # Word-level features for each word of the chunk
+    for w in sentence[ind].split():
+        word_features = concept_features_for_word(w)
+        features.update(word_features)
+
+    # Context windows
+    for feature in enabled_chunk_concept_features:
+        current_feat = feature(sentence, ind)
+        features.update(current_feat)
+
+    return features
+
+
+
+mitre_features = {
+    "INITCAP": r"^[A-Z].*$",
+    "ALLCAPS": r"^[A-Z]+$",
+    "CAPSMIX": r"^[A-Za-z]+$",
+    "HASDIGIT": r"^.*[0-9].*$",
+    "SINGLEDIGIT": r"^[0-9]$",
+    "DOUBLEDIGIT": r"^[0-9][0-9]$",
+    "FOURDIGITS": r"^[0-9][0-9][0-9][0-9]$",
+    "NATURALNUM": r"^[0-9]+$",
+    "REALNUM": r"^[0-9]+.[0-9]+$",
+    "ALPHANUM": r"^[0-9A-Za-z]+$",
+    "HASDASH": r"^.*-.*$",
+    "PUNCTUATION": r"^[^A-Za-z0-9]+$",
+    "PHONE1": r"^[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$",
+    "PHONE2": r"^[0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$",
+    "FIVEDIGIT": r"^[0-9][0-9][0-9][0-9][0-9]",
+    "NOVOWELS": r"^[^AaEeIiOoUu]+$",
+    "HASDASHNUMALPHA": r"^.*[A-z].*-.*[0-9].*$ | *.[0-9].*-.*[0-9].*$",
+    "DATESEPERATOR": r"^[-/]$",
+}
+
 
 # note: make spaces optional?
 # Check about the documentation for this.
