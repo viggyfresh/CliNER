@@ -20,8 +20,9 @@ enabled = enabled_modules()
 if enabled['GENIA']:
     from genia_dir.genia_features import GeniaFeatures
 
+# Only create UMLS cache if module is available
 if enabled['UMLS']:
-    from umls_dir.umls_features import UMLSFeatures
+    import umls_dir.umls_features as feat_umls
 
 import word_features as feat_word
 
@@ -30,10 +31,6 @@ nltk_tagger = load_pos_tagger()
 # Feature Enabling
 enabled_concept_features = frozenset( ["UMLS"])
 
-
-# Only create UMLS cache if module is available
-if enabled['UMLS']:
-    feat_umls = UMLSFeatures()
 
 if enabled['GENIA']:
     feat_genia=None
