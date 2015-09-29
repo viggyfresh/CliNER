@@ -1,12 +1,10 @@
 ######################################################################
-#  CliCon - word_features.py                                         #
+#  CliNER - word_features.py                                         #
 #                                                                    #
 #  Willie Boag                                      wboag@cs.uml.edu #
 #                                                                    #
 #  Purpose: Isolate all word-level features into a single file       #
 ######################################################################
-
-
 
 
 __author__ = 'Willie Boag'
@@ -22,650 +20,559 @@ from nltk import LancasterStemmer, PorterStemmer
 lancaster_st = LancasterStemmer()
 porter_st = PorterStemmer()
 
-class WordFeatures:
+def feature_word(word):
+    return {('word', word.lower()): 1}
 
-    enabled_IOB_prose_word_features = frozenset( ['Generic#', 'last_two_letters', 'word', 'length', 'mitre', 'stem_porter', 'stem_lancaster', 'word_shape', 'metric_unit' ] )
+def feature_stem_lancaster(word):
+    return {('stem_lancaster', lancaster_st.stem(word.lower())): 1}
 
-    enabled_IOB_nonprose_word_features = frozenset( ['word', 'word_shape', 'mitre', 'QANN' ] )
+def feature_generic(word):
+    generic = re.sub('[0-9]', '0', word)
+    return {('Generic#', generic): 1}
+
+def feature_last_two_letters(word):
+    return {('last_two_letters', word[-2:]): 1}
 
-    #enabled_concept_features = frozenset( ['word', 'prefix', 'stem_porter', 'stem_lancaster', 'previous_word_stem', 'next_word_stem'] )
-    enabled_concept_features = frozenset( ['word', 'prefix', 'stem_porter', 'stem_lancaster', 'previous_word_stem', 'next_word_stem', 'word_shape', 'metric_unit', 'mitre', 'directive', 'date'] )
+def feature_length(word):
+    return {('length', None): len(word)}
 
+def feature_stem_porter(word):
+    return {('stem_porter', porter_st.stem(word)): 1}
 
-    def __init__(self):
-        pass
+def feature_mitre(word):
+    features = {}
+    for f in mitre_features:
+        if re.search(mitre_features[f], word):
+            features[('mitre', f)] = 1
+    return features
 
+def feature_word_shape(word):
+    features = {}
+    wordShapes = getWordShapes(word)
+    for shape in wordShapes:
+        features[('word_shape', shape)] = 1
+    return features
 
-    def IOB_prose_features(self, word):
-        """
-        IOB_prose_features()
+def feature_metric_unit(word):
+    unit = None
+    if is_weight(word):
+        unit = 'weight'
+    elif is_size(word):
+        unit = 'size'
+    elif is_volume(word):
+        unit = 'volume'
+    return {('metric_unit', unit): 1}
 
-        Purpose: Creates a dictionary of prose  features for the given word.
+def feature_prefix(word):
+    prefix = word[:4].lower()
+    return {("prefix", prefix): 1}
 
-        @param word. A string
-        @return      A dictionary of features
+def QANN_features(word):
+    """
+    QANN_features()
 
-        >>> wf = WordFeatures()
-        >>> wf.IOB_prose_features('test') is not None
-        True
-        """
-        # Feature: <dummy>
-        features = {}
-        #features = {('dummy', None): 1}  # always have >0 dimensions
+    Purpose: Creates a dictionary of QANN features for the given word.
 
-        if "word" in self.enabled_IOB_prose_word_features:
-            features[('word', word.lower())] = 1
+    @param word. A string
+    @return      A dictionary of features
 
-        #return features
+    >>> QANN_features('test') is not None
+    True
+    """
 
-        if "stem_lancaster" in self.enabled_IOB_prose_word_features:
-            features[ ('stem_lancaster', lancaster_st.stem(word.lower())) ] = 1
+    features = {}
 
-        if 'Generic#' in self.enabled_IOB_prose_word_features:
-            generic = re.sub('[0-9]','0',word)
-            features[ ('Generic#',generic) ] = 1
+    # Feature: test result
+    if is_test_result(word):    features[('test_result',None)] = 1
 
-        if 'last_two_letters' in self.enabled_IOB_prose_word_features:
-            features[ ('last_two_letters',word[-2:]) ] = 1
+    # Feature: measurements
+    if is_measurement(word):    features[('measurement',None)] = 1
 
-        if "length" in self.enabled_IOB_prose_word_features:
-            features[('length', None)] = len(word)
+    # Feature: directive
+    if is_directive(word):      features[('directive',  None)] = 1
 
-        if "stem_porter" in self.enabled_IOB_prose_word_features:
-            features[('stem_porter', porter_st.stem(word))] = 1
+    # Feature: date
+    if is_date(word):           features[('date',       None)] = 1
 
-        if "mitre" in self.enabled_IOB_prose_word_features:
-            for f in self.mitre_features:
-                if re.search(self.mitre_features[f], word):
-                    features[('mitre', f)] = 1
+    # Feature: volume
+    if is_volume(word):         features[('volume',     None)] = 1
 
-        if "word_shape" in self.enabled_IOB_prose_word_features:
-            wordShapes = getWordShapes(word)
-            for shape in wordShapes:
-                features[('word_shape', shape)] = 1
+    # Feature: weight
+    if is_weight(word):         features[('weight',     None)] = 1
 
-        return features
+    # Feature: size
+    if is_size(word):           features[('size',       None)] = 1
 
+    # Feature: prognosis location
+    if is_prognosis_location:   features[('prog_location', None)] = 1
 
+    # Feature: problem form
+    if has_problem_form(word):  features[('problem_form',     None)] = 1
 
-    def IOB_nonprose_features(self, word):
-        """
-        IOB_nonprose_features()
+    # Feature: concept class
+    if is_weight(word):         features[('weight',     None)] = 1
 
-        Purpose: Creates a dictionary of nonprose features for the given word.
+    return features
 
-        @param word. A string
-        @return      A dictionary of features
+def feature_prev_word_stem(sentence, ind):
+    if ind != 0:
+        prev_ind = ind - 1
+        prev_chunk = sentence[prev_ind].split()
+        prev_word = porter_st.stem( prev_chunk[-1] )
+        return {('prev_word_stem', prev_word): 1}
+    else:
+        return {('prev_word_stem', '<START>'): 1}
 
-        >>> wf = WordFeatures()
-        >>> wf.IOB_nonprose_features('test') is not None
-        True
-        """
+def feature_next_word_stem(sentence, ind):
+    if ind != len(sentence)-1:
+        next_ind = ind + 1
+        next_chunk = sentence[next_ind].split()
+        next_word = porter_st.stem( next_chunk[0] )
+        return {('next_word_stem', next_word): 1}
+    else:
+        return {('next_word_stem', '<END>'): 1}
 
-        features = {}
 
-        # Feature: The word, itself
-        features[('word', word.lower())] = 1
+enabled_IOB_prose_word_features = frozenset( [feature_generic, feature_last_two_letters, feature_word, feature_length, feature_stem_porter, feature_mitre, feature_stem_lancaster, feature_word_shape, feature_metric_unit] )
 
-        #return features
+def IOB_prose_features(word):
+    """
+    IOB_prose_features()
 
-        # Feature: Mitre
-        if "mitre" in self.enabled_IOB_nonprose_word_features:
-            for f in self.mitre_features:
-                if re.search(self.mitre_features[f], word):
-                    features[('mitre', f)] = 1
+    Purpose: Creates a dictionary of prose  features for the given word.
 
-        # Feature: Word Shape
-        if "word_shape" in self.enabled_IOB_nonprose_word_features:
-            wordShapes = getWordShapes(word)
-            for shape in wordShapes:
-                features[('word_shape', shape)] = 1
+    @param word. A string
+    @return      A dictionary of features
 
-        # Feature: QANN features
-        if 'QANN' in self.enabled_IOB_nonprose_word_features:
-            qann_feats = self.QANN_features(word)
-            features.update(qann_feats)
-
-        return features
-
-
+    >>> IOB_prose_features('test') is not None
+    True
+    """
 
-    # Note: most of this function is currently commented out so the doctests should be fixed if this is ever changed
-    def concept_features_for_word(self, word):
+    # Feature: <dummy>
+    features = {('dummy', None): 1}  # always have >0 dimensions
 
-        """
-        concept_features_for_word()
-
-        Purpose: Creates a dictionary of concept features for the given word.
-
-        @param  word. A word to generate features for
-        @return       A dictionary of features
+    # Extract all enabled features
+    for feature in enabled_IOB_prose_word_features:
+        current_feat = feature(word)
+        features.update(current_feat)
 
-        >>> wf = WordFeatures()
-        >>> wf.concept_features_for_word('test') is not None
-        True
-        """
-
-        features = {}
-
-        # Feature: Uncased Word
-        if "word" in self.enabled_concept_features:
-            features[ ("word",word.lower()) ] = 1
-
-        #return features
-
-        '''
-        # Feature: Porter Stem
-        if "stem_porter" in self.enabled_concept_features:
-            st = nltk.stem.PorterStemmer()
-            features[ ("stem_poter", st.stem(word)) ] = 1
-
-        # Feature: Lancaster Stem
-        if "stem_lancaster" in self.enabled_concept_features:
-            st = nltk.stem.LancasterStemmer()
-            features[ ("stem_lancaster", st.stem(word)) ] = 1
-        '''
+    return features
 
-        '''
-        # Feature: First Four Letters
-        if "prefix" in self.enabled_concept_features:
-            prefix = word[:4].lower()
-            features[ ("prefix",prefix) ] = 1
-        '''
-
-        '''
-        # Use: None
-        # Feature: Length
-        if "length" in self.enabled_concept_features:
-            features[ ("length",None) ] = len(word)
-        '''
-
-        # Feature: Metric Unit
-        if "metric_unit" in self.enabled_concept_features:
-            unit = None
-            if self.is_weight(word):
-                unit = 'weight'
-            elif self.is_size(word):
-                unit = 'size'
-            elif self.is_volume(word):
-                unit = 'volume'
-            features[('metric_unit',unit)] = 1
-
-        '''
-        # Feature: Date
-        if 'date' in self.enabled_concept_features:
-            if self.is_date(word):
-                features[('date',None)] = 1
-
-        # Feature: Directive
-        if 'directive' in self.enabled_concept_features:
-            if self.is_directive(word):
-                features[('directive',None)] = 1
-
-        # Feature: Mitre
-        if "mitre" in self.enabled_concept_features:
-            for f in self.mitre_features:
-                if re.search(self.mitre_features[f], word):
-                    features[('mitre', f)] = 1
-
-        # Feature: Word Shape
-        if "word_shape" in self.enabled_concept_features:
-            wordShapes = getWordShapes(word)
-            for shape in wordShapes:
-                features[('word_shape', shape)] = 1
-        '''
-
-        return features
-
-
-    #FIXME The documentation for this is incorrect, not 100% sure how it works.
-    def concept_features_for_chunk(self, sentence, ind):
-
-        """
-        concept_features_for_chunk()
-
-        @param  word. A chunk from the sentence
-        @return       A dictionary of features
-
-        """
-
-        #features = {'dummy':1}
-        features = {}
-
-        # Word-level features for each word of the chunk
-        #print 'sent[ind]: <%s>' % sentence[ind]
-        for w in sentence[ind].split():
-            word_features = self.concept_features_for_word(w)
-            features.update(word_features)
-
-        #return features
-
-        # Feature: Previous word
-        if "previous_word_stem" in self.enabled_concept_features:
-            if ind != 0:
-                prev_ind = ind - 1
-                prev_chunk = sentence[prev_ind].split()
-                prev_word = porter_st.stem( prev_chunk[-1] )
-                features[ ('prev_word_stem',prev_word) ] = 1
-            else:
-                features[ ('prev_word_stem','<START>') ] = 1
-
-        # Feature: Previous word
-        if "next_word_stem" in self.enabled_concept_features:
-            if ind != len(sentence)-1:
-                next_ind = ind + 1
-                next_chunk = sentence[next_ind].split()
-                next_word = porter_st.stem( next_chunk[0] )
-                features[ ('next_word_stem',next_word) ] = 1
-            else:
-                features[ ('next_word_stem','<END>') ] = 1
-
-        return features
-
-
-
-
-    mitre_features = {
-        "INITCAP": r"^[A-Z].*$",
-        "ALLCAPS": r"^[A-Z]+$",
-        "CAPSMIX": r"^[A-Za-z]+$",
-        "HASDIGIT": r"^.*[0-9].*$",
-        "SINGLEDIGIT": r"^[0-9]$",
-        "DOUBLEDIGIT": r"^[0-9][0-9]$",
-        "FOURDIGITS": r"^[0-9][0-9][0-9][0-9]$",
-        "NATURALNUM": r"^[0-9]+$",
-        "REALNUM": r"^[0-9]+.[0-9]+$",
-        "ALPHANUM": r"^[0-9A-Za-z]+$",
-        "HASDASH": r"^.*-.*$",
-        "PUNCTUATION": r"^[^A-Za-z0-9]+$",
-        "PHONE1": r"^[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$",
-        "PHONE2": r"^[0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$",
-        "FIVEDIGIT": r"^[0-9][0-9][0-9][0-9][0-9]",
-        "NOVOWELS": r"^[^AaEeIiOoUu]+$",
-        "HASDASHNUMALPHA": r"^.*[A-z].*-.*[0-9].*$ | *.[0-9].*-.*[0-9].*$",
-        "DATESEPERATOR": r"^[-/]$",
+
+enabled_IOB_nonprose_word_features = frozenset( [feature_word, feature_word_shape, feature_mitre, QANN_features] )
+
+def IOB_nonprose_features(word):
+    """
+    IOB_nonprose_features()
+
+    Purpose: Creates a dictionary of nonprose features for the given word.
+
+    @param word. A string
+    @return      A dictionary of features
+
+    >>> IOB_nonprose_features('test') is not None
+    True
+    """
+
+    # Feature: <dummy>
+    features = {('dummy', None): 1}  # always have >0 dimensions
+
+    # Extract all enabled features
+    for feature in enabled_IOB_nonprose_word_features:
+        current_feat = feature(word)
+        features.update(current_feat)
+
+    return features
+
+
+enabled_word_concept_features = frozenset( [feature_word, feature_prefix, feature_stem_porter, feature_stem_lancaster, feature_word_shape, feature_metric_unit, feature_mitre] )
+
+# Note: most of this function is currently commented out so the doctests should be fixed if this is ever changed
+def concept_features_for_word(word):
+
+    """
+    concept_features_for_word()
+
+    Purpose: Creates a dictionary of concept features for the given word.
+
+    @param  word. A word to generate features for
+    @return       A dictionary of features
+
+    >>> concept_features_for_word('test') is not None
+    True
+    """
+
+    features = {}
+
+    # extract all selected features
+    for feature in enabled_word_concept_features:
+        current_feat = feature(word)
+        features.update(current_feat)
+
+    return features
+
+
+enabled_chunk_concept_features = frozenset( [ feature_prev_word_stem, feature_next_word_stem] )
+
+def concept_features_for_chunk(sentence, ind):
+
+    """
+    concept_features_for_chunk()
+
+    @param  sentence    A sentence that has been chunked into vectors
+            ind         The index of the concept in question within the sentence vector
+    @return             A dictionary of features
+
+    """
+
+    features = {'dummy':1}
+
+    # Word-level features for each word of the chunk
+    for w in sentence[ind].split():
+        word_features = concept_features_for_word(w)
+        features.update(word_features)
+
+    # Context windows
+    for feature in enabled_chunk_concept_features:
+        current_feat = feature(sentence, ind)
+        features.update(current_feat)
+
+    return features
+
+
+
+mitre_features = {
+    "INITCAP": r"^[A-Z].*$",
+    "ALLCAPS": r"^[A-Z]+$",
+    "CAPSMIX": r"^[A-Za-z]+$",
+    "HASDIGIT": r"^.*[0-9].*$",
+    "SINGLEDIGIT": r"^[0-9]$",
+    "DOUBLEDIGIT": r"^[0-9][0-9]$",
+    "FOURDIGITS": r"^[0-9][0-9][0-9][0-9]$",
+    "NATURALNUM": r"^[0-9]+$",
+    "REALNUM": r"^[0-9]+.[0-9]+$",
+    "ALPHANUM": r"^[0-9A-Za-z]+$",
+    "HASDASH": r"^.*-.*$",
+    "PUNCTUATION": r"^[^A-Za-z0-9]+$",
+    "PHONE1": r"^[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$",
+    "PHONE2": r"^[0-9][0-9][0-9]-[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]$",
+    "FIVEDIGIT": r"^[0-9][0-9][0-9][0-9][0-9]",
+    "NOVOWELS": r"^[^AaEeIiOoUu]+$",
+    "HASDASHNUMALPHA": r"^.*[A-z].*-.*[0-9].*$ | *.[0-9].*-.*[0-9].*$",
+    "DATESEPERATOR": r"^[-/]$",
+}
+
+
+# note: make spaces optional?
+# Check about the documentation for this.
+def is_test_result(context):
+    """
+    is_test_result()
+
+    Purpose: Checks if the context is a test result.
+
+    @param context. A string.
+    @return         it returns the matching object of '[blank] was positive/negative' or None if it cannot find it.
+                    otherwise, it will return True.
+
+    >>> print is_test_result('test was 10%')
+    True
+    >>> print is_test_result('random string of words')
+    None
+    >>> print is_test_result('Test')
+    None
+    >>> print is_test_result('patient less than 30')
+    True
+    >>> print is_test_result(' ')
+    None
+    """
+    regex = r"^[A-Za-z]+( )*(-|--|:|was|of|\*|>|<|more than|less than)( )*[0-9]+(%)*"
+    if not re.search(regex, context):
+        return re.search(r"^[A-Za-z]+ was (positive|negative)", context)
+    return True
+
+def is_measurement(word):
+    """
+    is_measurement()
+
+    Purpose: Checks if the word is a measurement.
+
+    @param word. A string.
+    @return      the matched object if it is a measurement, otherwise None.
+
+    >>> is_measurement('10units') is not None
+    True
+    >>> is_measurement('7 units') is not None
+    True
+    >>> is_measurement('10cc') is not None
+    True
+    >>> is_measurement('300 L') is not None
+    True
+    >>> is_measurement('20mL') is not None
+    True
+    >>> is_measurement('400000 dL') is not None
+    True
+    >>> is_measurement('30000') is not None
+    False
+    >>> is_measurement('20dl') is not None
+    False
+    >>> is_measurement('units') is not None
+    True
+    """
+    regex = r"^[0-9]*( )?(unit(s)|cc|L|mL|dL)$"
+    return re.search(regex, word)
+
+def is_directive(word):
+    """
+    is_directive()
+
+    Purpose: Checks if the word is a directive.
+
+    @param word. A string.
+    @return      the matched object if it is a directive, otherwise None.
+
+    >>> is_directive('q.abc') is not None
+    True
+    >>> is_directive('qAD') is not None
+    True
+    >>> is_directive('PRM') is not None
+    True
+    >>> is_directive('bid') is not None
+    True
+    >>> is_directive('prm') is not None
+    True
+    >>> is_directive('p.abc') is not None
+    True
+    >>> is_directive('qABCD') is not None
+    False
+    >>> is_directive('BID') is not None
+    False
+    """
+    regex = r"^(q\..*|q..|PRM|bid|prm|p\..*)$"
+    return re.search(regex, word)
+
+def is_date(word):
+    """
+    is_date()
+
+    Purpose: Checks if word is a date.
+
+    @param word. A string.
+    @return      the matched object if it is a date, otherwise None.
+
+    >>> is_date('2015-03-1') is not None
+    True
+    >>> is_date('2014-02-19') is not None
+    True
+    >>> is_date('03-27-1995') is not None
+    True
+    >>> is_date('201') is not None
+    False
+    >>> is_date('0') is not None
+    False
+    """
+    regex= r'^(\d\d\d\d-\d\d-\d|\d\d?-\d\d?-\d\d\d\d?|\d\d\d\d-\d\d?-\d\d?)$'
+    return re.search(regex,word)
+
+def is_volume(word):
+    """
+    is_volume()
+
+    Purpose: Checks if word is a volume.
+
+    @param word. A string.
+    @return      the matched object if it is a volume, otherwise None.
+
+    >>> is_volume('9ml') is not None
+    True
+    >>> is_volume('10 mL') is not None
+    True
+    >>> is_volume('552 dL') is not None
+    True
+    >>> is_volume('73') is not None
+    False
+    >>> is_volume('ml') is not None
+    True
+    """
+    regex = r"^[0-9]*( )?(ml|mL|dL)$"
+    return re.search(regex, word)
+
+def is_weight(word):
+    """
+    is_weight()
+
+    Purpose: Checks if word is a weight.
+
+    @param word. A string.
+    @return      the matched object if it is a weight, otherwise None.
+
+    >>> is_weight('1mg') is not None
+    True
+    >>> is_weight('10 g') is not None
+    True
+    >>> is_weight('78 mcg') is not None
+    True
+    >>> is_weight('10000 milligrams') is not None
+    True
+    >>> is_weight('14 grams') is not None
+    True
+    >>> is_weight('-10 g') is not None
+    False
+    >>> is_weight('grams') is not None
+    True
+    """
+    regex = r"^[0-9]*( )?(mg|g|mcg|milligrams|grams)$"
+    return re.search(regex, word)
+
+def is_size(word):
+    """
+    is_size()
+
+    Purpose: Checks if the word is a size.
+
+    @param word. A string.
+    @return      the matched object if it is a weight, otheriwse None.
+
+    >>> is_size('1mm') is not None
+    True
+    >>> is_size('10 cm') is not None
+    True
+    >>> is_size('36 millimeters') is not None
+    True
+    >>> is_size('423 centimeters') is not None
+    True
+    >>> is_size('328') is not None
+    False
+    >>> is_size('22 meters') is not None
+    False
+    >>> is_size('millimeters') is not None
+    True
+    """
+    regex = r"^[0-9]*( )?(mm|cm|millimeters|centimeters)$"
+    return re.search(regex, word)
+
+def is_prognosis_location(word):
+    """
+    is_prognosis_location()
+
+    Purpose: Checks if the word is a prognosis location
+
+    @param word. A string.
+    @return      the matched object if it is a prognosis location, otherwise None.
+
+    >>> is_prognosis_location('c9-c5') is not None
+    True
+    >>> is_prognosis_location('C5-C9') is not None
+    True
+    >>> is_prognosis_location('test') is not None
+    False
+    >>> is_prognosis_location('c-9-C5') is not None
+    False
+    """
+    regex = r"^(c|C)[0-9]+(-(c|C)[0-9]+)*$"
+    return re.search(regex, word)
+
+def has_problem_form(word):
+    """
+    has_problem_form()
+
+    Purpose: Checks if the word has problem form.
+
+    @param word. A string
+    @return      the matched object if it has problem form, otheriwse None.
+
+    >>> has_problem_form('prognosis') is not None
+    True
+    >>> has_problem_form('diagnosis') is not None
+    True
+    >>> has_problem_form('diagnostic') is not None
+    True
+    >>> has_problem_form('arachnophobic') is not None
+    True
+    >>> has_problem_form('test') is not None
+    False
+    >>> has_problem_form('ice') is not None
+    False
+    """
+    regex = r".*(ic|is)$"
+    return re.search(regex, word)
+
+def get_def_class(word):
+    """
+    get_def_class()
+
+    Purpose: Checks for a definitive classification at the word level.
+
+    @param word. A string
+    @return      1 if the word is a test term,
+                 2 if the word is a problem term,
+                 3 if the word is a treatment term,
+                 0 otherwise.
+    >>> get_def_class('eval')
+    1
+    >>> get_def_class('rate')
+    1
+    >>> get_def_class('tox')
+    1
+    >>> get_def_class('swelling')
+    2
+    >>> get_def_class('mass')
+    2
+    >>> get_def_class('broken')
+    2
+    >>> get_def_class('therapy')
+    3
+    >>> get_def_class('vaccine')
+    3
+    >>> get_def_class('treatment')
+    3
+    >>> get_def_class('unrelated')
+    0
+    """
+    test_terms = {
+        "eval", "evaluation", "evaluations",
+        "sat", "sats", "saturation",
+        "exam", "exams",
+        "rate", "rates",
+        "test", "tests",
+        "xray", "xrays",
+        "screen", "screens",
+        "level", "levels",
+        "tox"
     }
-
-    # Try to get QANN features
-    def QANN_features(self, word):
-        """
-        QANN_features()
-
-        Purpose: Creates a dictionary of QANN features for the given word.
-
-        @param word. A string
-        @return      A dictionary of features
-
-        >>> wf = WordFeatures()
-        >>> wf.QANN_features('test') is not None
-        True
-        """
-
-        features = {}
-
-        # Feature: test result
-        if self.is_test_result(word):    features[('test_result',None)] = 1
-
-        # Feature: measurements
-        if self.is_measurement(word):    features[('measurement',None)] = 1
-
-        # Feature: directive
-        if self.is_directive(word):      features[('directive',  None)] = 1
-
-        # Feature: date
-        if self.is_date(word):           features[('date',       None)] = 1
-
-        # Feature: volume
-        if self.is_volume(word):         features[('volume',     None)] = 1
-
-        # Feature: weight
-        if self.is_weight(word):         features[('weight',     None)] = 1
-
-        # Feature: size
-        if self.is_size(word):           features[('size',       None)] = 1
-
-        # Feature: prognosis location
-        if self.is_prognosis_location:   features[('prog_location', None)] = 1
-
-        # Feature: problem form
-        if self.has_problem_form(word):  features[('problem_form',     None)] = 1
-
-        # Feature: concept class
-        if self.is_weight(word):         features[('weight',     None)] = 1
-
-        return features
-
-
-
-    # note: make spaces optional?
-    # Check about the documentation for this.
-    def is_test_result(self, context):
-        """
-        is_test_result()
-
-        Purpose: Checks if the context is a test result.
-
-        @param context. A string.
-        @return         it returns the matching object of '[blank] was positive/negative' or None if it cannot find it.
-                        otherwise, it will return True.
-
-        >>> wf = WordFeatures()
-        >>> print wf.is_test_result('test was 10%')
-        True
-        >>> print wf.is_test_result('random string of words')
-        None
-        >>> print wf.is_test_result('Test')
-        None
-        >>> print wf.is_test_result('patient less than 30')
-        True
-        >>> print wf.is_test_result(' ')
-        None
-        """
-        regex = r"^[A-Za-z]+( )*(-|--|:|was|of|\*|>|<|more than|less than)( )*[0-9]+(%)*"
-        if not re.search(regex, context):
-            return re.search(r"^[A-Za-z]+ was (positive|negative)", context)
-        return True
-
-
-    def is_measurement(self, word):
-        """
-        is_measurement()
-
-        Purpose: Checks if the word is a measurement.
-
-        @param word. A string.
-        @return      the matched object if it is a measurement, otherwise None.
-
-        >>> wf = WordFeatures()
-        >>> wf.is_measurement('10units') is not None
-        True
-        >>> wf.is_measurement('7 units') is not None
-        True
-        >>> wf.is_measurement('10cc') is not None
-        True
-        >>> wf.is_measurement('300 L') is not None
-        True
-        >>> wf.is_measurement('20mL') is not None
-        True
-        >>> wf.is_measurement('400000 dL') is not None
-        True
-        >>> wf.is_measurement('30000') is not None
-        False
-        >>> wf.is_measurement('20dl') is not None
-        False
-        >>> wf.is_measurement('units') is not None
-        True
-        """
-        regex = r"^[0-9]*( )?(unit(s)|cc|L|mL|dL)$"
-        return re.search(regex, word)
-
-
-    def is_directive(self, word):
-        """
-        is_directive()
-
-        Purpose: Checks if the word is a directive.
-
-        @param word. A string.
-        @return      the matched object if it is a directive, otherwise None.
-
-        >>> wf = WordFeatures()
-        >>> wf.is_directive('q.abc') is not None
-        True
-        >>> wf.is_directive('qAD') is not None
-        True
-        >>> wf.is_directive('PRM') is not None
-        True
-        >>> wf.is_directive('bid') is not None
-        True
-        >>> wf.is_directive('prm') is not None
-        True
-        >>> wf.is_directive('p.abc') is not None
-        True
-        >>> wf.is_directive('qABCD') is not None
-        False
-        >>> wf.is_directive('BID') is not None
-        False
-        """
-        regex = r"^(q\..*|q..|PRM|bid|prm|p\..*)$"
-        return re.search(regex, word)
-
-
-    def is_date(self, word):
-        """
-        is_date()
-
-        Purpose: Checks if word is a date.
-
-        @param word. A string.
-        @return      the matched object if it is a date, otherwise None.
-
-        >>> wf = WordFeatures()
-        >>> wf.is_date('2015-03-1') is not None
-        True
-        >>> wf.is_date('2014-02-19') is not None
-        True
-        >>> wf.is_date('03-27-1995') is not None
-        True
-        >>> wf.is_date('201') is not None
-        False
-        >>> wf.is_date('0') is not None
-        False
-        """
-        regex= r'^(\d\d\d\d-\d\d-\d|\d\d?-\d\d?-\d\d\d\d?|\d\d\d\d-\d\d?-\d\d?)$'
-        return re.search(regex,word)
-
-
-    def is_volume(self, word):
-        """
-        is_volume()
-
-        Purpose: Checks if word is a volume.
-
-        @param word. A string.
-        @return      the matched object if it is a volume, otherwise None.
-
-        >>> wf = WordFeatures()
-        >>> wf.is_volume('9ml') is not None
-        True
-        >>> wf.is_volume('10 mL') is not None
-        True
-        >>> wf.is_volume('552 dL') is not None
-        True
-        >>> wf.is_volume('73') is not None
-        False
-        >>> wf.is_volume('ml') is not None
-        True
-        """
-        regex = r"^[0-9]*( )?(ml|mL|dL)$"
-        return re.search(regex, word)
-
-
-    def is_weight(self, word):
-        """
-        is_weight()
-
-        Purpose: Checks if word is a weight.
-
-        @param word. A string.
-        @return      the matched object if it is a weight, otherwise None.
-
-        >>> wf = WordFeatures()
-        >>> wf.is_weight('1mg') is not None
-        True
-        >>> wf.is_weight('10 g') is not None
-        True
-        >>> wf.is_weight('78 mcg') is not None
-        True
-        >>> wf.is_weight('10000 milligrams') is not None
-        True
-        >>> wf.is_weight('14 grams') is not None
-        True
-        >>> wf.is_weight('-10 g') is not None
-        False
-        >>> wf.is_weight('grams') is not None
-        True
-        """
-        regex = r"^[0-9]*( )?(mg|g|mcg|milligrams|grams)$"
-        return re.search(regex, word)
-
-
-    def is_size(self, word):
-        """
-        is_size()
-
-        Purpose: Checks if the word is a size.
-
-        @param word. A string.
-        @return      the matched object if it is a weight, otheriwse None.
-
-        >>> wf = WordFeatures()
-        >>> wf.is_size('1mm') is not None
-        True
-        >>> wf.is_size('10 cm') is not None
-        True
-        >>> wf.is_size('36 millimeters') is not None
-        True
-        >>> wf.is_size('423 centimeters') is not None
-        True
-        >>> wf.is_size('328') is not None
-        False
-        >>> wf.is_size('22 meters') is not None
-        False
-        >>> wf.is_size('millimeters') is not None
-        True
-        """
-        regex = r"^[0-9]*( )?(mm|cm|millimeters|centimeters)$"
-        return re.search(regex, word)
-
-
-    def is_prognosis_location(self, word):
-        """
-        is_prognosis_location()
-
-        Purpose: Checks if the word is a prognosis location
-
-        @param word. A string.
-        @return      the matched object if it is a prognosis location, otherwise None.
-
-        >>> wf = WordFeatures()
-        >>> wf.is_prognosis_location('c9-c5') is not None
-        True
-        >>> wf.is_prognosis_location('C5-C9') is not None
-        True
-        >>> wf.is_prognosis_location('test') is not None
-        False
-        >>> wf.is_prognosis_location('c-9-C5') is not None
-        False
-        """
-        regex = r"^(c|C)[0-9]+(-(c|C)[0-9]+)*$"
-        return re.search(regex, word)
-
-
-    def has_problem_form(self, word):
-        """
-        has_problem_form()
-
-        Purpose: Checks if the word has problem form.
-
-        @param word. A string
-        @return      the matched object if it has problem form, otheriwse None.
-
-        >>> wf = WordFeatures()
-        >>> wf.has_problem_form('prognosis') is not None
-        True
-        >>> wf.has_problem_form('diagnosis') is not None
-        True
-        >>> wf.has_problem_form('diagnostic') is not None
-        True
-        >>> wf.has_problem_form('arachnophobic') is not None
-        True
-        >>> wf.has_problem_form('test') is not None
-        False
-        >>> wf.has_problem_form('ice') is not None
-        False
-        """
-        regex = r".*(ic|is)$"
-        return re.search(regex, word)
-
-
-    def get_def_class(self, word):
-        """
-        get_def_class()
-
-        Purpose: Checks for a definitive classification at the word level.
-
-        @param word. A string
-        @return      1 if the word is a test term,
-                     2 if the word is a problem term,
-                     3 if the word is a treatment term,
-                     0 otherwise.
-        >>> wf = WordFeatures();
-        >>> wf.get_def_class('eval')
-        1
-        >>> wf.get_def_class('rate')
-        1
-        >>> wf.get_def_class('tox')
-        1
-        >>> wf.get_def_class('swelling')
-        2
-        >>> wf.get_def_class('mass')
-        2
-        >>> wf.get_def_class('broken')
-        2
-        >>> wf.get_def_class('therapy')
-        3
-        >>> wf.get_def_class('vaccine')
-        3
-        >>> wf.get_def_class('treatment')
-        3
-        >>> wf.get_def_class('unrelated')
-        0
-        """
-        test_terms = {
-            "eval", "evaluation", "evaluations",
-            "sat", "sats", "saturation",
-            "exam", "exams",
-            "rate", "rates",
-            "test", "tests",
-            "xray", "xrays",
-            "screen", "screens",
-            "level", "levels",
-            "tox"
-        }
-        problem_terms = {
-            "swelling",
-            "wound", "wounds",
-            "symptom", "symptoms",
-            "shifts", "failure",
-            "insufficiency", "insufficiencies",
-            "mass", "masses",
-            "aneurysm", "aneurysms",
-            "ulcer", "ulcers",
-            "trama", "cancer",
-            "disease", "diseased",
-            "bacterial", "viral",
-            "syndrome", "syndromes",
-            "pain", "pains"
-            "burns", "burned",
-            "broken", "fractured"
-        }
-        treatment_terms = {
-            "therapy",
-            "replacement",
-            "anesthesia",
-            "supplement", "supplemental",
-            "vaccine", "vaccines"
-            "dose", "doses",
-            "shot", "shots",
-            "medication", "medicine",
-            "treatment", "treatments"
-        }
-        if word.lower() in test_terms:
-            return 1
-        elif word.lower() in problem_terms:
-            return 2
-        elif word.lower() in treatment_terms:
-            return 3
-        return 0
+    problem_terms = {
+        "swelling",
+        "wound", "wounds",
+        "symptom", "symptoms",
+        "shifts", "failure",
+        "insufficiency", "insufficiencies",
+        "mass", "masses",
+        "aneurysm", "aneurysms",
+        "ulcer", "ulcers",
+        "trama", "cancer",
+        "disease", "diseased",
+        "bacterial", "viral",
+        "syndrome", "syndromes",
+        "pain", "pains"
+        "burns", "burned",
+        "broken", "fractured"
+    }
+    treatment_terms = {
+        "therapy",
+        "replacement",
+        "anesthesia",
+        "supplement", "supplemental",
+        "vaccine", "vaccines"
+        "dose", "doses",
+        "shot", "shots",
+        "medication", "medicine",
+        "treatment", "treatments"
+    }
+    if word.lower() in test_terms:
+        return 1
+    elif word.lower() in problem_terms:
+        return 2
+    elif word.lower() in treatment_terms:
+        return 3
+    return 0
 

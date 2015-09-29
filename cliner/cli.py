@@ -102,7 +102,7 @@ def predict(out, model, format, input):
     if format:
         cmd += ['-f', format]
 
-    # Execute train.py
+    # Execute predict.py
     subprocess.call(cmd)
 
 
@@ -139,7 +139,7 @@ def evaluate(predictions, gold, out, format, input):
     if format:
         cmd += ['-f',      format]
 
-    # Execute train.py
+    # Execute evaluate.py
     subprocess.call(cmd)
 
 
@@ -173,7 +173,7 @@ def format(annotations, format, out, input):
     if format:
         cmd += ['-f',      format]
 
-    # Execute train.py
+    # Execute format.py
     subprocess.call(cmd)
 
 

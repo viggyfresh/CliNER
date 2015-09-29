@@ -14,71 +14,81 @@ __date__   = 'Jan. 27, 2014'
 from wordshape import getWordShapes
 from utilities import is_prose_sentence
 
-from sentence_features import SentenceFeatures
+import sentence_features as feat_sent
+
+def IOB_prose_features(data, Y=None):
+    """
+    IOB_prose_features()
+
+    @param data      A list of split sentences (1 sent = 1 line from file)
+    @param Y         A list of list of IOB (1:1 mapping with data)
+    @return          tuple: list of IOB_prose_features, list of IOB 
+
+    """
+    
+    prose   = []
+    pchunks = []
+
+    # If no Y given, that information doesn't matter
+    if not Y:
+        Y = data
+
+    for sentence,labels in zip(data, Y):
+        if is_prose_sentence(sentence):
+           prose.append(feat_sent.IOB_prose_features(sentence, data))
+           pchunks += labels
+
+    return (prose, pchunks)
 
 
+def IOB_nonprose_features(data, Y=None):
+    """
+    IOB_nonprose_features()
 
-class FeatureWrapper:
+    @param data      A list of split sentences (1 sent = 1 line from file)
+    @param Y         A list of list of IOB (1:1 mapping with data)
+    @return          tuple: list of IOB_prose_features, list of IOB 
 
-    # FIXME - Make three objects - one for each classifier
+    """
+    
+    nonprose   = []
+    nchunks    = []
+    
+    # If no Y given, that information doesn't matter
+    if not Y:
+        Y = data
 
+    for sentence,labels in zip(data, Y):
+        if not is_prose_sentence(sentence):
+           nonprose.append(feat_sent.IOB_nonprose_features(sentence))
+           nchunks += labels
 
-    # Instantiate an FeatureWrapper object
-    def __init__(self, data=None):
-
-        # Sentence-level features
-        self.feat_sent = SentenceFeatures(data)
-
-
-
-    def extract_IOB_features(self, sentence):
-        """
-        extract_IOB_features()
-
-        @param sentence. A list of chunks
-        @return          tuple: boolean (Prose or not), a list of dictionaries of features
-
-        >>> fw = FeatureWrapper()
-        >>> fw.extract_IOB_features(['this', 'is', 'a' 'test']) is not None
-        True
-        """
-        # Different features depending on whether sentence is 'prose'
-        isProse = is_prose_sentence(sentence)
-
-        if isProse:
-            features_list = self.feat_sent.IOB_prose_features(sentence)
-        else:
-            features_list = self.feat_sent.IOB_nonprose_features(sentence)
-
-        # Return features as well as indication of whether it is prose or not
-        return (isProse, features_list)
+    return (nonprose, nchunks)
 
 
+def concept_features(sentence, chunk_inds):
+    """
+    concept_features()
 
-    def concept_features(self, sentence, chunk_inds):
-        """
-        concept_features()
+    @param sentence.   a list of chunks
+    @param chunk_inds. a list of important indices of the sentence
+    @return            a list of dictionaries of features
 
-        @param sentence.   a list of chunks
-        @param chunk_inds. a list of important indices of the sentence
-        @return            a list of dictionaries of features
+    >>> concept_features(['this', 'is', 'an', 'important', 'test'], [3, 4]) is not None
+    True
+    """
+    # FIXME - move all of this work to SentenceFeatures object
 
-        >>> fw = FeatureWrapper()
-        >>> fw.concept_features(['this', 'is', 'an', 'important', 'test'], [3, 4]) is not None
-        True
-        """
-        # FIXME - move all of this work to SentenceFeatures object
+    '''
+    # VERY basic feature set for sanity check tests during development
+    features_list = []
+    for i,ind in enumerate(chunk_inds):
+        features = {('phrase',sentence[ind]) : 1}
+        features_list.append(features)
+    return features_list
+    '''
 
-        '''
-        # VERY basic feature set for sanity check tests during development
-        features_list = []
-        for i,ind in enumerate(chunk_inds):
-            features = {('phrase',sentence[ind]) : 1}
-            features_list.append(features)
-        return features_list
-        '''
-
-        # Create a list of feature sets (one per chunk)
-        features_list = self.feat_sent.concept_features_for_sentence(sentence,chunk_inds)
-        return features_list
+    # Create a list of feature sets (one per chunk)
+    features_list = feat_sent.concept_features_for_sentence(sentence,chunk_inds)
+    return features_list
 

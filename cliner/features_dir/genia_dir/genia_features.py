@@ -45,12 +45,12 @@ class GeniaFeatures:
               This function MUST take each line of the file (in order) as input
         """
 
-        # Return value is a list of dictionaries (of features)
-        features_list = [ {}  for  _  in  sentence ]
-
 
         # Mechanism to allow for skipping nonprose
         if not is_prose: return []
+
+        # Return value is a list of dictionaries (of features)
+        features_list = [ {}  for  _  in  sentence ]
 
 
         # Get the GENIA features of the current sentence

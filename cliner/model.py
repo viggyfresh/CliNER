@@ -2,7 +2,8 @@ from __future__ import with_statement
 
 from sklearn.feature_extraction  import DictVectorizer
 
-from features_dir.features import FeatureWrapper
+import features_dir.features as feat_obj
+
 from features_dir.utilities import load_pickled_obj, is_prose_sentence
 
 from machine_learning import sci
@@ -21,7 +22,6 @@ class Model:
 
     @staticmethod
     def load(filename='awesome.model'):
-
         model = load_pickled_obj(filename)
         model.filename = filename
 
@@ -89,7 +89,6 @@ class Model:
         iobs = self.__first_predict(tokenized_sentences)
         note.setIOBLabels(iobs)
 
-
         # Second pass (concept labels)
         if globals_cliner.verbosity > 0:
             print 'second pass'
@@ -108,7 +107,6 @@ class Model:
     #########################################################################
     ##           Mid-level reformats data and sends to lower level         ##
     #########################################################################
-
 
     def __first_train(self, tokenized_sentences, Y, do_grid=False):
 
@@ -133,14 +131,9 @@ class Model:
         #    print
         #exit()
 
-        # Feature extractor
-        feat_obj = FeatureWrapper(tokenized_sentences)
-
-        # FIXME 0000b - separate the partition from the feature extraction
-        #                 (includes removing feat_obj as argument)
-        # FIXME 0005 - rename variables to be more informative
         # Parition into prose v. nonprose
-        prose, nonprose, pchunks, nchunks = partition_prose(tokenized_sentences, Y, feat_obj)
+        prose,pchunks    = feat_obj.IOB_prose_features(   tokenized_sentences, Y)
+        nonprose,nchunks = feat_obj.IOB_nonprose_features(tokenized_sentences, Y)
 
         #for p in prose:
         #    for x in p:
@@ -194,27 +187,27 @@ class Model:
 
         if globals_cliner.verbosity > 0: print 'second pass'
 
-        # Create object that is a wrapper for the features
-        feat_o = FeatureWrapper()
-
-        if globals_cliner.verbosity > 0: print '\textracting  features (pass two)'
-
-        # Feature extractor
-        #feat_obj = features.FeatureWrapper()
 
         # Extract features
-        text_features = extract_concept_features(chunked_data, inds_list, feat_o)
+        if globals_cliner.verbosity > 0:
+            print '\textracting  features (pass two)'
 
-        if globals_cliner.verbosity > 0: print '\tvectorizing features (pass two)'
+        text_features = [ feat_obj.concept_features(s,inds) for s,inds in zip(chunked_data,inds_list) ]
+        flattened_text_features = flatten(text_features)
+
+
+        if globals_cliner.verbosity > 0:
+            print '\tvectorizing features (pass two)'
 
         # Vectorize labels
         numeric_labels = [  concept_labels[y]  for  y  in  con_labels  ]
 
         # Vectorize features
         self._second_vec = DictVectorizer()
-        vectorized_features = self._second_vec.fit_transform(text_features)
+        vectorized_features = self._second_vec.fit_transform(flattened_text_features)
 
-        if globals_cliner.verbosity > 0: print '\ttraining  classifier (pass two)'
+        if globals_cliner.verbosity > 0:
+            print '\ttraining  classifier (pass two)'
 
         # Train the model
         self._second_clf = sci.train(vectorized_features,numeric_labels,do_grid)
@@ -236,26 +229,11 @@ class Model:
         #    print line
         #print '\n\n\n'
 
-        # Create object that is a wrapper for the features
-        feat_obj = FeatureWrapper(data)
-
         if globals_cliner.verbosity > 0: print '\textracting  features (pass one)'
 
-        # FIXME 0007 - Replace with functions to partition and extract feats
         # separate prose and nonprose data
-        prose    = []
-        nonprose = []
-        plinenos = []
-        nlinenos = []
-        for i,line in enumerate(data):
-            if line == []: continue
-            isProse,feats = feat_obj.extract_IOB_features(line)
-            if isProse:
-                prose.append(feats)
-                plinenos.append(i)
-            else:
-                nonprose.append(feats)
-                nlinenos.append(i)
+        prose, plinenos    = feat_obj.IOB_prose_features(data)
+        nonprose, nlinenos = feat_obj.IOB_nonprose_features(data)
 
         # Predict labels for IOB prose and nonprose text
         nlist = self.__generic_first_predict('nonprose', nonprose, self._first_nonprose_vec, self._first_nonprose_clf)
@@ -305,19 +283,22 @@ class Model:
             return []
 
         # Create object that is a wrapper for the features
-        feat_o = FeatureWrapper()
         if globals_cliner.verbosity > 0: print '\textracting  features (pass two)'
 
-        # Create object that is a wrapper for the features
-        feat_obj = FeatureWrapper()
+        print '\textracting  features (pass two)'
+
 
         # Extract features
-        text_features = extract_concept_features(chunked_sentences, inds_list, feat_obj)
+        text_features = [ feat_obj.concept_features(s,inds) for s,inds in zip(chunked_sentences,inds_list) ]
+        flattened_text_features = flatten(text_features)
+
+
+        print '\tvectorizing features (pass two)'
 
         if globals_cliner.verbosity > 0: print '\tvectorizing features (pass two)'
 
         # Vectorize features
-        vectorized_features = self._second_vec.transform(text_features)
+        vectorized_features = self._second_vec.transform(flattened_text_features)
 
         if globals_cliner.verbosity > 0: print '\tpredicting    labels (pass two)'
 
@@ -613,50 +594,5 @@ def second_pass_data(note):
     inds              = note.getConceptIndices()
 
     return chunked_sentences, inds
-
-
-
-
-
-
-def partition_prose(data, Y, feat_obj):
-
-    '''
-    partition_prose
-
-    Purpose: Partition data (and corresponding labels) into prose and nonprose sections
-
-    @param data. list of tokenized sentences
-    @param Y.    list of corresponding labels for tokenized sentences
-    @return <tuple> whose four elements are:
-            0) foo
-            1) bar
-            2) baz
-            3) quux
-
-    >>> ...
-    >>> data = ...
-    >>> Y = ...
-    >>> feat_obj = ... # eventually want to get rid of this argument
-    >>> partition_prose(data, Y, feat_obj)
-    ...
-    '''
-
-    # FIXME 0000a - separate the partition from the feature extraction
-
-    prose    = []
-    nonprose = []
-    pchunks = []
-    nchunks = []
-    for line,labels in zip(data,Y):
-        isProse,feats = feat_obj.extract_IOB_features(line)
-        if isProse:
-            prose.append(feats)
-            pchunks += labels
-        else:
-            nonprose.append(feats)
-            nchunks += labels
-
-    return prose, nonprose, pchunks, nchunks
 
 
