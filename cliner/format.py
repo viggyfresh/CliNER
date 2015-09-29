@@ -137,7 +137,6 @@ def main():
 
 
     # Clean up
-    os.close(os_handle)
     os.remove(tmp_file)
     if out_file:
         out_f.close()

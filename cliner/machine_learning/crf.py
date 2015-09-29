@@ -131,7 +131,6 @@ def train(X, Y, do_grid):
     os.close(os_handle)
 
     # Remove the temporary file
-    os.close(os_handle)
     os.remove(tmp_file)
 
     return model
