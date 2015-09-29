@@ -14,7 +14,8 @@ import pycrfsuite
 
 count = 0
 
-tmp_dir = os.path.join(os.environ["CLINER_DIR"], "cliner/tmp_files_dir")
+#tmp_dir = os.path.join(os.environ["CLINER_DIR"], "cliner/tmp_files_dir")
+tmp_dir = '/tmp'
 
 def format_features(rows, labels=None):
 
@@ -108,37 +109,31 @@ def train(X, Y, do_grid):
     #            print >>f, y, '\t', x.nonzero()[1][0]
     #        print >>f
 
-
     # Format features fot crfsuite
     feats = format_features(X,Y)
-
 
     # Create a Trainer object.
     trainer = pycrfsuite.Trainer(verbose=False)
     for xseq, yseq in pycrf_instances(feats, labeled=True):
         trainer.append(xseq, yseq)
 
-
     # Set paramters
     if do_grid:
         'Grid Search not implemented yet'
 
-
     # Train the model
-    tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="crf_temp")[1]
+    os_handle,tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="crf_temp")
 
     trainer.train(tmp_file)
-
 
     # Read the trained model into a string
     model = ''
     with open(tmp_file, 'rb') as f:
         model = f.read()
 
-
     # Remove the temporary file
+    os.close(os_handle)
     os.remove(tmp_file)
-
 
     return model
 
@@ -151,20 +146,18 @@ def predict(clf, X):
     feats = format_features(X)
 
     # Dump the model into a temp file
-    tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="crf_temp")[1]
+    os_handle,tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="crf_temp")
 
     with open(tmp_file, 'wb') as f:
         f.write(clf)
-
 
     # Create the Tagger object
     tagger = pycrfsuite.Tagger()
     tagger.open(tmp_file)
 
-
     # Remove the temp file
+    os.close(os_handle)
     os.remove(tmp_file)
-
 
     # Tag the sequence
     retVal = []
@@ -180,6 +173,5 @@ def predict(clf, X):
     #        x = x[0]
     #        print >>f, y, '\t', x[:-2]
     #    print >>f
-
 
     return retVal

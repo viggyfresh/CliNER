@@ -92,6 +92,8 @@ class SentenceFeatures:
         for i,word in enumerate(sentence):
             features_list.append(self.feat_word.IOB_prose_features(sentence[i]))
 
+        #return features_list
+
         # Feature: Bag of Words unigram conext (window=3)
         if 'unigram_context' in self.enabled_IOB_prose_sentence_features:
             window = 3
@@ -227,21 +229,23 @@ class SentenceFeatures:
         return features_list
 
 
+
     def IOB_nonprose_features(self, sentence):
         """
         IOB_nonprose_features
-        
+
         @param sentence. A list of strings
         @return          A list of dictionaries of features
-        
+
         """
-        
+
         # Get a feature set for each word in the sentence
         features_list = []
         for i,word in enumerate(sentence):
             word_feats = self.feat_word.IOB_nonprose_features(sentence[i])
             features_list.append( word_feats )
 
+        #return features_list
 
         # Feature: Bag of Words unigram conext (window=3)
         if 'unigram_context' in self.enabled_IOB_nonprose_sentence_features:
@@ -350,6 +354,8 @@ class SentenceFeatures:
         features_list = []
         for ind in chunk_inds:
             features_list.append( self.feat_word.concept_features_for_chunk(sentence,ind) )
+
+        #return features_list
 
 
         # Allow for particular features to be enabled

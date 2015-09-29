@@ -15,9 +15,12 @@ __date__   = 'Nov. 6, 2014'
 
 
 import string
+import re
+import nltk
 
 from abstract_note import AbstractNote
 from utilities_for_notes import classification_cmp, lineno_and_tokspan
+
 
 
 class Note_i2b2(AbstractNote):
@@ -42,7 +45,6 @@ class Note_i2b2(AbstractNote):
 
 
     def getClassificationTuples(self):
-
         # return value
         retVal = []
 
@@ -78,6 +80,9 @@ class Note_i2b2(AbstractNote):
 
 
     def read_standard(self, txt, con=None):
+
+        print 'ERROR: MAKE SURE TOKENIZATION IN READ_STANDARD()'
+        exit()
 
         start = 0
         end = 0
@@ -162,34 +167,61 @@ class Note_i2b2(AbstractNote):
         start = 0
         end = 0
 
+        sent_tokenize = lambda text: text.split('\n')
+        word_tokenize = lambda text: text.split(' ')
+
         # Read in the medical text
         with open(txt) as f:
-
             # Original text file
             self.text = f.read().strip('\n')
 
-            i = 0
-            for line in self.text.split('\n'):
-                end += len(line) + 1
-                self.line_inds.append( (start,end-1) )
-                start = end
+            #i = 0
+            sentences = sent_tokenize(self.text)
+            for sentence in sentences:
 
-                # Strip away non-printable characters
-                line = filter(lambda x: x in string.printable, line)
+                # NOTE - technically, assumes every sentence is unique
+                # Get verbatim slice into sentence
+                start += self.text[start:].index(sentence)
+                end = start + len(sentence)
 
-                # Add sentence to the data list
-                self.data.append(line.split(' '))
+                #print '<%s>' % sentence
+                #print '\n\n||||||||||\n\n'
+                #print start, end
+                #print '<%s>' % self.text[start:end]
+                #print
+
+                #print '<<<%s>>>' % self.text[start:start+20]
+                #print
+                #print '[[%s]]' % self.text[start]
+                #print '[[%s]]' % self.text[start+1]
+                #print '[[%s]]' % self.text[start+2]
+                #print '[[%s]]' % self.text[start+3]
+                #print '\n'*10
+
+                self.line_inds.append( (start,end) )
+
+                # FIXME - Should we be removing unprintable?
+                sent = filter(lambda x: x in string.printable, sentence)
+                self.data.append(word_tokenize(sent))
+
+                #i += 1
+                #if i < 4: continue
+                #exit()
+
 
         # TEST - is line_inds correct?
-        #print self.line_inds
         #i = 0
         #for line,span in zip(self.data,self.line_inds):
         #    start,end = span
-        #    print '<t>' + self.text[start:end] + '</t>'
-        #    print '<l>' + ' '.join(line)       + '</l>'
-        #    print
+        #    print 'line: ', i+1
+        #    print 'inds: ', span
+        #    toks = word_tokenize(self.text[start:end].replace('\n','\t\t'))
+        #    print '<t>' + ' '.join(toks)                       + '</t>'
+        #    print '<l>' + ' '.join(line).replace('\n','\t\t')  + '</l>'
+        #    print '\n'
         #    i += 1
-        #    if i == 13: exit()
+        #    #if i == 4: exit()
+        #exit()
 
         # If an accompanying concept file was specified, read it
         if con:
@@ -285,6 +317,7 @@ class Note_i2b2(AbstractNote):
             #print "start:          ", start
             #print "end             ", end
             #print "text:           ", text
+            #print 'len(text):      ', len(text)
             #print "text[start]:    ", text[start]
             #print "concept:        ", concept
 
@@ -292,6 +325,8 @@ class Note_i2b2(AbstractNote):
             datum = text[start]
             for j in range(start, end):
                 datum += " " + text[j+1]
+
+            #print 'datum:          ', datum
 
             # Line:TokenNumber of where the concept starts and ends
             idx1 = "%d:%d" % (lineno, start)
@@ -308,5 +343,5 @@ class Note_i2b2(AbstractNote):
             retStr +=  "c=\"%s\" %s %s||t=\"%s\"\n" % (datum, idx1, idx2, label)
 
         # return formatted data
-        return retStr
+        return retStr.strip()
 

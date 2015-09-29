@@ -39,9 +39,9 @@ class WordFeatures:
     def IOB_prose_features(self, word):
         """
         IOB_prose_features()
-        
+
         Purpose: Creates a dictionary of prose  features for the given word.
-        
+
         @param word. A string
         @return      A dictionary of features
 
@@ -50,54 +50,50 @@ class WordFeatures:
         True
         """
         # Feature: <dummy>
-        features = {('dummy', None): 1}  # always have >0 dimensions
+        features = {}
+        #features = {('dummy', None): 1}  # always have >0 dimensions
 
-        # Allow for particular features to be enabled
-        for feature in self.enabled_IOB_prose_word_features:
+        if "word" in self.enabled_IOB_prose_word_features:
+            features[('word', word.lower())] = 1
 
-            if feature == "word":
-                features[(feature, word.lower())] = 1
+        #return features
 
-            if feature == "stem_lancaster":
-                features[ (feature, lancaster_st.stem(word.lower())) ] = 1
+        if "stem_lancaster" in self.enabled_IOB_prose_word_features:
+            features[ ('stem_lancaster', lancaster_st.stem(word.lower())) ] = 1
 
-            # Feature: Generic# stemmed word
-            if feature == 'Generic#':
-                generic = re.sub('[0-9]','0',word)
-                features[ ('Generic#',generic) ] = 1
+        if 'Generic#' in self.enabled_IOB_prose_word_features:
+            generic = re.sub('[0-9]','0',word)
+            features[ ('Generic#',generic) ] = 1
 
-            # Feature: Last two leters of word
-            if feature == 'last_two_letters':
-                features[ ('last_two_letters',word[-2:]) ] = 1
+        if 'last_two_letters' in self.enabled_IOB_prose_word_features:
+            features[ ('last_two_letters',word[-2:]) ] = 1
 
+        if "length" in self.enabled_IOB_prose_word_features:
+            features[('length', None)] = len(word)
 
-            if feature == "length":
-                features[(feature, None)] = len(word)
+        if "stem_porter" in self.enabled_IOB_prose_word_features:
+            features[('stem_porter', porter_st.stem(word))] = 1
 
-            if feature == "stem_porter":
-                features[(feature, porter_st.stem(word))] = 1
+        if "mitre" in self.enabled_IOB_prose_word_features:
+            for f in self.mitre_features:
+                if re.search(self.mitre_features[f], word):
+                    features[('mitre', f)] = 1
 
-
-            if feature == "mitre":
-                for f in self.mitre_features:
-                    if re.search(self.mitre_features[f], word):
-                        features[(feature, f)] = 1
-
-            if feature == "word_shape":
-                wordShapes = getWordShapes(word)
-                for shape in wordShapes:
-                    features[(feature, shape)] = 1
-
+        if "word_shape" in self.enabled_IOB_prose_word_features:
+            wordShapes = getWordShapes(word)
+            for shape in wordShapes:
+                features[('word_shape', shape)] = 1
 
         return features
+
 
 
     def IOB_nonprose_features(self, word):
         """
         IOB_nonprose_features()
-        
+
         Purpose: Creates a dictionary of nonprose features for the given word.
-        
+
         @param word. A string
         @return      A dictionary of features
 
@@ -105,31 +101,30 @@ class WordFeatures:
         >>> wf.IOB_nonprose_features('test') is not None
         True
         """
-        
+
         features = {}
 
         # Feature: The word, itself
         features[('word', word.lower())] = 1
 
-        # Allow for particular features to be enabled
-        for feature in self.enabled_IOB_nonprose_word_features:
+        #return features
 
-            # Feature: Mitre
-            if feature == "mitre":
-                for f in self.mitre_features:
-                    if re.search(self.mitre_features[f], word):
-                        features[('mitre', f)] = 1
+        # Feature: Mitre
+        if "mitre" in self.enabled_IOB_nonprose_word_features:
+            for f in self.mitre_features:
+                if re.search(self.mitre_features[f], word):
+                    features[('mitre', f)] = 1
 
-            # Feature: Word Shape
-            if feature == "word_shape":
-                wordShapes = getWordShapes(word)
-                for shape in wordShapes:
-                    features[('word_shape', shape)] = 1
+        # Feature: Word Shape
+        if "word_shape" in self.enabled_IOB_nonprose_word_features:
+            wordShapes = getWordShapes(word)
+            for shape in wordShapes:
+                features[('word_shape', shape)] = 1
 
-            # Feature: QANN features
-            if feature == 'QANN':
-                qann_feats = self.QANN_features(word)
-                features.update(qann_feats)
+        # Feature: QANN features
+        if 'QANN' in self.enabled_IOB_nonprose_word_features:
+            qann_feats = self.QANN_features(word)
+            features.update(qann_feats)
 
         return features
 
@@ -142,7 +137,7 @@ class WordFeatures:
         concept_features_for_word()
 
         Purpose: Creates a dictionary of concept features for the given word.
- 
+
         @param  word. A word to generate features for
         @return       A dictionary of features
 
@@ -153,76 +148,72 @@ class WordFeatures:
 
         features = {}
 
-        # Allow for particular features to be enabled
-        for feature in self.enabled_concept_features:
+        # Feature: Uncased Word
+        if "word" in self.enabled_concept_features:
+            features[ ("word",word.lower()) ] = 1
 
-            # Feature: Uncased Word
-            if feature == "word":
-                features[ ("word",word.lower()) ] = 1
+        #return features
 
+        '''
+        # Feature: Porter Stem
+        if "stem_porter" in self.enabled_concept_features:
+            st = nltk.stem.PorterStemmer()
+            features[ ("stem_poter", st.stem(word)) ] = 1
 
-            '''
-            # Feature: Porter Stem
-            if feature == "stem_porter":
-                st = nltk.stem.PorterStemmer()
-                features[ ("stem_poter", st.stem(word)) ] = 1
+        # Feature: Lancaster Stem
+        if "stem_lancaster" in self.enabled_concept_features:
+            st = nltk.stem.LancasterStemmer()
+            features[ ("stem_lancaster", st.stem(word)) ] = 1
+        '''
 
-            # Feature: Lancaster Stem
-            if feature == "stem_lancaster":
-                st = nltk.stem.LancasterStemmer()
-                features[ ("stem_lancaster", st.stem(word)) ] = 1
-            '''
+        '''
+        # Feature: First Four Letters
+        if "prefix" in self.enabled_concept_features:
+            prefix = word[:4].lower()
+            features[ ("prefix",prefix) ] = 1
+        '''
 
-            '''
-            # Feature: First Four Letters
-            if feature == "prefix":
-                prefix = word[:4].lower()
-                features[ ("prefix",prefix) ] = 1
-            '''
+        '''
+        # Use: None
+        # Feature: Length
+        if "length" in self.enabled_concept_features:
+            features[ ("length",None) ] = len(word)
+        '''
 
-            '''
-            # Use: None
-            # Feature: Length
-            if feature == "length":
-                features[ ("length",None) ] = len(word)
-            '''
+        # Feature: Metric Unit
+        if "metric_unit" in self.enabled_concept_features:
+            unit = None
+            if self.is_weight(word):
+                unit = 'weight'
+            elif self.is_size(word):
+                unit = 'size'
+            elif self.is_volume(word):
+                unit = 'volume'
+            features[('metric_unit',unit)] = 1
 
-            # Feature: Metric Unit
-            if feature == "metric_unit":
-                unit = None
-                if self.is_weight(word):
-                    unit = 'weight'
-                elif self.is_size(word):
-                    unit = 'size'
-                elif self.is_volume(word):
-                    unit = 'volume'
-                features[('metric_unit',unit)] = 1
+        '''
+        # Feature: Date
+        if 'date' in self.enabled_concept_features:
+            if self.is_date(word):
+                features[('date',None)] = 1
 
-            '''
-            # Feature: Date
-            if feature == 'date':
-                if self.is_date(word):
-                    features[('date',None)] = 1
+        # Feature: Directive
+        if 'directive' in self.enabled_concept_features:
+            if self.is_directive(word):
+                features[('directive',None)] = 1
 
-            # Feature: Directive
-            if feature == 'directive':
-                if self.is_directive(word):
-                    features[('directive',None)] = 1
+        # Feature: Mitre
+        if "mitre" in self.enabled_concept_features:
+            for f in self.mitre_features:
+                if re.search(self.mitre_features[f], word):
+                    features[('mitre', f)] = 1
 
-            # Feature: Mitre
-            if feature == "mitre":
-                for f in self.mitre_features:
-                    if re.search(self.mitre_features[f], word):
-                        features[('mitre', f)] = 1
-
-            # Feature: Word Shape
-            if feature == "word_shape":
-                wordShapes = getWordShapes(word)
-                for shape in wordShapes:
-                    features[('word_shape', shape)] = 1
-            '''
-
-
+        # Feature: Word Shape
+        if "word_shape" in self.enabled_concept_features:
+            wordShapes = getWordShapes(word)
+            for shape in wordShapes:
+                features[('word_shape', shape)] = 1
+        '''
 
         return features
 
@@ -238,38 +229,36 @@ class WordFeatures:
 
         """
 
-        features = {'dummy':1}
+        #features = {'dummy':1}
+        features = {}
 
         # Word-level features for each word of the chunk
+        #print 'sent[ind]: <%s>' % sentence[ind]
         for w in sentence[ind].split():
             word_features = self.concept_features_for_word(w)
             features.update(word_features)
 
-        return features
+        #return features
 
-        # Context windows
-        for feature in self.enabled_concept_features:
+        # Feature: Previous word
+        if "previous_word_stem" in self.enabled_concept_features:
+            if ind != 0:
+                prev_ind = ind - 1
+                prev_chunk = sentence[prev_ind].split()
+                prev_word = porter_st.stem( prev_chunk[-1] )
+                features[ ('prev_word_stem',prev_word) ] = 1
+            else:
+                features[ ('prev_word_stem','<START>') ] = 1
 
-            # Feature: Previous word
-            if feature == "previous_word_stem":
-                if ind != 0:
-                    prev_ind = ind - 1
-                    prev_chunk = sentence[prev_ind].split()
-                    prev_word = porter_st.stem( prev_chunk[-1] )
-                    features[ ('prev_word_stem',prev_word) ] = 1
-                else:
-                    features[ ('prev_word_stem','<START>') ] = 1
-
-            # Feature: Previous word
-            if feature == "next_word_stem":
-                if ind != len(sentence)-1:
-                    next_ind = ind + 1
-                    next_chunk = sentence[next_ind].split()
-                    next_word = porter_st.stem( next_chunk[0] )
-                    features[ ('next_word_stem',next_word) ] = 1
-                else:
-                    features[ ('next_word_stem','<END>') ] = 1
-
+        # Feature: Previous word
+        if "next_word_stem" in self.enabled_concept_features:
+            if ind != len(sentence)-1:
+                next_ind = ind + 1
+                next_chunk = sentence[next_ind].split()
+                next_word = porter_st.stem( next_chunk[0] )
+                features[ ('next_word_stem',next_word) ] = 1
+            else:
+                features[ ('next_word_stem','<END>') ] = 1
 
         return features
 
@@ -302,16 +291,16 @@ class WordFeatures:
         """
         QANN_features()
 
-        Purpose: Creates a dictionary of QANN features for the given word. 
+        Purpose: Creates a dictionary of QANN features for the given word.
 
         @param word. A string
         @return      A dictionary of features
-        
+
         >>> wf = WordFeatures()
         >>> wf.QANN_features('test') is not None
         True
         """
-                                                                      
+
         features = {}
 
         # Feature: test result
@@ -346,6 +335,8 @@ class WordFeatures:
 
         return features
 
+
+
     # note: make spaces optional?
     # Check about the documentation for this.
     def is_test_result(self, context):
@@ -374,6 +365,7 @@ class WordFeatures:
         if not re.search(regex, context):
             return re.search(r"^[A-Za-z]+ was (positive|negative)", context)
         return True
+
 
     def is_measurement(self, word):
         """
@@ -407,6 +399,7 @@ class WordFeatures:
         regex = r"^[0-9]*( )?(unit(s)|cc|L|mL|dL)$"
         return re.search(regex, word)
 
+
     def is_directive(self, word):
         """
         is_directive()
@@ -419,23 +412,24 @@ class WordFeatures:
         >>> wf = WordFeatures()
         >>> wf.is_directive('q.abc') is not None
         True
-        >>> wf.is_directive('qAD') is not None 
+        >>> wf.is_directive('qAD') is not None
         True
-        >>> wf.is_directive('PRM') is not None 
+        >>> wf.is_directive('PRM') is not None
         True
-        >>> wf.is_directive('bid') is not None 
+        >>> wf.is_directive('bid') is not None
         True
-        >>> wf.is_directive('prm') is not None 
+        >>> wf.is_directive('prm') is not None
         True
-        >>> wf.is_directive('p.abc') is not None 
+        >>> wf.is_directive('p.abc') is not None
         True
-        >>> wf.is_directive('qABCD') is not None 
+        >>> wf.is_directive('qABCD') is not None
         False
-        >>> wf.is_directive('BID') is not None 
+        >>> wf.is_directive('BID') is not None
         False
         """
         regex = r"^(q\..*|q..|PRM|bid|prm|p\..*)$"
         return re.search(regex, word)
+
 
     def is_date(self, word):
         """
@@ -461,11 +455,12 @@ class WordFeatures:
         regex= r'^(\d\d\d\d-\d\d-\d|\d\d?-\d\d?-\d\d\d\d?|\d\d\d\d-\d\d?-\d\d?)$'
         return re.search(regex,word)
 
+
     def is_volume(self, word):
         """
         is_volume()
 
-        Purpose: Checks if word is a volume. 
+        Purpose: Checks if word is a volume.
 
         @param word. A string.
         @return      the matched object if it is a volume, otherwise None.
@@ -485,6 +480,7 @@ class WordFeatures:
         regex = r"^[0-9]*( )?(ml|mL|dL)$"
         return re.search(regex, word)
 
+
     def is_weight(self, word):
         """
         is_weight()
@@ -497,21 +493,22 @@ class WordFeatures:
         >>> wf = WordFeatures()
         >>> wf.is_weight('1mg') is not None
         True
-        >>> wf.is_weight('10 g') is not None 
+        >>> wf.is_weight('10 g') is not None
         True
-        >>> wf.is_weight('78 mcg') is not None  
+        >>> wf.is_weight('78 mcg') is not None
         True
-        >>> wf.is_weight('10000 milligrams') is not None  
+        >>> wf.is_weight('10000 milligrams') is not None
         True
-        >>> wf.is_weight('14 grams') is not None  
+        >>> wf.is_weight('14 grams') is not None
         True
-        >>> wf.is_weight('-10 g') is not None  
+        >>> wf.is_weight('-10 g') is not None
         False
         >>> wf.is_weight('grams') is not None
         True
         """
         regex = r"^[0-9]*( )?(mg|g|mcg|milligrams|grams)$"
         return re.search(regex, word)
+
 
     def is_size(self, word):
         """
@@ -525,21 +522,22 @@ class WordFeatures:
         >>> wf = WordFeatures()
         >>> wf.is_size('1mm') is not None
         True
-        >>> wf.is_size('10 cm') is not None   
+        >>> wf.is_size('10 cm') is not None
         True
-        >>> wf.is_size('36 millimeters') is not None   
+        >>> wf.is_size('36 millimeters') is not None
         True
-        >>> wf.is_size('423 centimeters') is not None   
+        >>> wf.is_size('423 centimeters') is not None
         True
-        >>> wf.is_size('328') is not None   
+        >>> wf.is_size('328') is not None
         False
-        >>> wf.is_size('22 meters') is not None   
+        >>> wf.is_size('22 meters') is not None
         False
-        >>> wf.is_size('millimeters') is not None  
+        >>> wf.is_size('millimeters') is not None
         True
         """
         regex = r"^[0-9]*( )?(mm|cm|millimeters|centimeters)$"
         return re.search(regex, word)
+
 
     def is_prognosis_location(self, word):
         """
@@ -562,6 +560,7 @@ class WordFeatures:
         """
         regex = r"^(c|C)[0-9]+(-(c|C)[0-9]+)*$"
         return re.search(regex, word)
+
 
     def has_problem_form(self, word):
         """
@@ -589,6 +588,7 @@ class WordFeatures:
         regex = r".*(ic|is)$"
         return re.search(regex, word)
 
+
     def get_def_class(self, word):
         """
         get_def_class()
@@ -603,25 +603,25 @@ class WordFeatures:
         >>> wf = WordFeatures();
         >>> wf.get_def_class('eval')
         1
-        >>> wf.get_def_class('rate') 
+        >>> wf.get_def_class('rate')
         1
-        >>> wf.get_def_class('tox') 
+        >>> wf.get_def_class('tox')
         1
-        >>> wf.get_def_class('swelling') 
+        >>> wf.get_def_class('swelling')
         2
-        >>> wf.get_def_class('mass') 
+        >>> wf.get_def_class('mass')
         2
-        >>> wf.get_def_class('broken') 
+        >>> wf.get_def_class('broken')
         2
-        >>> wf.get_def_class('therapy') 
+        >>> wf.get_def_class('therapy')
         3
-        >>> wf.get_def_class('vaccine') 
+        >>> wf.get_def_class('vaccine')
         3
-        >>> wf.get_def_class('treatment') 
+        >>> wf.get_def_class('treatment')
         3
-        >>> wf.get_def_class('unrelated') 
+        >>> wf.get_def_class('unrelated')
         0
-        """ 
+        """
         test_terms = {
             "eval", "evaluation", "evaluations",
             "sat", "sats", "saturation",

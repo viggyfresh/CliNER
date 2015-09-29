@@ -48,7 +48,6 @@ def main():
     parser.add_argument("-f",
         dest = "format",
         help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )",
-        default = 'i2b2'
     )
 
     parser.add_argument("-g",
@@ -75,7 +74,13 @@ def main():
 
 
     # data format
-    format = args.format
+    if args.format:
+        format = args.format
+    else:
+        print '\n\tERROR: must provide "format" argument\n'
+        exit()
+
+
 
 
     # Must specify output format
@@ -101,7 +106,7 @@ def main():
 
 
     # Train the model
-    train(training_list, args.model, format, is_crf=is_crf, grid=args.grid)
+    train(training_list, args.model, format, is_crf, args.grid)
 
 
 
@@ -110,24 +115,20 @@ def train(training_list, model_path, format, is_crf=True, grid=False):
     # Read the data into a Note object
     notes = []
     for txt, con in training_list:
-        note_tmp = Note(format)       # Create Note
-        note_tmp.read(txt, con)       # Read data into Note
-        notes.append(note_tmp)        # Add the Note to the list
-
+        note_tmp = Note(format)   # Create Note
+        note_tmp.read(txt, con)   # Read data into Note
+        notes.append(note_tmp)    # Add the Note to the list
 
     # file names
     if not notes:
         print 'Error: Cannot train on 0 files. Terminating train.'
         return 1
 
-
     # Create a Machine Learning model
     model = Model(is_crf=is_crf)
 
-
     # Train the model using the Note's data
     model.train(notes, grid)
-
 
     # Pickle dump
     print 'pickle dump'

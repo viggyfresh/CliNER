@@ -310,7 +310,6 @@ def main():
     parser.add_argument("-f",
         dest = "format",
         help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )",
-        default = 'i2b2'
     )
 
     parser.add_argument("-o",
@@ -321,7 +320,12 @@ def main():
 
     # Parse command line arguments
     args = parser.parse_args()
-    format = args.format
+
+    if args.format:
+        format = args.format
+    else:
+        print '\n\tERROR: must provide "format" argument\n'
+        exit()
 
 
     # Is output destination specified?
