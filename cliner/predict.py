@@ -34,7 +34,7 @@ def main():
     parser.add_argument("-o",
         dest = "output",
         help = "The directory to write the output",
-        default = os.path.join(os.getenv('CLINER_DIR'), 'data/test_predictions')
+        default = os.path.join(os.getenv('CLINER_DIR'), 'data/predictions')
     )
 
     parser.add_argument("-m",
@@ -51,8 +51,7 @@ def main():
     parser.add_argument("-crf",
         dest = "with_crf",
         help = "Specify where to find crfsuite",
-
-      default = None
+        default = None
     )
 
     args = parser.parse_args()

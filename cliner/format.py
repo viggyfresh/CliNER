@@ -22,7 +22,7 @@ from notes.note import Note
 
 import tempfile
 
-tmp_dir = os.path.join(os.environ["CLINER_DIR"], "cliner/tmp_files_dir")
+tmp_dir = '/tmp'
 
 def create_filename(odir, bfile, extension):
     fname = os.path.basename(bfile) + extension
@@ -116,9 +116,9 @@ def main():
     internal_output = in_note.write_standard()
 
     os_handle,tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="format_temp")
-
     with open(tmp_file, 'w') as f:
         f.write(internal_output)
+    os.close(os_handle)
 
     #print internal_output
 

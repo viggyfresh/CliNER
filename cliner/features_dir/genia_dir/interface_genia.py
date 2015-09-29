@@ -21,7 +21,7 @@ import tempfile
 from commands import getstatusoutput
 from genia_cache import GeniaCache
 
-tmp_dir = os.path.join(os.environ["CLINER_DIR"], "cliner/tmp_files_dir")
+tmp_dir = '/tmp'
 
 def genia(geniatagger, data):
 
