@@ -46,7 +46,6 @@ def main():
     parser.add_argument("-f",
         dest = "format",
         help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )",
-        default = 'i2b2'
     )
 
     parser.add_argument("-crf",
@@ -61,7 +60,13 @@ def main():
     # Parse arguments
     files = glob.glob(args.input)
     helper.mkpath(args.output)
-    format = args.format
+
+    if args.format:
+        format = args.format
+    else:
+        print '\n\tERROR: must provide "format" argument\n'
+        exit()
+
 
 
     # Predict
@@ -94,8 +99,17 @@ def predict(files, model_path, output_dir, format):
     n = len(files)
     for i,txt in enumerate(sorted(files)):
 
-        # Read the data into a Note object
         note = Note(format)
+
+        # Output file
+        extension = note.getExtension()
+        fname = os.path.splitext(os.path.basename(txt))[0] + '.' + extension
+        out_path = os.path.join(output_dir, fname)
+        #if os.path.exists(out_path):
+        #    print '\tWARNING: prediction file already exists (%s)' % out_path
+        #    continue
+
+        # Read the data into a Note object
         note.read(txt)
 
 
@@ -108,14 +122,10 @@ def predict(files, model_path, output_dir, format):
         labels = model.predict(note)
 
         # Get predictions in proper format
-        extension = note.getExtension()
         output = note.write(labels)
 
         #print output
 
-        # Output file
-        fname = os.path.splitext(os.path.basename(txt))[0] + '.' + extension
-        out_path = os.path.join(output_dir, fname)
 
         # Output the concept predictions
         print '\n\nwriting to: ', out_path

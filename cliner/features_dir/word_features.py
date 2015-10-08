@@ -71,15 +71,15 @@ def QANN_features(word):
     """
     QANN_features()
 
-    Purpose: Creates a dictionary of QANN features for the given word. 
+    Purpose: Creates a dictionary of QANN features for the given word.
 
     @param word. A string
     @return      A dictionary of features
-    
+
     >>> QANN_features('test') is not None
     True
     """
-                                                                  
+
     features = {}
 
     # Feature: test result
@@ -138,9 +138,9 @@ enabled_IOB_prose_word_features = frozenset( [feature_generic, feature_last_two_
 def IOB_prose_features(word):
     """
     IOB_prose_features()
-    
+
     Purpose: Creates a dictionary of prose  features for the given word.
-    
+
     @param word. A string
     @return      A dictionary of features
 
@@ -164,16 +164,16 @@ enabled_IOB_nonprose_word_features = frozenset( [feature_word, feature_word_shap
 def IOB_nonprose_features(word):
     """
     IOB_nonprose_features()
-    
+
     Purpose: Creates a dictionary of nonprose features for the given word.
-    
+
     @param word. A string
     @return      A dictionary of features
 
     >>> IOB_nonprose_features('test') is not None
     True
     """
-    
+
     # Feature: <dummy>
     features = {('dummy', None): 1}  # always have >0 dimensions
 
@@ -333,19 +333,19 @@ def is_directive(word):
 
     >>> is_directive('q.abc') is not None
     True
-    >>> is_directive('qAD') is not None 
+    >>> is_directive('qAD') is not None
     True
-    >>> is_directive('PRM') is not None 
+    >>> is_directive('PRM') is not None
     True
-    >>> is_directive('bid') is not None 
+    >>> is_directive('bid') is not None
     True
-    >>> is_directive('prm') is not None 
+    >>> is_directive('prm') is not None
     True
-    >>> is_directive('p.abc') is not None 
+    >>> is_directive('p.abc') is not None
     True
-    >>> is_directive('qABCD') is not None 
+    >>> is_directive('qABCD') is not None
     False
-    >>> is_directive('BID') is not None 
+    >>> is_directive('BID') is not None
     False
     """
     regex = r"^(q\..*|q..|PRM|bid|prm|p\..*)$"
@@ -378,7 +378,7 @@ def is_volume(word):
     """
     is_volume()
 
-    Purpose: Checks if word is a volume. 
+    Purpose: Checks if word is a volume.
 
     @param word. A string.
     @return      the matched object if it is a volume, otherwise None.
@@ -408,15 +408,15 @@ def is_weight(word):
 
     >>> is_weight('1mg') is not None
     True
-    >>> is_weight('10 g') is not None 
+    >>> is_weight('10 g') is not None
     True
-    >>> is_weight('78 mcg') is not None  
+    >>> is_weight('78 mcg') is not None
     True
-    >>> is_weight('10000 milligrams') is not None  
+    >>> is_weight('10000 milligrams') is not None
     True
-    >>> is_weight('14 grams') is not None  
+    >>> is_weight('14 grams') is not None
     True
-    >>> is_weight('-10 g') is not None  
+    >>> is_weight('-10 g') is not None
     False
     >>> is_weight('grams') is not None
     True
@@ -435,17 +435,17 @@ def is_size(word):
 
     >>> is_size('1mm') is not None
     True
-    >>> is_size('10 cm') is not None   
+    >>> is_size('10 cm') is not None
     True
-    >>> is_size('36 millimeters') is not None   
+    >>> is_size('36 millimeters') is not None
     True
-    >>> is_size('423 centimeters') is not None   
+    >>> is_size('423 centimeters') is not None
     True
-    >>> is_size('328') is not None   
+    >>> is_size('328') is not None
     False
-    >>> is_size('22 meters') is not None   
+    >>> is_size('22 meters') is not None
     False
-    >>> is_size('millimeters') is not None  
+    >>> is_size('millimeters') is not None
     True
     """
     regex = r"^[0-9]*( )?(mm|cm|millimeters|centimeters)$"
@@ -510,25 +510,25 @@ def get_def_class(word):
                  0 otherwise.
     >>> get_def_class('eval')
     1
-    >>> get_def_class('rate') 
+    >>> get_def_class('rate')
     1
-    >>> get_def_class('tox') 
+    >>> get_def_class('tox')
     1
-    >>> get_def_class('swelling') 
+    >>> get_def_class('swelling')
     2
-    >>> get_def_class('mass') 
+    >>> get_def_class('mass')
     2
-    >>> get_def_class('broken') 
+    >>> get_def_class('broken')
     2
-    >>> get_def_class('therapy') 
+    >>> get_def_class('therapy')
     3
-    >>> get_def_class('vaccine') 
+    >>> get_def_class('vaccine')
     3
-    >>> get_def_class('treatment') 
+    >>> get_def_class('treatment')
     3
-    >>> get_def_class('unrelated') 
+    >>> get_def_class('unrelated')
     0
-    """ 
+    """
     test_terms = {
         "eval", "evaluation", "evaluations",
         "sat", "sats", "saturation",

@@ -32,13 +32,11 @@ supported_formats_help = "Data format ( " + ' | '.join(Note.supportedFormats()) 
 
 # Train
 @cliner.command()
-@click.option('--annotations'   , help='Concept files for training.'  )
-@click.option('--model'         , help='Model output by train.'       )
-@click.option('--format'        , help=supported_formats_help         )
-@click.option('--grid/--no-grid', help='Flag that enables grid search',
-              default=False)
-@click.option('--crf/--no-crf'  , help='Flag that enables crfsuite'   ,
-              default=True)
+@click.option('--annotations'   ,help='Concept files for training.'             )
+@click.option('--model'         ,help='Model output by train.'                  )
+@click.option('--format'        ,help=supported_formats_help                    )
+@click.option('--grid/--no-grid',help='Flag to enable grid search',default=False)
+@click.option('--crf/--no-crf'  ,help='Flag to enable crfsuite'   ,default=True )
 @click.argument('input')
 def train(annotations, model, format, grid, crf, input):
 
@@ -79,11 +77,11 @@ def train(annotations, model, format, grid, crf, input):
 
 # Predict
 @cliner.command()
-@click.option('--out'   , help='The directory to write the output')
-@click.option('--model' , help='Model used to predict on files'   )
-@click.option('--format', help=supported_formats_help             )
+@click.option('--out'     , help='The directory to write the output'           )
+@click.option('--model'   , help='Model used to predict on files'              )
+@click.option('--format'  , help=supported_formats_help                        )
 @click.argument('input')
-def predict(model, out, format, input):
+def predict(out, model, format, input):
 
     # Base directory
     BASE_DIR = os.environ.get('CLINER_DIR')
@@ -150,9 +148,9 @@ def evaluate(predictions, gold, out, format, input):
 
 # Format
 @cliner.command()
-@click.option('--annotations', help='Concept files for training.')
-@click.option('--format'     , help=supported_formats_help       )
-@click.option('--out'        , help='File to write the output.'  )
+@click.option('--annotations', help='Concept files for training.'                 )
+@click.option('--format'     , help=supported_formats_help                        )
+@click.option('--out'        , help='File to write the output.'                   )
 @click.argument('input')
 def format(annotations, format, out, input):
 

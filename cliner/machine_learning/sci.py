@@ -1,4 +1,4 @@
-import numpy as np  
+import numpy as np
 from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
 from sklearn.grid_search import GridSearchCV
@@ -25,17 +25,17 @@ def train(X, Y, do_grid):
 
     # Search space
     C_range     = 10.0 ** np.arange( -5, 9 )
-    gamma_range = 10.0 ** np.arange( -5 , 9 )
+    gamma_range = 10.0 ** np.arange( -5, 9 )
 
     # Grid search?
     if do_grid:
         print '\t\tperforming grid search'
 
-        estimates = LinearSVC() 
+        estimates = LinearSVC()
         parameters = [ {'C':C_range } ]
-            
+
         # Find best classifier
-        clf = GridSearchCV(estimates, parameters, score_func = f1_score, 
+        clf = GridSearchCV(estimates, parameters, score_func = f1_score,
                            n_jobs = cpu_count()                        )
         clf.fit(X, Y)
 

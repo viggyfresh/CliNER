@@ -113,7 +113,7 @@ class Note:
         """
         Purpose: Call derived object's reader
         """
-        retVal = self.derived_note.read(txt_file, con_file)
+        retVal = self.derived_note.read(txt_file, con_file,)
         self.getIOBLabels()
         return retVal
 
@@ -170,19 +170,48 @@ class Note:
         data = self.derived_note.data
         text = self.derived_note.text
 
+        #for d in data:
+        #    print d
+        #exit()
+
+        b_count = 0
+
         # Add 'B's and 'I's from concept spans
         for classification in self.derived_note.getClassificationTuples():
             concept,char_spans = classification
 
+            #print '\n\n'
+            #print concept
+            #print char_spans
+
             # Each span (could be noncontiguous span)
             for span in char_spans:
+                start_ind,end_ind = span
+                #print '\t', start_ind, end_ind
+                #print '\t', text[start_ind:end_ind]
+
                 lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span)
                 start,end = tokspan
 
+                #print '\t', lineno, tokspan
+                #print '\t\t', data[lineno]
+                #print '\t\t', data[lineno][tokspan[0]:tokspan[1]+1]
+                #print '\t\t', iobs[lineno]
+
                 # Update concept tokens to 'B's and 'I's
+                assert iobs[lineno][start] == 'O'
                 iobs[lineno][start] = 'B'
+                b_count += 1
+                #print 'B: ', b_count
                 for i in range(start+1,end+1):
+                    #print '\t\t\t', i
+                    assert iobs[lineno][i] == 'O'
                     iobs[lineno][i] = 'I'
+
+                #print '\t\t', iobs[lineno]
+
+            #exit()
+        #exit()
 
         # Memoize for next call
         self.iob_labels = iobs
@@ -247,9 +276,11 @@ class Note:
 
 
     def getConceptIndices(self):
-
         # Return value
         inds_list = []
+
+        #print len(filter(lambda l:l=='B', sum(self.iob_labels,[])))
+        #exit()
 
         # Line-by-line chunking
         for iobs in self.iob_labels:
@@ -270,7 +301,6 @@ class Note:
 
             # Add line from file
             inds_list.append(line)
-
 
         return inds_list
 

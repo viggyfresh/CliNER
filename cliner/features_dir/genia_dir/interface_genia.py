@@ -50,7 +50,7 @@ def genia(geniatagger, data):
         # write list to file and then feed it to GENIA
         genia_dir = os.path.dirname(geniatagger)
 
-        out = tempfile.mkstemp(dir=tmp_dir, suffix="genia_temp")[1]
+        os_handle,out = tempfile.mkstemp(dir=tmp_dir, suffix="genia_temp")
 
         with open(out, 'w') as f:
             for line in uncached: f.write(line + '\n')
@@ -76,6 +76,7 @@ def genia(geniatagger, data):
             cache.add_map(line,tags)
 
         # Remove temp file
+        os.close(os_handle)
         os.remove(out)
 
 

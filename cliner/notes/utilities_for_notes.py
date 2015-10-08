@@ -8,7 +8,10 @@
 
 
 import nltk.data
+import nltk.tokenize
 import re
+import string
+
 
 
 def classification_cmp(a,b):
@@ -48,6 +51,79 @@ def concept_cmp(a,b):
 
 # Helper function
 def lineno_and_tokspan(line_inds, data, text, char_span):
+    """ File character offsets => line number and index into line """
+
+    #print '\n\n\n'
+    #print char_span
+    #print '<<%s>>' % text[char_span[0]:char_span[1]]
+
+    # Locate line number
+    for i,candidate_span in enumerate(line_inds):
+        if char_span[1] <= candidate_span[1]:
+            lineno = i
+            break
+
+    phrase = text[char_span[0]:char_span[1]]
+    #print
+    #print 'PHRASE: <%s>' % phrase
+    #print
+
+    tokenized = data[lineno]
+    #print
+    #print 'TOKENIZED: ', tokenized
+    #print
+
+    # TODO make test case that has a false alarm token sequence
+
+    # Try to find token sequence that covers phrase
+    buf = phrase.strip()
+    tokens = []
+    i = 0
+    while i < len(tokenized):
+        token = tokenized[i]
+        #print '\tbuf: <%s>' % buf
+        #print '\ttok: <%s>' % token
+        #print
+        if buf.startswith(token):
+            buf = buf[len(token):].strip()
+            tokens.append(i)
+            if len(buf) == 0:
+                # Verify that this is the right span
+                tokspan = (tokens[0], tokens[-1])
+                span = lno_and_tokspan__to__char_span(line_inds,data,text,lineno,tokspan)
+                #print '\t\ttarget:    ', char_span
+                #print '\t\tcandidate: ', span
+                # If this is the wrong span, then reset
+                if span != char_span:
+                    buf = phrase.strip()
+                    while len(tokens) > 0:
+                        i -= 1
+                        tokens.pop()
+                    i += 1
+                else:
+                    break
+
+        else:
+            # Reset buffer
+            buf = phrase.strip()
+
+            # Backtrack (Mealy model)
+            while len(tokens) > 0:
+                i -= 1
+                tokens.pop()
+        i += 1
+
+    #print 'tokens: ', tokens
+    start_tok = tokens[ 0]
+    end_tok   = tokens[-1]
+
+    return lineno, (start_tok,end_tok)
+
+
+
+
+# Helper function
+def __old_lineno_and_tokspan(line_inds, data, text, char_span):
     """ File character offsets => line number and index into line """
     for i,span in enumerate(line_inds):
         if char_span[1] <= span[1]:
@@ -109,61 +185,58 @@ def lineno_and_tokspan(line_inds, data, text, char_span):
 # Helper function
 def lno_and_tokspan__to__char_span(line_inds, data, text, lineno, tokspan):
     """ File character offsets => line number and index into line """
+    # NOTE - makes no assumptions about what joins the tokens in the span
 
+    # Get char offsets for that sentence
+    #print '\n\n\n'
+    #print 'lineno: ', lineno
+    #print 'toks:   ', tokspan
     start,end = line_inds[lineno]
+    phrase = text[start:end]
+    #print 'start: ', start
+    #print 'end:   ', end
 
-    dataWithEmpty= text[start:end].replace('\n',' ').replace('\t',' ').split(' ')
+    # Get the list of tokens for that sentence
+    start_tok,end_tok = tokspan
+    toks = data[lineno][start_tok:end_tok+1]
 
-    print 'start: ', start
-    print 'end:   ', end
-    print 'dataWith: ', dataWithEmpty
-    print
-    print 'data:     ', data[lineno]
-    print '\n\n\n'
+    phrase = phrase.replace('\n', '\t')
+    #print '\tphrase: <%s>' % phrase
+    #print '\ttarget toks: ' ,toks
 
-    tokPosRelToSent = []
-    count = 0
-    for string in dataWithEmptyChars:
-        if string != '':
-            tokPosRelToSent.append((count, count + len(string)-1))
-            count += len(string) + 1
-        else:  # empty string
-            count += 1
+    tokens = data[lineno]
+    buf = phrase
+    index = 0
+    for i in range(1,start_tok+1):
+        index += len(tokens[i-1])
+        index += buf[index:].index(tokens[i])
+        #print '\t\ttok: ', tokens[i]
+        #print '\t\t\tindex: ', index
+        #low = max(0,index-30)
+        #print '\t\t\tbuf[:index]: <%s>' % buf[low:index]
+    start_ind = index
+    #print '\tstart_ind: ', start_ind
 
-    #print tokPosRelToSent
-    #print tokPosRelToSent[startTok:endTok+1]
+    #print '\n'*5
+    #print 'start: <%s>' % phrase[start_ind:]
+    #print '\n'*5
 
-    startOfTokRelToText = tokPosRelToSent[startTok][0] + start
-    endOfTokRelToText   = tokPosRelToSent[  endTok][1] + start
+    for i in range(start_tok+1,end_tok+1):
+        index += len(tokens[i-1])
+        index += buf[index:].index(tokens[i])
+        #print '\t\ttok: ', tokens[i]
+        #print '\t\t\tindex: ', index
+        #low = max(0,index-30)
+        #print '\t\t\tbuf[:index]: <%s>' % buf[low:index]
+    end_ind = index + len(tokens[end_tok])
+    #print '\tend_ind:   ', end_ind
 
-    #print '---' + self.text[endOfTokRelToText-3:endOfTokRelToText+4] + '---'
+    #print '\n'*5
+    #print 'finale: <%s>' % phrase[start_ind:end_ind]
+    #print '\n'*5
 
-    #print startOfTokRelToText, '  ', endOfTokRelToText
-
-    # Heuristc / Hack for determining when to include extra space
-    if (    self.text[endOfTokRelToText  ].isalpha()) and \
-       (not self.text[endOfTokRelToText+1].isalpha()) :
-               endOfTokRelToText += 1
-
-    #print startOfTokRelToText, '  ', endOfTokRelToText
-    #print '\n'
-
-    if line not in spans:
-        spans[line] = (self.fileName + ".text||Disease_Disorder||CUI-less||" + str(startOfTokRelToText) + "||" +  str(endOfTokRelToText))
-    else:
-        spans[line] += ("\n" + self.fileName + ".text||Disease_Disorder||CUI-less||" + str(startOfTokRelToText) + "||" +  str(endOfTokRelToText))
-
-
-    print lineno
-    print tokspan
-    
-    line = data[lineno]
-
-    print line
-
-    print
-
-    return 0,0
+    final_span = (start+start_ind, start+end_ind)
+    return final_span
 
 
 
@@ -174,10 +247,15 @@ class SentenceTokenizer:
     def __init__(self):
         self.sent_tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
-    def tokenize(self, text_file):
+    #def tokenize(self, text_file):
+    def tokenize(self, text):
         """ Split the document into sentences """
-        text = open(text_file, 'r').read()
-        return self.sent_tokenizer.tokenize(text)
+        #return text.split('\n')
+        #return self.sent_tokenizer.tokenize(text)
+        data = self.sent_tokenizer.tokenize(text)
+        splitted = [ sent.split('\n\n') for sent in data ]
+        sents = sum(splitted, [])
+        return [ sent.strip() for sent in sents if (sent.strip() != []) ]
 
 
 
@@ -190,5 +268,22 @@ class WordTokenizer:
 
     def tokenize(self, sent):
         """ Split the sentence into tokens """
-        return sent.split()
+        #return sent.strip().split()
+        #return sent.strip().split(' ')
+        #return filter(lambda word: word!= '', nltk.tokenize.wordpunct_tokenize(sent))
+        toks = filter(lambda w: len(w)>0, nltk.tokenize.wordpunct_tokenize(sent))
+        #splitted = [ w.replace('/',' / ').split() for w in toks ]
+        #toks = sum(splitted, [])
+        return toks
+
+
+
+
+def find_all(a_str, sub):
+    start = 0
+    while True:
+        start = a_str.find(sub, start)
+        if start == -1: return
+        yield start
+        start += len(sub)
 

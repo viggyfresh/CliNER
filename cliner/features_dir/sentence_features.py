@@ -132,7 +132,7 @@ def IOB_prose_features(sentence, data=None):
 
         # GENIA features
         if (feature == 'GENIA') and enabled['GENIA']:
-            
+
             # Get GENIA features
             genia_feat_list = feat_genia.features(sentence)
 
@@ -215,12 +215,12 @@ def IOB_prose_features(sentence, data=None):
 def IOB_nonprose_features(sentence):
     """
     IOB_nonprose_features
-    
+
     @param sentence. A list of strings
     @return          A list of dictionaries of features
-    
+
     """
-    
+
     # Get a feature set for each word in the sentence
     features_list = []
     for i,word in enumerate(sentence):

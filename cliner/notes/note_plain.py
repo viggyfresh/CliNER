@@ -1,29 +1,35 @@
 from __future__ import with_statement
 
-
 ######################################################################
-#  CliNER - note_i2b2.py                                             #
+#  CliNER - note_plain.py                                            #
 #                                                                    #
 #  Willie Boag                                      wboag@cs.uml.edu #
 #                                                                    #
-#  Purpose: Derived note object for reading i2b2 formatted data.     #
+#  Purpose: Derived note object for reading planintext files         #
 ######################################################################
 
 
 __author__ = 'Willie Boag'
-__date__   = 'Nov. 6, 2014'
+__date__   = 'Aug 2, 2015'
 
 
 import string
+import sys
 import re
 import nltk
 
 from abstract_note import AbstractNote
-from utilities_for_notes import classification_cmp, lineno_and_tokspan
+from utilities_for_notes import concept_cmp, classification_cmp
+from utilities_for_notes import lineno_and_tokspan, lno_and_tokspan__to__char_span
+from utilities_for_notes import WordTokenizer, SentenceTokenizer
+
+
+word_tokenizer =     WordTokenizer()
+sent_tokenizer = SentenceTokenizer()
 
 
 
-class Note_i2b2(AbstractNote):
+class Note_plain(AbstractNote):
 
     def __init__(self):
         # Internal representation natural for i2b2 format
@@ -33,7 +39,7 @@ class Note_i2b2(AbstractNote):
 
 
     def getExtension(self):
-        return 'con'
+        return 'plain'
 
 
     def getText(self):
@@ -41,42 +47,21 @@ class Note_i2b2(AbstractNote):
 
 
     def getTokenizedSentences(self):
-        return map(lambda s: (' '.join(s)).split(), self.data)
+        return self.data
 
 
     def getClassificationTuples(self):
-        # return value
         retVal = []
-
-        # Build list of standardized classification tuples
-        for classification in self.classifications:
-            concept,lineno,tok_start,tok_end = classification
-
-            # character offset of beginning of line
-            begin = self.line_inds[lineno-1][0]
-
-            # Sweep through line to get character offsets from line start
-            start = 0
-            for word in self.data[lineno-1][:tok_start]:
-                start += len(word) + 1
-
-            # Length of concept span
-            end = start
-            for word in self.data[lineno-1][tok_start:tok_end+1]:
-                end += len(word) + 1
-            end -= 1
-
-            #print begin
-            #print begin+start, begin+end
-            #print '~~' + self.text[begin+start:begin+end] + '~~'
-
-            retVal.append( (concept,[(begin+start,begin+end)]) )
-
+        for classification in  self.classifications:
+            concept,span = classification
+            retVal.append( (concept,[span]) )
         return retVal
+
 
 
     def getLineIndices(self):
         return self.line_inds
+
 
 
     def read_standard(self, txt, con=None):
@@ -157,33 +142,37 @@ class Note_i2b2(AbstractNote):
 
     def read(self, txt, con=None):
         """
-        Note_i2b2::read()
+        Note_plain::read()
 
         @param txt. A file path for the tokenized medical record
-        @param con. A file path for the i2b2 annotated concepts for txt
+        @param con. A file path for the plain annotated concepts for txt
         """
 
         # Character indices of each line
         start = 0
         end = 0
 
-        sent_tokenize = lambda text: text.split('\n')
-        word_tokenize = lambda text: text.split(' ')
+        sent_tokenize = sent_tokenizer.tokenize
+        word_tokenize = word_tokenizer.tokenize
 
         # Read in the medical text
         with open(txt) as f:
             # Original text file
-            self.text = f.read().strip('\n')
+            text = f.read().strip('\n')
+            self.text = filter(lambda x: x in string.printable, text)
 
-            #i = 0
+            i = 0
             sentences = sent_tokenize(self.text)
             for sentence in sentences:
 
-                # NOTE - technically, assumes every sentence is unique
+                # NOTE - Fails on repeat line
+                #  need to reference previous length to advance by that much guaranteed
                 # Get verbatim slice into sentence
                 start += self.text[start:].index(sentence)
                 end = start + len(sentence)
 
+                i += 1
+                #print 'line: ' , i
                 #print '<%s>' % sentence
                 #print '\n\n||||||||||\n\n'
                 #print start, end
@@ -200,14 +189,16 @@ class Note_i2b2(AbstractNote):
 
                 self.line_inds.append( (start,end) )
 
+                # Advance index to avoid rare issue of duplicate lines
+                start = end
+
                 # FIXME - Should we be removing unprintable?
-                sent = filter(lambda x: x in string.printable, sentence)
-                self.data.append(word_tokenize(sent))
+                sentence = filter(lambda x: x in string.printable, sentence)
+                self.data.append(word_tokenize(sentence))
 
                 #i += 1
                 #if i < 4: continue
                 #exit()
-
 
         # TEST - is line_inds correct?
         #i = 0
@@ -232,41 +223,26 @@ class Note_i2b2(AbstractNote):
                     # Empty line
                     if line == '\n': continue
 
-                    # concept
-                    prefix, suffix = line.split('||')
-                    text = prefix.split()
-                    conc = suffix[3:-2]
-
-                    start = text[-2].split(':')
-                    end   = text[-1].split(':')
-
-                    assert "concept spans one line", start[0] == end[0]
-
-                    # lineno
-                    l = int(start[0])
-
-                    # starttok
-                    # endtok
-                    start = int(start[1])
-                    end   = int(  end[1])
+                    # Extract info
+                    regex = '^c="(.*)" (\d+) (\d+)\|\|t="(.*)"$'
+                    match = re.search(regex, line)
+                    text,start,end,concept = match.groups()
+                    span = (int(start),int(end))
 
                     # Add the classification to the Note object
-                    classifications.append( (conc,l,start,end) )
+                    classifications.append( (concept,span) )
 
                     #print "txt:   ", txt
-                    #print "l:     ", l
                     #print "start: ", start
                     #print "end:   ", end
-                    #print "line:  ", self.data[l-1]
-
                     #print "\n" + "-" * 80
 
             # Safe guard against concept file having duplicate entries
             classifications = list(set(classifications))
 
             # Concept file does not guarantee ordering by line number
-            self.classifications = sorted(classifications,
-                                          cmp=classification_cmp)
+            self.classifications = sorted(classifications, key=lambda t:t[1][0])
+
 
 
     def write(self, labels=None):
@@ -291,13 +267,45 @@ class Note_i2b2(AbstractNote):
         if labels != None:
             classifications = labels
         elif self.classifications != None:
-            classifications = self.classifications
+            line_inds = self.line_inds
+            data      = self.data
+            text      = self.text
+            classifications = []
+            for concept,char_span in self.classifications:
+                lineno,tokspan = lineno_and_tokspan(line_inds, data, text, char_span)
+                classifications.append( ( concept,lineno+1,tokspan[0],tokspan[1] ) )
+            classifications = sorted(classifications, cmp=classification_cmp)
         else:
             raise Exception('Cannot write concept file: must specify labels')
 
+        '''
+        #print classifications
+        for classification in classifications:
+            concept = classification[0]
+            lineno  = classification[1]
+            start   = classification[2]
+            end     = classification[3]
+
+            span = lno_and_tokspan__to__char_span(self.line_inds, self.data, self.text, lineno-1, (start,end))
+
+            print "classification: ", classification
+            print "lineno:         ", lineno
+            print "start:          ", start
+            print "end             ", end
+
+            print "tokens:          <%s>" % ' '.join(self.data[lineno-1][start:end+1]).replace('\n','\t')
+            print "concept:        ", concept
+            print 'span:           ', span
+            print '\n\n\n'
+        '''
+
+        #exit()
+        #print '\n'*40
 
         # For each classification
         for classification in classifications:
+
+            #if classification != ('test', 6, 309, 311): continue
 
             # Ensure 'none' classifications are skipped
             if classification[0] == 'none':
@@ -319,29 +327,26 @@ class Note_i2b2(AbstractNote):
             #print "text:           ", text
             #print 'len(text):      ', len(text)
             #print "text[start]:    ", text[start]
+            #print "tokens:         ", text[start:end+1]
             #print "concept:        ", concept
 
-            # The text string of words that has been classified
-            datum = text[start]
-            for j in range(start, end):
-                datum += " " + text[j+1]
+            # Find the text string that the concept refers to
+            span = lno_and_tokspan__to__char_span(self.line_inds, self.data, self.text, lineno-1, (start,end))
+            span_start, span_end = span
 
-            #print 'datum:          ', datum
+            #print 'span:           ', span
 
-            # Line:TokenNumber of where the concept starts and ends
-            idx1 = "%d:%d" % (lineno, start)
-            idx2 = "%d:%d" % (lineno, end  )
+            datum = self.text[span_start:span_end].replace('\n','\t')
+            #print 'span_text:       <%s>' % datum
 
             # Classification
             label = concept
 
-            # Fixing issue involving i2b2 format (remove capitalization)
-            lowercased = [w.lower() for w in datum.split()]
-            datum = ' '.join(lowercased)
-
-            # Print format
-            retStr +=  "c=\"%s\" %s %s||t=\"%s\"\n" % (datum, idx1, idx2, label)
+            # Print format (very similar to i2b2)
+            retStr +=  "c=\"%s\" %d %d||t=\"%s\"\n" % (datum,span_start,span_end,label)
 
         # return formatted data
         return retStr.strip()
+
+
 
