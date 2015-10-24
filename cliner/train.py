@@ -118,7 +118,8 @@ def main():
 
 
     # display file names (for user to see data was properly located)
-    print '\n', training_list, '\n'
+ #@TODO add verbose flag for this    
+ #   print '\n', training_list, '\n'
 
 
     # Train the model
