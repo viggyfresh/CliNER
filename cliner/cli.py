@@ -40,12 +40,6 @@ supported_formats_help = "Data format ( " + ' | '.join(Note.supportedFormats()) 
 @click.argument('input')
 def train(annotations, model, format, grid, crf, input):
 
-    # training data needs concept file annotations
-    if not annotations:
-        print >>sys.stderr, '\n\tError: Must provide annotations for text files'
-        print >>sys.stderr,  ''
-        exit(1)
-
     # Base directory
     BASE_DIR = os.environ.get('CLINER_DIR')
     if not BASE_DIR:
