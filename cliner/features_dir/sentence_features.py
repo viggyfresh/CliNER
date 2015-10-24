@@ -72,7 +72,6 @@ def IOB_prose_features(sentence, data=None):
         tagger = enabled['GENIA']
         feat_genia = GeniaFeatures(tagger,data)
 
-
     # Get a feature set for each word in the sentence
     for i,word in enumerate(sentence):
         features_list.append(feat_word.IOB_prose_features(sentence[i]))
@@ -329,7 +328,6 @@ def concept_features_for_sentence(sentence, chunk_inds):
     @param  chunk_inds. A list of indices for non-None-labeled chunks
     @return             A list of feature dictionaries
     """
-
 
     # Get a feature set for each word in the sentence
     features_list = []

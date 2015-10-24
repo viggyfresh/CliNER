@@ -275,15 +275,15 @@ def is_test_result(context):
     @return         it returns the matching object of '[blank] was positive/negative' or None if it cannot find it.
                     otherwise, it will return True.
 
-    >>> print is_test_result('test was 10%')
+    >>> is_test_result('test was 10%')
     True
-    >>> print is_test_result('random string of words')
+    >>> is_test_result('random string of words')
     None
-    >>> print is_test_result('Test')
+    >>> is_test_result('Test')
     None
-    >>> print is_test_result('patient less than 30')
+    >>> is_test_result('patient less than 30')
     True
-    >>> print is_test_result(' ')
+    >>> is_test_result(' ')
     None
     """
     regex = r"^[A-Za-z]+( )*(-|--|:|was|of|\*|>|<|more than|less than)( )*[0-9]+(%)*"
