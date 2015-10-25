@@ -4,7 +4,7 @@
  Creation Date : 19-09-2015
 <<<<<<< HEAD
                                                                               
- Last Modified : Wed 07 Oct 2015 09:23:59 PM EDT
+ Last Modified : Sun 25 Oct 2015 05:15:04 PM EDT
                                                                               
  Created By : Renan Campos                                                    
                                                                               
@@ -30,19 +30,12 @@ class func_cache(lru_cache):
         self.verbose = verbose
 
     def ShowInfo(self):
-<<<<<<< HEAD
+        # This function is only implicitly called if verbose flag is set.
         print "Cache results for:", self.FuncName
         print "   hits:", self.cache.hits
         print "   misses:", self.cache.misses
         print "   lookups:", self.cache.lookups, "\n"
-=======
-        # TODO - this should use a verbosity setting (not default print)
-        if False:
-            print "hits:", self.cache.hits
-            print "misses:", self.cache.misses
-            print "lookups:", self.cache.lookups
->>>>>>> 6403f56bb687b79483093ed2a3281df607b690ce
-
+    
     def __call__(self, f):
         lru_cached = super(func_cache, self).__call__(f)
         lru_cached.ShowInfo = self.ShowInfo
