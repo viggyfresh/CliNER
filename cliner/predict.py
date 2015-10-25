@@ -136,8 +136,6 @@ def predict(files, model_path, output_dir, format):
             # Get predictions in proper format
             output = note.write(labels)
 
-            #print output
-
 
             # Output the concept predictions
             print '\n\nwriting to: ', out_path

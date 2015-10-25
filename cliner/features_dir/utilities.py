@@ -13,10 +13,8 @@ import os
 
 
 # used as a default path for stashing pos tagger.
-pos_tagger_path = os.path.join( os.environ['CLINER_DIR'], "cliner/features_dir/nltk_tagger.p")
+pos_tagger_path = os.path.join( os.environ['CLINER_DIR'], "cliner/features_dir/taggers/maxent_treebank_pos_tagger.pickle")
 
-if not os.path.isfile(pos_tagger_path):
-    import nltk.data, nltk.tag
 
 def load_pickled_obj(path_to_pickled_obj):
 
@@ -47,21 +45,7 @@ def dump_pos_tagger(path_to_obj):
 def load_pos_tagger(path_to_obj=pos_tagger_path):
     """ faster tagger loading """
 
-    tagger = None
-
-    if os.path.isfile(path_to_obj):
-
-        print "loading tagger..."
-
-        tagger = load_pickled_obj(path_to_obj)
-
-    else:
-
-        print "tagger not currently stashed... creating new stash..."
-
-        dump_pos_tagger(path_to_obj)
-
-        tagger = load_pickled_obj(path_to_obj)
+    tagger = load_pickled_obj(path_to_obj)
 
     return tagger
 
