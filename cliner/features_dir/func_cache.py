@@ -3,7 +3,7 @@
                                                                               
  Creation Date : 19-09-2015
                                                                               
- Last Modified : Wed 07 Oct 2015 09:06:27 PM EDT
+ Last Modified : Wed 07 Oct 2015 09:23:59 PM EDT
                                                                               
  Created By : Renan Campos                                                    
                                                                               
@@ -21,9 +21,9 @@ class func_cache(lru_cache):
 
     def ShowInfo(self):
         print "Cache results for:", self.FuncName
-        print "hits:", self.cache.hits
-        print "misses:", self.cache.misses
-        print "lookups:", self.cache.lookups
+        print "   hits:", self.cache.hits
+        print "   misses:", self.cache.misses
+        print "   lookups:", self.cache.lookups, "\n"
 
     def __call__(self, f):
         lru_cached = super(func_cache, self).__call__(f)
