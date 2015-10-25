@@ -30,19 +30,16 @@ def main():
     parser.add_argument("-t",
         dest = "txt",
         help = "The files that contain the training examples",
-        default = os.path.join(os.getenv('CLINER_DIR'), 'data/train/txt/*')
     )
 
     parser.add_argument("-c",
         dest = "con",
         help = "The files that contain the labels for the training examples",
-        default = os.path.join(os.getenv('CLINER_DIR'), 'data/train/con/*')
     )
 
     parser.add_argument("-m",
         dest = "model",
         help = "Path to the model that should be generated",
-        default = os.path.join(os.getenv('CLINER_DIR'), 'models/run.model')
     )
 
     parser.add_argument("-f",
@@ -65,6 +62,25 @@ def main():
     # Parse the command line arguments
     args = parser.parse_args()
     is_crf = not args.nocrf
+
+    # Error check: Ensure that file paths are specified
+    if not args.txt:
+        print >>sys.stderr, '\n\tError: Must provide text files'
+        print >>sys.stderr,  ''
+        exit(1)
+    if not args.con:
+        print >>sys.stderr, '\n\tError: Must provide annotations for text files'
+        print >>sys.stderr,  ''
+        exit(1)
+    if not args.model:
+        print >>sys.stderr, '\n\tError: Must provide valid path to store model'
+        print >>sys.stderr,  ''
+        exit(1)
+    modelpath = os.path.dirname(args.model)
+    if not os.path.exists(modelpath):
+        print >>sys.stderr, '\n\tError: Model dir does not exist: %s' % modelpath
+        print >>sys.stderr,  ''
+        exit(1)
 
 
     # A list of text    file paths

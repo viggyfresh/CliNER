@@ -1,7 +1,8 @@
-"""                                                                              
+"""
  File Name : func_cache.py
-                                                                              
+
  Creation Date : 19-09-2015
+<<<<<<< HEAD
                                                                               
  Last Modified : Wed 07 Oct 2015 09:23:59 PM EDT
                                                                               
@@ -9,6 +10,15 @@
                                                                               
  Purpose : Class wrapper for third-party lru cache. 
            Adds method used for reporting hits/misses.                                                                 
+=======
+
+ Last Modified : Wed 07 Oct 2015 09:06:27 PM EDT
+
+ Created By : Renan Campos
+
+ Purpose : Class wrapper for third-party lru cache.
+           Adds method used for reporting hits/misses.
+>>>>>>> 6403f56bb687b79483093ed2a3281df607b690ce
 """
 
 from repoze.lru import lru_cache
@@ -20,10 +30,18 @@ class func_cache(lru_cache):
         self.verbose = verbose
 
     def ShowInfo(self):
+<<<<<<< HEAD
         print "Cache results for:", self.FuncName
         print "   hits:", self.cache.hits
         print "   misses:", self.cache.misses
         print "   lookups:", self.cache.lookups, "\n"
+=======
+        # TODO - this should use a verbosity setting (not default print)
+        if False:
+            print "hits:", self.cache.hits
+            print "misses:", self.cache.misses
+            print "lookups:", self.cache.lookups
+>>>>>>> 6403f56bb687b79483093ed2a3281df607b690ce
 
     def __call__(self, f):
         lru_cached = super(func_cache, self).__call__(f)

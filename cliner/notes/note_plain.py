@@ -171,7 +171,7 @@ class Note_plain(AbstractNote):
                 start += self.text[start:].index(sentence)
                 end = start + len(sentence)
 
-                i += 1
+                #i += 1
                 #print 'line: ' , i
                 #print '<%s>' % sentence
                 #print '\n\n||||||||||\n\n'
@@ -200,19 +200,21 @@ class Note_plain(AbstractNote):
                 #if i < 4: continue
                 #exit()
 
+        '''
         # TEST - is line_inds correct?
-        #i = 0
-        #for line,span in zip(self.data,self.line_inds):
-        #    start,end = span
-        #    print 'line: ', i+1
-        #    print 'inds: ', span
-        #    toks = word_tokenize(self.text[start:end].replace('\n','\t\t'))
-        #    print '<t>' + ' '.join(toks)                       + '</t>'
-        #    print '<l>' + ' '.join(line).replace('\n','\t\t')  + '</l>'
-        #    print '\n'
-        #    i += 1
-        #    #if i == 4: exit()
-        #exit()
+        i = 0
+        for line,span in zip(self.data,self.line_inds):
+            start,end = span
+            print 'line: ', i+1
+            print 'inds: ', span
+            toks = word_tokenize(self.text[start:end].replace('\n','\t\t'))
+            print '<t>' + ' '.join(toks)                       + '</t>'
+            print '<l>' + ' '.join(line).replace('\n','\t\t')  + '</l>'
+            print '\n'
+            i += 1
+            #if i == 4: exit()
+        exit()
+        '''
 
         # If an accompanying concept file was specified, read it
         if con:

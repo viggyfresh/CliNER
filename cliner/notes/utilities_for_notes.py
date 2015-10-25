@@ -252,9 +252,16 @@ class SentenceTokenizer:
         """ Split the document into sentences """
         #return text.split('\n')
         #return self.sent_tokenizer.tokenize(text)
+        text = re.sub('\n\n+', '\n\n', text)
         data = self.sent_tokenizer.tokenize(text)
-        splitted = [ sent.split('\n\n') for sent in data ]
+
+        splitted = [ sent.split('\n\n') for sent in data  ]
         sents = sum(splitted, [])
+
+        # Could do something (similar to here) to ensure nonprose is split well
+        #splitted = [ sent.split(':')    for sent in sents ]
+        #sents = sum(splitted, [])
+
         return [ sent.strip() for sent in sents if (sent.strip() != []) ]
 
 

@@ -85,6 +85,10 @@ class Model:
         # Extract formatted data
         tokenized_sentences =  first_pass_data(note)
 
+        #for s in tokenized_sentences:
+        #    print s
+        #exit()
+
         # Predict IOB labels
         iobs = self.__first_predict(tokenized_sentences)
         note.setIOBLabels(iobs)
@@ -225,11 +229,7 @@ class Model:
         @return       A list of list of IOB labels (1:1 mapping with data)
         """
 
-        #for line in data:
-        #    print line
-        #print '\n\n\n'
-
-        if globals_cliner.verbosity > 0: print '\textracting  features (pass one)'
+        if globals_cliner.verbosity > 0:print '\textracting  features (pass one)'
 
         # separate prose and nonprose data
         prose, plinenos    = feat_obj.IOB_prose_features(data)
@@ -238,11 +238,6 @@ class Model:
         # Predict labels for IOB prose and nonprose text
         nlist = self.__generic_first_predict('nonprose', nonprose, self._first_nonprose_vec, self._first_nonprose_clf)
         plist = self.__generic_first_predict(   'prose',    prose, self._first_prose_vec   , self._first_prose_clf   )
-
-        #for line in nlist:
-        #for line in plist:
-        #    print line
-        #exit()
 
 
         # Stitch prose and nonprose data back together
@@ -263,11 +258,6 @@ class Model:
                 nonprose_iobs[-1] = map(num2iob, nonprose_iobs[-1])
                 iobs.append( nonprose_iobs[-1] )
 
-        #for line in iobs:
-        #    print line
-
-        #exit()
-
         # list of list of IOB labels
         return iobs
 
@@ -286,7 +276,6 @@ class Model:
         if globals_cliner.verbosity > 0: print '\textracting  features (pass two)'
 
         print '\textracting  features (pass two)'
-
 
         # Extract features
         text_features = [ feat_obj.concept_features(s,inds) for s,inds in zip(chunked_sentences,inds_list) ]

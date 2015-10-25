@@ -28,19 +28,16 @@ def main():
     parser.add_argument("-i",
         dest = "input",
         help = "The input files to predict",
-        default = os.path.join(os.getenv('CLINER_DIR'), 'data/test_data/*')
     )
 
     parser.add_argument("-o",
         dest = "output",
         help = "The directory to write the output",
-        default = os.path.join(os.getenv('CLINER_DIR'), 'data/predictions')
     )
 
     parser.add_argument("-m",
         dest = "model",
         help = "The model to use for prediction",
-        default = os.path.join(os.getenv('CLINER_DIR'), 'models/run.model')
     )
 
     parser.add_argument("-f",
@@ -56,6 +53,20 @@ def main():
 
     args = parser.parse_args()
 
+    # Error check: Ensure that file paths are specified
+    if not args.input:
+        print >>sys.stderr, '\n\tError: Must provide text files\n'
+        exit(1)
+    if not args.output:
+        print >>sys.stderr, '\n\tError: Must provide output directory\n'
+        exit(1)
+    if not args.model:
+        print >>sys.stderr, '\n\tError: Must provide path to model\n'
+        exit(1)
+    if not os.path.exists(args.model):
+        print >>sys.stderr, '\n\tError: Model does not exist: %s\n' % args.model
+        exit(1)
+
 
     # Parse arguments
     files = glob.glob(args.input)
@@ -66,7 +77,6 @@ def main():
     else:
         print '\n\tERROR: must provide "format" argument\n'
         exit()
-
 
 
     # Predict
@@ -84,7 +94,6 @@ def predict(files, model_path, output_dir, format):
         exit(1)
 
 
-
     # Load model
     model = Model.load(model_path)
 
@@ -99,40 +108,44 @@ def predict(files, model_path, output_dir, format):
     n = len(files)
     for i,txt in enumerate(sorted(files)):
 
-        note = Note(format)
+        try:
+            note = Note(format)
 
-        # Output file
-        extension = note.getExtension()
-        fname = os.path.splitext(os.path.basename(txt))[0] + '.' + extension
-        out_path = os.path.join(output_dir, fname)
-        #if os.path.exists(out_path):
-        #    print '\tWARNING: prediction file already exists (%s)' % out_path
-        #    continue
+            # Output file
+            extension = note.getExtension()
+            fname = os.path.splitext(os.path.basename(txt))[0] + '.' + extension
+            out_path = os.path.join(output_dir, fname)
+            '''
+            if os.path.exists(out_path):
+                #print '\tWARNING: prediction file already exists (%s)' % out_path
+                continue
+            '''
 
-        # Read the data into a Note object
-        note.read(txt)
-
-
-        print '-' * 30
-        print '\n\t%d of %d' % (i+1,n)
-        print '\t', txt, '\n'
+            # Read the data into a Note object
+            note.read(txt)
 
 
-        # Predict concept labels
-        labels = model.predict(note)
-
-        # Get predictions in proper format
-        output = note.write(labels)
-
-        #print output
+            print '-' * 30
+            print '\n\t%d of %d' % (i+1,n)
+            print '\t', txt, '\n'
 
 
-        # Output the concept predictions
-        print '\n\nwriting to: ', out_path
-        with open(out_path, 'w') as f:
-            print >>f, output
-        print
+            # Predict concept labels
+            labels = model.predict(note)
 
+            # Get predictions in proper format
+            output = note.write(labels)
+
+
+            # Output the concept predictions
+            print '\n\nwriting to: ', out_path
+            with open(out_path, 'w') as f:
+                print >>f, output
+            print
+
+        except Exception, e:
+            # Output the concept predictions
+            print >>sys.stderr, '\n\nfailure: ', txt
 
 
 
