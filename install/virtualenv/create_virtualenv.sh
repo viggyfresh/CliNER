@@ -16,7 +16,7 @@ if [[ ! $VIRTUAL_ENV ]] ; then
     else
         old=$(pwd)
         cd $CLINER_DIR
-        virtualenv venv_cliner > /dev/null
+        virtualenv --python=python2.7 venv_cliner > /dev/null
         source venv_cliner/bin/activate
         cd $old
     fi
