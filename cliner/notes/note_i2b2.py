@@ -51,6 +51,11 @@ class Note_i2b2(AbstractNote):
         # Build list of standardized classification tuples
         for classification in self.classifications:
             concept,lineno,tok_start,tok_end = classification
+            #print 'concept: ', concept
+            #print 'lineno: ', lineno
+            #print 'tok_start: ', tok_start
+            #print 'tok_end:   ', tok_end
+            #print 'line: <%s>' % self.data[lineno-1]
 
             # character offset of beginning of line
             begin = self.line_inds[lineno-1][0]
@@ -59,6 +64,9 @@ class Note_i2b2(AbstractNote):
             start = 0
             for word in self.data[lineno-1][:tok_start]:
                 start += len(word) + 1
+                while self.text[begin+start].isspace():
+                    start += 1
+                #print '\tword: <%s> start=%d' % (self.text[begin+start:begin+start+10],start)
 
             # Length of concept span
             end = start
@@ -168,7 +176,8 @@ class Note_i2b2(AbstractNote):
         end = 0
 
         sent_tokenize = lambda text: text.split('\n')
-        word_tokenize = lambda text: text.split(' ')
+        #word_tokenize = lambda text: text.split(' ')
+        word_tokenize = lambda text: text.split()
 
         # Read in the medical text
         with open(txt) as f:
