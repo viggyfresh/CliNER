@@ -76,9 +76,9 @@ def main():
         print >>sys.stderr, '\n\tError: Must provide valid path to store model'
         print >>sys.stderr,  ''
         exit(1)
-    modelpath = os.path.dirname(args.model)
-    if not os.path.exists(modelpath):
-        print >>sys.stderr, '\n\tError: Model dir does not exist: %s' % modelpath
+    modeldir = os.path.dirname(args.model)
+    if (not os.path.exists(modeldir)) and (modeldir != ''):
+        print >>sys.stderr, '\n\tError: Model dir does not exist: %s' % modeldir
         print >>sys.stderr,  ''
         exit(1)
 
@@ -95,8 +95,6 @@ def main():
     else:
         print '\n\tERROR: must provide "format" argument\n'
         exit()
-
-
 
 
     # Must specify output format
@@ -116,11 +114,9 @@ def main():
         if k in con_files_map:
             training_list.append((txt_files_map[k], con_files_map[k]))
 
-
     # display file names (for user to see data was properly located)
- #@TODO add verbose flag for this    
- #   print '\n', training_list, '\n'
-
+    # TODO add verbose flag for this
+    #   print '\n', training_list, '\n'
 
     # Train the model
     train(training_list, args.model, format, is_crf, args.grid)
