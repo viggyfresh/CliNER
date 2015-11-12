@@ -211,7 +211,7 @@ Please email wboag@cs.uml.edu with your installation questions.
 
     http://www.nlm.nih.gov/databases/umls.html
 
-    You will need to get following tables: **MRREL, MRCON, MRSTY**
+    You will need to get following tables: **MRREL.RRF, MRCONSO.RRF, MRSTY.RRF**
 
     **Put these tables in the $CLINER_DIR/umls_tables directory.**
 
@@ -219,6 +219,20 @@ Please email wboag@cs.uml.edu with your installation questions.
 
     **The database will be built from the tables when CliNER is run for the first time.**
 
+    How to obtain UMLS tables:
+
+        1. download all the files from https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html
+        2. unzip mmsys.zip into a folder
+        3. put all other files downloaded into that folder
+        4. execute run_linux.sh
+        5. select install UMLS on gui
+        6. choose destination for umls directory
+        7. hit ok
+        8. hit new config
+        9. accept agreement
+        10. select only active UMLS sources as your default subset
+        11. select at top of gui pane, done and then select begin subset.
+        12. the destination folder should contain the necessary files needed.
 
 
 (7) Create 'cliner' executable script for command-line use
@@ -245,10 +259,10 @@ Deploying with Vagrant
 
 With Vagrant and a type-2 hypervisor (such as the free VirtualBox) installed on
 the system, running "vagrant up" will deploy a virtual machine and painlessly
-install/build CliNER. 
+install/build CliNER.
 
 The access ip is listed during deployment (usually 127.0.0.1:2222).
-The username/password is vagrant/vagrant.  
+The username/password is vagrant/vagrant.
 
 Usage Examples
 --------
