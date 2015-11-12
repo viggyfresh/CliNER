@@ -77,4 +77,16 @@ def cui_lookup( string ):
 
 def concept_exists(string):
     """ Fast query for set membership in trie """
-    return string in trie
+    return unicode(string) in trie
+
+
+if __name__ == "__main__":
+
+ #   print string_lookup("blood")
+#    print cui_lookup("blood")
+#    print concept_exists("blood")
+    pass
+
+
+
+

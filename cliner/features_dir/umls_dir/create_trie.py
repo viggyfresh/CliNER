@@ -31,7 +31,7 @@ def create_trie():
     #load data in files.
     print "opening file"
     try:
-        mrcon_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRCON')
+        mrcon_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRCONSO.RRF')
         MRCON_TABLE = open( mrcon_path , "r" )
     except IOError:
         print "\nNo file to use for creating MRCON table\n"
@@ -45,11 +45,14 @@ def create_trie():
     concepts = []
     for line in MRCON_TABLE:
 
-	l = tuple(line[0:-1].split('|'))
+        line = line.split('|')
+        line.pop()
 
-        if len(l) < 6: continue
+        assert len(line) == 18
 
-        concept = l[6]
+        if len(line) < 6: continue
+
+        concept = line[14]
 
         # Ignore non-ascii
         try:

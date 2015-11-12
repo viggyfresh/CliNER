@@ -108,44 +108,39 @@ def predict(files, model_path, output_dir, format):
     n = len(files)
     for i,txt in enumerate(sorted(files)):
 
-        try:
-            note = Note(format)
+        note = Note(format)
 
-            # Output file
-            extension = note.getExtension()
-            fname = os.path.splitext(os.path.basename(txt))[0] + '.' + extension
-            out_path = os.path.join(output_dir, fname)
-            '''
-            if os.path.exists(out_path):
-                #print '\tWARNING: prediction file already exists (%s)' % out_path
-                continue
-            '''
+        # Output file
+        extension = note.getExtension()
+        fname = os.path.splitext(os.path.basename(txt))[0] + '.' + extension
+        out_path = os.path.join(output_dir, fname)
+        '''
+        if os.path.exists(out_path):
+            #print '\tWARNING: prediction file already exists (%s)' % out_path
+            continue
+        '''
 
-            # Read the data into a Note object
-            note.read(txt)
-
-
-            print '-' * 30
-            print '\n\t%d of %d' % (i+1,n)
-            print '\t', txt, '\n'
+        # Read the data into a Note object
+        note.read(txt)
 
 
-            # Predict concept labels
-            labels = model.predict(note)
-
-            # Get predictions in proper format
-            output = note.write(labels)
+        print '-' * 30
+        print '\n\t%d of %d' % (i+1,n)
+        print '\t', txt, '\n'
 
 
-            # Output the concept predictions
-            print '\n\nwriting to: ', out_path
-            with open(out_path, 'w') as f:
-                print >>f, output
-            print
+        # Predict concept labels
+        labels = model.predict(note)
 
-        except Exception, e:
-            # Output the concept predictions
-            print >>sys.stderr, '\n\nfailure: ', txt
+        # Get predictions in proper format
+        output = note.write(labels)
+
+
+        # Output the concept predictions
+        print '\n\nwriting to: ', out_path
+        with open(out_path, 'w') as f:
+            print >>f, output
+        print
 
 
 

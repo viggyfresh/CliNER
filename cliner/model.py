@@ -135,9 +135,23 @@ class Model:
         #    print
         #exit()
 
-        # Parition into prose v. nonprose
-        prose,pchunks    = feat_obj.IOB_prose_features(   tokenized_sentences, Y)
-        nonprose,nchunks = feat_obj.IOB_nonprose_features(tokenized_sentences, Y)
+        # Seperate into prose v nonprose
+        nested_prose_data   ,    nested_prose_Y = zip(*filter(lambda line_iob_tup:     is_prose_sentence(line_iob_tup[0]), zip(tokenized_sentences,Y) ))
+        nested_nonprose_data, nested_nonprose_Y = zip(*filter(lambda line_iob_tup: not is_prose_sentence(line_iob_tup[0]), zip(tokenized_sentences,Y) ))
+
+        #extract features
+        nested_prose_feats    = feat_obj.IOB_prose_features(      nested_prose_data)
+        nested_nonprose_feats = feat_obj.IOB_nonprose_features(nested_nonprose_data)
+
+        # Flatten lists (because classifier will expect flat)
+        prose_Y        = flatten(nested_prose_Y       )
+        nonprose_Y     = flatten(nested_nonprose_Y    )
+
+        # rename because code uses it
+        pchunks  =    prose_Y
+        nchunks  = nonprose_Y
+        prose    =    nested_prose_feats
+        nonprose = nested_nonprose_feats
 
         #for p in prose:
         #    for x in p:
@@ -231,9 +245,17 @@ class Model:
 
         if globals_cliner.verbosity > 0:print '\textracting  features (pass one)'
 
-        # separate prose and nonprose data
-        prose, plinenos    = feat_obj.IOB_prose_features(data)
-        nonprose, nlinenos = feat_obj.IOB_nonprose_features(data)
+        # Seperate into
+        nested_prose_data    = filter(lambda line:     is_prose_sentence(line), data)
+        nested_nonprose_data = filter(lambda line: not is_prose_sentence(line), data)
+
+        # Parition into prose v. nonprose
+        nested_prose_feats    = feat_obj.IOB_prose_features(      nested_prose_data)
+        nested_nonprose_feats = feat_obj.IOB_nonprose_features(nested_nonprose_data)
+
+        # rename because code uses it
+        prose    =    nested_prose_feats
+        nonprose = nested_nonprose_feats
 
         # Predict labels for IOB prose and nonprose text
         nlist = self.__generic_first_predict('nonprose', nonprose, self._first_nonprose_vec, self._first_nonprose_clf)
@@ -585,3 +607,6 @@ def second_pass_data(note):
     return chunked_sentences, inds
 
 
+
+def concat(a,b):
+    return a+b
