@@ -52,6 +52,7 @@ def getConceptSpans(boundaries, classifications):
                         break
                     if possibleEnd == 'I':
                         end += 1
+
                 conceptSpans[lineIndex].update({(beginning,end):concept})
 
     return conceptSpans
@@ -63,7 +64,7 @@ def evaluate(referenceSpans, predictedSpans, exactMatch=False, reportSeperately=
     classes = [
                 "treatment",
                 "problem",
-                "test"
+                "test",
               ]
 
     measures = {
@@ -247,7 +248,9 @@ def displayMatrix(out, name, confusion):
     print >>out, "Analysis"
     print >>out, " " * pad, "Precision\tRecall\tF1"
 
+    #print confusion
 
+    #print labels.items()
     for lab, lab_v in labels.items():
         if lab == 'none': continue
 
@@ -255,12 +258,61 @@ def displayMatrix(out, name, confusion):
         fp = sum(confusion[v][lab_v] for k, v in labels.items() if v != lab_v)
         fn = sum(confusion[lab_v][v] for k, v in labels.items() if v != lab_v)
 
-        precision += [float(tp) / (tp + fp + 1e-100)]
-        recall += [float(tp) / (tp + fn + 1e-100)]
-        f1 += [float(2 * tp) / (2 * tp + fp + fn + 1e-100)]
+        """
+        print lab
+        print tp
+        print fp
+        print fn
+        """
+
+        p_num = tp
+        p_den = (tp + fp)
+
+        if p_num == p_den:
+            p = 1.0
+        else:
+            p = float(p_num) / p_den
+
+        r_num = tp
+        r_den = (tp + fn)
+
+        if r_num == r_den:
+            r = 1.0
+        else:
+            r = float(r_num) / r_den
+
+        """
+        print "LAB: ", lab
+        print "R_NUM: ", r_num
+        print "R_DEN: ", r_den
+        print "RECALL: ", r
+        """
+
+        precision += [p]
+        recall += [r]
+
+        if (p*r) == (p+r):
+            f = 2.0
+        else:
+            f = 2 * ((p * r) / (p + r))
+
+        f1 += [f]
+
+        """
+        print precision
+        print recall
+        print f1
+        """
+
         print >>out, "%s %.4f\t%.4f\t%.4f" % (lab.rjust(pad), precision[-1], recall[-1], f1[-1])
 
     print >>out, "--------"
+
+    """
+    print "precision: ", precision
+    print "recall: ", recall
+    print "f1: ", f1
+    """
 
     precision = sum(precision) / len(precision)
     recall = sum(recall) / len(recall)
@@ -270,19 +322,32 @@ def displayMatrix(out, name, confusion):
 
 
 
-def generateResultsForExactSpans(truePositive, falseNegative, falsePositive):
+def generateResultsForExactSpans(tp, fn, fp):
 
-    #convert to float implicitly incase of any truncation
-    truePositive = float(truePositive)
-    flaseNegative = float(falseNegative)
-    falsePositive = float(falsePositive)
 
-    recall = truePositive / (truePositive + falseNegative)
-    precision = truePositive / (truePositive + falsePositive)
-    fScore = (2*truePositive) / (2*truePositive + falseNegative + falsePositive)
+    p_num = tp
+    p_den = (tp + fp)
+
+    if p_num == p_den:
+        p = 1.0
+    else:
+        p = float(p_num) / p_den
+
+    r_num = tp
+    r_den = (tp + fn)
+
+    if r_num == r_den:
+        r = 1.0
+    else:
+        r = float(r_num) / r_den
+
+    if (p*r) == (p+r):
+        f = 2.0
+    else:
+        f = 2 * ((p * r) / (p + r))
 
     #convert to percent
-    return {"Recall":(recall * 100), "Precision":(precision * 100), "F Score":(fScore * 100)}
+    return {"Recall":(r * 100), "Precision":(p * 100), "F Score":(f * 100)}
 
 
 def main():
@@ -348,16 +413,13 @@ def main():
     txt_files_map = helper.map_files(txt_files)
     wildcard = '*.' + Note.dictOfFormatToExtensions()[format]
 
-
     # List of gold data
     ref_files = glob.glob( os.path.join(args.ref, wildcard) )
     ref_files_map = helper.map_files(ref_files)
 
-
     # List of predictions
     pred_files = glob.glob( os.path.join(args.con, wildcard) )
     pred_files_map = helper.map_files(pred_files)
-
 
     # Grouping of text, predictions, gold
     files = []
@@ -384,7 +446,8 @@ def main():
     confusionMatrixExactSpan = deepcopy(confusion)
     confusionMatrixInexactSpan = deepcopy(confusion)
 
-
+    if len(files) == 0:
+        exit("No files to be evaluated")
 
     for txt, annotations, gold in files:
 

@@ -50,21 +50,25 @@ class Note_i2b2(AbstractNote):
         # return value
         retVal = []
 
+        q = False
+
         # Build list of standardized classification tuples
         for classification in self.classifications:
             concept,lineno,tok_start,tok_end = classification
 
             #q = lineno==12 and tok_start==19
-            #if q:
-            #    print '\n\n\n\n'
-            #    print 'concept: ', concept
-            #    print 'lineno: ', lineno
-            #    print 'tok_start: ', tok_start
-            #    print 'tok_end:   ', tok_end
-            #    print 'line: <%s>' % self.data[lineno-1]
+            if q:
+                print '\n\n\n\n'
+                print 'concept: ', concept
+                print 'lineno: ', lineno
+                print 'tok_start: ', tok_start
+                print 'tok_end:   ', tok_end
+                print 'line: <%s>' % self.data[lineno-1]
 
             # character offset of beginning of line
             begin = self.line_inds[lineno-1][0]
+
+            if q: print "BEGIN: ", self.line_inds[lineno-1]
 
             # Sweep through line to get character offsets from line start
             start = 0
@@ -100,6 +104,8 @@ class Note_i2b2(AbstractNote):
             retVal.append( (concept,[(begin+start,begin+end)]) )
 
         #exit()
+
+#        print retVal
 
         return retVal
 

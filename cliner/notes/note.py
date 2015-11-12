@@ -176,42 +176,46 @@ class Note:
 
         b_count = 0
 
+        seen_before = {}
+
         # Add 'B's and 'I's from concept spans
         for classification in self.derived_note.getClassificationTuples():
             concept,char_spans = classification
 
-            #print '\n\n'
-            #print 'concept: ', concept
-            #print 'char_spans: ', char_spans
+            """
+            print '\n\n'
+            print 'concept: ', concept
+            print 'char_spans: ', char_spans
+            """
 
             # Each span (could be noncontiguous span)
             for span in char_spans:
                 start_ind,end_ind = span
+
                 #print '\tstart_ind, end_ind: ', start_ind, end_ind
                 #print '\ttext[start_ind:end_ind]: <%s>' % text[start_ind:end_ind]
 
-                lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span)
+                lineno, tokspan = lineno_and_tokspan(line_inds, data, text, span, seen_before)
                 start,end = tokspan
 
-                #print '\tlineno, tokspan: ', lineno, tokspan
-                #print '\t\tdata[linenp]: ', data[lineno]
-                #print '\t\ttokspan: ', data[lineno][tokspan[0]:tokspan[1]+1]
-                #print '\t\tiobs: ', iobs[lineno]
+#                print '\tlineno, tokspan: ', lineno, tokspan
+#                print '\t\tdata[linenp]: ', data[lineno]
+#                print '\t\ttokspan: ', data[lineno][tokspan[0]:tokspan[1]+1]
+#                print '\t\tiobs: ', iobs[lineno]
 
                 # Update concept tokens to 'B's and 'I's
                 assert iobs[lineno][start] == 'O'
+
                 iobs[lineno][start] = 'B'
                 b_count += 1
                 #print 'B: ', b_count
                 for i in range(start+1,end+1):
                     #print '\t\t\t', i
+
                     assert iobs[lineno][i] == 'O'
                     iobs[lineno][i] = 'I'
 
                 #print '\t\t', iobs[lineno]
-
-            #exit()
-        #exit()
 
         # Memoize for next call
         self.iob_labels = iobs
@@ -359,6 +363,8 @@ class Note:
                 tmp.append('none')
             self.concepts.append(tmp)
 
+        seen_before = {}
+
         # Use the classifications to correct all mislabled 'none's
         for classification in self.derived_note.getClassificationTuples():
             concept    = classification[0]
@@ -369,7 +375,7 @@ class Note:
             data      = self.derived_note.getTokenizedSentences()
             text      = self.derived_note.getText()
             for span in char_spans:
-                lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span)
+                lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span, seen_before)
                 start,end = tokspan
 
             self.concepts[lineno][start] = concept

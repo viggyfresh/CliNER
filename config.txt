@@ -1,2 +1,2 @@
-GENIA None /home/rcampos/CliNER/cliner/features_dir/genia_dir/geniatagger-3.0.1/geniatagger
+GENIA None
 UMLS None
