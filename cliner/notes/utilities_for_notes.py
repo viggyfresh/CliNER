@@ -14,6 +14,10 @@ import string
 
 
 
+class NoteException(Exception):
+    pass
+
+
 def classification_cmp(a,b):
     """
     concept_cmp()
@@ -35,7 +39,12 @@ def classification_cmp(a,b):
         if a[1] > b[1]:
             return  1
         else:
-            return 0
+            if a[2] < b[2]:
+                return -1
+            if a[2] > b[2]:
+                return  1
+            else:
+                return 0
 
 
 
@@ -53,9 +62,11 @@ def concept_cmp(a,b):
 def lineno_and_tokspan(line_inds, data, text, char_span):
     """ File character offsets => line number and index into line """
 
-    #print '\n\n\n'
-    #print char_span
-    #print '<<%s>>' % text[char_span[0]:char_span[1]]
+    q = False
+    if q:
+        print '\n\n\n'
+        print 'char_span: ', char_span
+        print '<<%s>>' % text[char_span[0]:char_span[1]]
 
     # Locate line number
     for i,candidate_span in enumerate(line_inds):
@@ -64,35 +75,47 @@ def lineno_and_tokspan(line_inds, data, text, char_span):
             break
 
     phrase = text[char_span[0]:char_span[1]]
-    #print
-    #print 'PHRASE: <%s>' % phrase
-    #print
+    if q:
+        print
+        print 'PHRASE: <%s>' % phrase
+        print
 
     tokenized = data[lineno]
-    #print
-    #print 'TOKENIZED: ', tokenized
-    #print
+    if q:
+        print
+        print 'TOKENIZED: ', tokenized
+        print
 
     # TODO make test case that has a false alarm token sequence
 
     # Try to find token sequence that covers phrase
     buf = phrase.strip()
+    #print '\tinitial buf: <%s>\n' % buf
     tokens = []
     i = 0
     while i < len(tokenized):
         token = tokenized[i]
-        #print '\tbuf: <%s>' % buf
-        #print '\ttok: <%s>' % token
-        #print
+        if q:
+            print '\ti: ', i
+            print '\tbuf: <%s>' % buf
+            print '\ttok: <%s>' % token
+            print
         if buf.startswith(token):
             buf = buf[len(token):].strip()
+            if q:
+                print '\t\tnew buf: <%s>' % buf
             tokens.append(i)
+            if q:
+                print '\t\ttokens:  ', tokens
+                print
             if len(buf) == 0:
                 # Verify that this is the right span
                 tokspan = (tokens[0], tokens[-1])
                 span = lno_and_tokspan__to__char_span(line_inds,data,text,lineno,tokspan)
-                #print '\t\ttarget:    ', char_span
-                #print '\t\tcandidate: ', span
+                if q:
+                    print '\t\ttarget:    ', char_span
+                    print '\t\tcandidate: ', span
+                    print '\t\tchar_span text: <%s>' % text[char_span[0]:char_span[1]]
                 # If this is the wrong span, then reset
                 if span != char_span:
                     buf = phrase.strip()

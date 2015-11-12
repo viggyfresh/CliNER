@@ -17,9 +17,11 @@ __date__   = 'Nov. 6, 2014'
 import string
 import re
 import nltk
+import os
 
 from abstract_note import AbstractNote
 from utilities_for_notes import classification_cmp, lineno_and_tokspan
+from utilities_for_notes import NoteException
 
 
 
@@ -51,11 +53,15 @@ class Note_i2b2(AbstractNote):
         # Build list of standardized classification tuples
         for classification in self.classifications:
             concept,lineno,tok_start,tok_end = classification
-            #print 'concept: ', concept
-            #print 'lineno: ', lineno
-            #print 'tok_start: ', tok_start
-            #print 'tok_end:   ', tok_end
-            #print 'line: <%s>' % self.data[lineno-1]
+
+            #q = lineno==12 and tok_start==19
+            #if q:
+            #    print '\n\n\n\n'
+            #    print 'concept: ', concept
+            #    print 'lineno: ', lineno
+            #    print 'tok_start: ', tok_start
+            #    print 'tok_end:   ', tok_end
+            #    print 'line: <%s>' % self.data[lineno-1]
 
             # character offset of beginning of line
             begin = self.line_inds[lineno-1][0]
@@ -66,19 +72,34 @@ class Note_i2b2(AbstractNote):
                 start += len(word) + 1
                 while self.text[begin+start].isspace():
                     start += 1
-                #print '\tword: <%s> start=%d' % (self.text[begin+start:begin+start+10],start)
+                #if q:
+                #    print '\tword: <%s> start=%d' % (self.text[begin+start:begin+start+10],start)
 
             # Length of concept span
             end = start
             for word in self.data[lineno-1][tok_start:tok_end+1]:
-                end += len(word) + 1
+                end += len(word)
+                while self.text[begin+end].isspace():
+                    end += 1
+            #if q:
+            #    print '\tword: <%s[%s]%s> end=%d' % \
+            #        ( self.text[begin+end-5:begin+end],
+            #          self.text[begin+end]            ,
+            #          self.text[begin+end+1:begin+end+5],
+            #          end )
             end -= 1
+            while self.text[begin+end].isspace():
+                end -= 1
+            end += 1
 
-            #print begin
-            #print begin+start, begin+end
-            #print '~~' + self.text[begin+start:begin+end] + '~~'
+            #if q:
+            #    print begin
+            #    print begin+start, begin+end
+            #    print '~~' + self.text[begin+start:begin+end] + '~~'
 
             retVal.append( (concept,[(begin+start,begin+end)]) )
+
+        #exit()
 
         return retVal
 
@@ -91,75 +112,6 @@ class Note_i2b2(AbstractNote):
 
         print 'ERROR: MAKE SURE TOKENIZATION IN READ_STANDARD()'
         exit()
-
-        start = 0
-        end = 0
-
-        with open(txt) as f:
-
-            # Get entire file
-            text = f.read().strip('\n')
-            self.text = text
-
-            # Split into lines
-            self.data = map(lambda s: s.split(), text.split('\n'))
-
-            # Tokenize each sentence into words (and save line number indices)
-            toks = []
-            gold = []          # Actual lines
-
-            for sent in self.data:
-
-                gold.append(sent)
-
-                # Keep track of which indices each line has
-                for word in sent:
-                    end += len(word) + 1
-
-                self.line_inds.append( (start,end-1) )
-                start = end
-
-                # Skip ahead to next non-whitespace
-                while (start < len(text)) and text[start].isspace(): start += 1
-
-
-        # If an accompanying concept file was specified, read it
-        if con:
-            classifications = []
-            with open(con) as f:
-                for line in f:
-
-                    # Empty line
-                    if line == '\n': continue
-
-                    # Parse concept file line
-                    fields = line.strip().split('||')
-                    #print fields
-                    concept = fields[0]
-                    span_inds = []
-                    for i in range(1,len(fields),2):
-                        span = int(fields[i]), int(fields[i+1])
-                        span_inds.append( span )
-
-                    # FIXME - For now, treat non-contiguous spans as separate
-                    for span in span_inds:
-                        # Add the classification to the Note object
-                        l,(start,end) = lineno_and_tokspan(self.line_inds,
-                                                           self.data,
-                                                           self.text,
-                                                           span)
-                        #print 'span:   ', span
-                        #print 'lineno: ', l
-                        #print 'start:  ', start
-                        #print 'end:    ', end
-                        #print '\n'
-                        classifications.append((concept,l+1,start,end))
-
-            # Safe guard against concept file having duplicate entries
-            classifications = list(set(classifications))
-
-            # Concept file does not guarantee ordering by line number
-            self.classifications = sorted(classifications,cmp=classification_cmp)
 
 
 
@@ -210,7 +162,7 @@ class Note_i2b2(AbstractNote):
                 self.line_inds.append( (start,end) )
 
                 # FIXME - Should we be removing unprintable?
-                sent = filter(lambda x: x in string.printable, sentence)
+                sent = ''.join(map(lambda x: x if (x in string.printable) else '@', sentence))
                 self.data.append(word_tokenize(sent))
 
                 #i += 1
@@ -276,6 +228,21 @@ class Note_i2b2(AbstractNote):
             # Concept file does not guarantee ordering by line number
             self.classifications = sorted(classifications,
                                           cmp=classification_cmp)
+
+            # TODO - eliminate minor spans which are subsumed
+            # Detect subsumed concept spans
+            for i in range(len(self.classifications)-1):
+                c1 = self.classifications[i]
+                c2 = self.classifications[i+1]
+                if c1[1] == c2[1]:
+                    if c1[3] > c2[2]:
+                        error_msg = '%s file has overlapping entities one line %d. This file will not be processed until you remove one of the offending entities' % (os.path.basename(con),c1[1])
+                        raise NoteException(error_msg)
+
+                #print c1
+                #print c2
+                #print
+            #exit()
 
 
     def write(self, labels=None):

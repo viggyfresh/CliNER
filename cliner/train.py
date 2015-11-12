@@ -22,6 +22,7 @@ import helper
 from sets import Set
 from model import Model
 from notes.note import Note
+from notes.utilities_for_notes import NoteException
 
 
 def main():
@@ -128,9 +129,12 @@ def train(training_list, model_path, format, is_crf=True, grid=False):
     # Read the data into a Note object
     notes = []
     for txt, con in training_list:
-        note_tmp = Note(format)   # Create Note
-        note_tmp.read(txt, con)   # Read data into Note
-        notes.append(note_tmp)    # Add the Note to the list
+        try:
+            note_tmp = Note(format)   # Create Note
+            note_tmp.read(txt, con)   # Read data into Note
+            notes.append(note_tmp)    # Add the Note to the list
+        except NoteException, e:
+            print '\n\tWARNING: Note Exception - %s\n\n' % str(e)
 
     # file names
     if not notes:

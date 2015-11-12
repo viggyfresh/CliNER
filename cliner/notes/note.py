@@ -181,22 +181,22 @@ class Note:
             concept,char_spans = classification
 
             #print '\n\n'
-            #print concept
-            #print char_spans
+            #print 'concept: ', concept
+            #print 'char_spans: ', char_spans
 
             # Each span (could be noncontiguous span)
             for span in char_spans:
                 start_ind,end_ind = span
-                #print '\t', start_ind, end_ind
-                #print '\t', text[start_ind:end_ind]
+                #print '\tstart_ind, end_ind: ', start_ind, end_ind
+                #print '\ttext[start_ind:end_ind]: <%s>' % text[start_ind:end_ind]
 
                 lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span)
                 start,end = tokspan
 
-                #print '\t', lineno, tokspan
-                #print '\t\t', data[lineno]
-                #print '\t\t', data[lineno][tokspan[0]:tokspan[1]+1]
-                #print '\t\t', iobs[lineno]
+                #print '\tlineno, tokspan: ', lineno, tokspan
+                #print '\t\tdata[linenp]: ', data[lineno]
+                #print '\t\ttokspan: ', data[lineno][tokspan[0]:tokspan[1]+1]
+                #print '\t\tiobs: ', iobs[lineno]
 
                 # Update concept tokens to 'B's and 'I's
                 assert iobs[lineno][start] == 'O'
