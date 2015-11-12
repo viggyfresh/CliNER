@@ -231,18 +231,29 @@ class Note_i2b2(AbstractNote):
 
             # TODO - eliminate minor spans which are subsumed
             # Detect subsumed concept spans
+
+        #    print self.classifications
             for i in range(len(self.classifications)-1):
+
                 c1 = self.classifications[i]
                 c2 = self.classifications[i+1]
                 if c1[1] == c2[1]:
-                    if c1[3] > c2[2]:
+
+
+                    """
+                    if c1[1] == 30:
+                        print "LINE: ", c1[1]
+                        print "c1: ", c1
+                        print "c2: ", c2
+                    """
+
+                    if c1[2] <= c2[2] and c2[2] <= c1[3]:
                         error_msg = '%s file has overlapping entities one line %d. This file will not be processed until you remove one of the offending entities' % (os.path.basename(con),c1[1])
                         raise NoteException(error_msg)
 
                 #print c1
                 #print c2
                 #print
-            #exit()
 
 
     def write(self, labels=None):

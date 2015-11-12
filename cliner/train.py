@@ -134,7 +134,7 @@ def train(training_list, model_path, format, is_crf=True, grid=False):
             note_tmp.read(txt, con)   # Read data into Note
             notes.append(note_tmp)    # Add the Note to the list
         except NoteException, e:
-            print '\n\tWARNING: Note Exception - %s\n\n' % str(e)
+            exit( '\n\tWARNING: Note Exception - %s\n\n' % str(e) )
 
     # file names
     if not notes:
