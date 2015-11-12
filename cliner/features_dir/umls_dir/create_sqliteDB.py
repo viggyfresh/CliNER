@@ -15,26 +15,26 @@ def create_db():
     print "opening files"
     #load data in files.
     try:
-        mrsty_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRSTY')
+        mrsty_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRSTY.RRF')
         MRSTY_TABLE_FILE = open( mrsty_path, "r" )
     except IOError:
-        print "\nNo file to use for creating MRSTY table\n"
+        print "\nNo file to use for creating MRSTY.RRF table\n"
         conn.close()
         sys.exit()
 
     try:
-        mrcon_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRCON')
+        mrcon_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRCONSO.RRF')
         MRCON_TABLE_FILE = open( mrcon_path , "r" )
     except IOError:
-        print "\nNo file to use for creating MRCON table\n"
+        print "\nNo file to use for creating MRCONSO.RRF table\n"
         conn.close()
         sys.exit()
 
     try:
-        mrrel_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRREL')
+        mrrel_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRREL.RRF')
         MRREL_TABLE_FILE = open( mrrel_path , "r" )
     except IOError:
-        print "\nNo file to use for creating MRREL table\n"
+        print "\nNo file to use for creating MRREL.RRF table\n"
         conn.close()
         sys.exit()
 
@@ -42,37 +42,61 @@ def create_db():
     c = conn.cursor()
 
     #create tables.
-    c.execute( "CREATE TABLE MRCON( CUI, LAT, TS, LUI, STT, SUI, STR, LRL, EMPTY ) ;" )
-    c.execute( "CREATE TABLE MRSTY( CUI, TUI, STY, EMPTY ) ;" )
-    c.execute( "CREATE TABLE MRREL( CUI1, REL, CUI2, RELA, SAB, SL, MG, EMPTY ) ;" )
+    c.execute( "CREATE TABLE MRSTY( CUI, TUI, STN, STY, ATUI, CVF  ) ;" )
+    c.execute( "CREATE TABLE MRCON( CUI, LAT, TS, LUI, STT, SUI, ISPREF, AUI, SAUI, SCUI, SDUI, SAB, TTY, CODE, STR, SRL, SUPPRESS, CVF ) ;" )
+    c.execute( "CREATE TABLE MRREL( CUI1, AUI1, STYPE1, REL, CUI2, AUI2, STYPE2, RELA, RUI, SRUI, SAB, SL, RG, DIR, SUPPRESS, CVF );")
 
     print "inserting data into MRSTY table"
     for line in MRSTY_TABLE_FILE:
 
-        try:
-            c.execute( "INSERT INTO MRSTY( CUI, TUI, STY, EMPTY) values( ?, ?, ?, ?)" , tuple(line[0:-1].split('|')) )
-        except sqlite3.ProgrammingError:
-            continue
+        line = line.strip('\n')
+
+        assert line[-1] == '|', "str: {}, char: ".format(line, line[-1])
+
+        line = line.split('|')
+
+        # end will always be empty str
+        line.pop()
+
+        assert len(line) == 6
+
+        c.execute( "INSERT INTO MRSTY( CUI, TUI, STN, STY, ATUI, CVF ) values( ?, ?, ?, ?, ?, ?)" , tuple(line))
 
     MRSTY_TABLE_FILE.close()
 
     print "inserting data into MRCON table"
     for line in MRCON_TABLE_FILE:
 
-        try:
-            c.execute( "INSERT INTO MRCON( CUI, LAT, TS, LUI, STT, SUI, STR, LRL, EMPTY ) values ( ?, ?, ? ,?, ?,?,?,?,?);", tuple(line[0:-1].split('|')) )
-        except sqlite3.ProgrammingError:
-            continue
-    
+        line = line.strip('\n')
+
+        assert line[-1] == '|', "str: {}, char: ".format(line, line[-1])
+
+        line = line.split('|')
+
+        # end will always be empty str
+        line.pop()
+
+        assert len(line) == 18
+
+        c.execute( "INSERT INTO MRCON( CUI, LAT, TS, LUI, STT, SUI, ISPREF, AUI, SAUI, SCUI, SDUI, SAB, TTY, CODE, STR, SRL, SUPPRESS, CVF ) values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", tuple(line))
+
     MRCON_TABLE_FILE.close()
 
     print "inserting data into MRREL table"
     for line in MRREL_TABLE_FILE:
-        
-        try:
-            c.execute( "INSERT INTO MRREL(  CUI1, REL, CUI2, RELA, SAB, SL, MG, EMPTY ) values( ?, ?, ?, ?,?, ? ,? ,? )" , tuple(line[0:-1].split('|')) )
-        except sqlite3.ProgrammingError:
-            continue
+
+        line = line.strip('\n')
+
+        assert line[-1] == '|', "str: {}, char: ".format(line, line[-1])
+
+        line = line.split('|')
+
+        # end will always be empty str
+        line.pop()
+
+        assert len(line) == 16
+
+        c.execute( "INSERT INTO MRREL(  CUI1, AUI1, STYPE1, REL, CUI2, AUI2, STYPE2, RELA, RUI, SRUI, SAB, SL, RG, DIR, SUPPRESS, CVF ) values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )" , tuple(line))
 
     MRREL_TABLE_FILE.close()
 

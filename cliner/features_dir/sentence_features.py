@@ -55,7 +55,15 @@ enabled_IOB_prose_sentence_features.append('GENIA')
 enabled_IOB_prose_sentence_features.append('UMLS')
 
 
-def IOB_prose_features(sentence, data=None):
+def sentence_features_preprocess(data):
+    global feat_genia
+    tagger = enabled['GENIA']
+    # Only run GENIA tagger if module is available
+    if tagger:
+        feat_genia = GeniaFeatures(tagger,data)
+
+
+def IOB_prose_features(sentence):
     """
     IOB_prose_features
 
@@ -64,13 +72,6 @@ def IOB_prose_features(sentence, data=None):
 
     """
     features_list = []
-
-    # Initialize feat_genia if not done so already
-    global feat_genia
-    if data and enabled['GENIA'] and not feat_genia:
-        # Only run GENIA tagger if module is available
-        tagger = enabled['GENIA']
-        feat_genia = GeniaFeatures(tagger,data)
 
     # Get a feature set for each word in the sentence
     for i,word in enumerate(sentence):

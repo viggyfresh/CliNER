@@ -16,54 +16,38 @@ from utilities import is_prose_sentence
 
 import sentence_features as feat_sent
 
-def IOB_prose_features(data, Y=None):
+
+def IOB_prose_features(nested_prose_data):
     """
     IOB_prose_features()
 
     @param data      A list of split sentences (1 sent = 1 line from file)
     @param Y         A list of list of IOB (1:1 mapping with data)
-    @return          tuple: list of IOB_prose_features, list of IOB 
+    @return          tuple: list of IOB_prose_features, list of IOB
 
     """
-    
-    prose   = []
-    pchunks = []
+    # Genia preprocessing
+    feat_sent.sentence_features_preprocess(nested_prose_data)
 
-    # If no Y given, that information doesn't matter
-    if not Y:
-        Y = data
-
-    for sentence,labels in zip(data, Y):
-        if is_prose_sentence(sentence):
-           prose.append(feat_sent.IOB_prose_features(sentence, data))
-           pchunks += labels
-
-    return (prose, pchunks)
+    prose_feats   = []
+    for sentence in nested_prose_data:
+       prose_feats.append(feat_sent.IOB_prose_features(sentence))
+    return prose_feats
 
 
-def IOB_nonprose_features(data, Y=None):
+def IOB_nonprose_features(nonprose_data):
     """
     IOB_nonprose_features()
 
     @param data      A list of split sentences (1 sent = 1 line from file)
     @param Y         A list of list of IOB (1:1 mapping with data)
-    @return          tuple: list of IOB_prose_features, list of IOB 
+    @return          tuple: list of IOB_prose_features, list of IOB
 
     """
-    
-    nonprose   = []
-    nchunks    = []
-    
-    # If no Y given, that information doesn't matter
-    if not Y:
-        Y = data
-
-    for sentence,labels in zip(data, Y):
-        if not is_prose_sentence(sentence):
-           nonprose.append(feat_sent.IOB_nonprose_features(sentence))
-           nchunks += labels
-
-    return (nonprose, nchunks)
+    nonprose_feats = []
+    for sentence in nonprose_data:
+       nonprose_feats.append(feat_sent.IOB_nonprose_features(sentence))
+    return nonprose_feats
 
 
 def concept_features(sentence, chunk_inds):

@@ -16,13 +16,11 @@ class GeniaFeatures:
 
 
     def __init__(self, tagger, data):
-
         """
         Constructor.
 
         @param data. A list of split sentences
         """
-
         # Filter out nonprose sentences
         prose = [ sent  for  sent  in  data  if  utilities.is_prose_sentence(sent) ]
 
@@ -45,17 +43,21 @@ class GeniaFeatures:
               This function MUST take each line of the file (in order) as input
         """
 
-
         # Mechanism to allow for skipping nonprose
         if not is_prose: return []
 
         # Return value is a list of dictionaries (of features)
         features_list = [ {}  for  _  in  sentence ]
 
+        #print 'sentence: ', sentence
+        #print 'len(sentence): ', len(sentence)
 
         # Get the GENIA features of the current sentence
         genia_feats = next( self.GENIA_features )
 
+        #print 'genia_feats: ', [ f['GENIA-word'] for f in genia_feats ]
+        #print 'len(genia_feats): ', len(genia_feats)
+        assert len(sentence) == len(genia_feats)
 
         # Feature: Current word's GENIA features
         for i,curr in enumerate(genia_feats):
