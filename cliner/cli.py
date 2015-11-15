@@ -18,7 +18,13 @@ import sys
 import subprocess
 import glob
 
+
+# Ensure CLINER_DIR is set (TODO set properly?)
+if 'CLINER_DIR' not in os.environ:
+    print >>sys.stderr, '\n\tError: You must set the CLINER_DIR path to continue\n'
+    exit()
 sys.path.append( os.environ['CLINER_DIR'] + "/cliner/notes" )
+
 
 from note import Note
 
