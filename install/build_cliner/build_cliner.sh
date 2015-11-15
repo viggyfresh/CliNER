@@ -10,7 +10,7 @@
 BUILD_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 log="$BUILD_DIR/log_installation.txt"
 echo "" > $log
-echo -e "\nSee python dependency details at: \n\t$BUILD_DIR/log_installation.txt\n"
+echo -e "\nSee build_cliner details at: \n\t$BUILD_DIR/log_installation.txt\n"
 
 
 

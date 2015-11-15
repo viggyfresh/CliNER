@@ -13,33 +13,8 @@ echo "" > $log
 echo -e "\nSee python dependency details at: \n\t$DEPENDENCIES_DIR/log_installation.txt\n"
 
 
-# Virtual Environment
-source $CLINER_DIR/install/virtualenv/create_virtualenv.sh
-
-
-#modules=(nltk python-crfsuite nose numpy scipy scikit-learn marisa-trie)
-#modules=(nltk python-crfsuite numpy scipy scikit-learn marisa-trie)
-modules=(nltk python-crfsuite numpy scipy scikit-learn marisa-trie repoze.lru)
-for m in ${modules[@]} ; do
-
-    echo -e "\nmodule: $m"
-
-    # Install module if necessary
-    python $CLINER_DIR/cliner/is_installed.py $m
-    if [[ $? != 0 ]] ; then
-        echo "installing $m"
-        pip install -U $m &>> $log
-
-        if [[ $? != 0 ]] ; then
-            echo -e "\tERROR installing $m (see log)"
-        else
-            echo -e "\t$m installed successfully\n"
-        fi
-    else
-        echo -e "\t$m already installed\n"
-    fi
-
-done
+# Install python dependencies
+pip install -r $DEPENDENCIES_DIR/../../requirements.txt &>> $log
 
 
 # Install nltk data

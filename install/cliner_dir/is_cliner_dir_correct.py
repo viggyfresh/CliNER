@@ -10,6 +10,10 @@
 import os
 
 
+def back(p):
+    return os.path.dirname(p)
+
+
 def is_cliner_dir_correct():
 
     '''
@@ -26,14 +30,8 @@ def is_cliner_dir_correct():
         return False
 
     # Is CLINER_DIR set correctly?
-    path = os.path.join(base, 'README.rst')
-    try:
-        with open(path, 'r') as f:
-            lines = f.readlines()
-            if len(lines) < 2: return False
-            return lines[1].strip() == 'CliNER'
-    except IOError:
-        return False
+    actual_cliner_dir = back(back(back(os.path.abspath(__file__))))
+    return base == actual_cliner_dir
 
 
 if __name__ == '__main__':
