@@ -55,6 +55,18 @@ enabled_IOB_prose_sentence_features.append('GENIA')
 enabled_IOB_prose_sentence_features.append('UMLS')
 
 
+
+def display_enabled_modules():
+    print
+    for module,status in enabled.items():
+        if status:
+            print '\t', module, '\t', ' ENABLED'
+        else:
+            print '\t', module, '\t', 'DISABLED'
+    print
+
+
+
 def sentence_features_preprocess(data):
     global feat_genia
     tagger = enabled['GENIA']

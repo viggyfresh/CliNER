@@ -17,6 +17,12 @@ from utilities import is_prose_sentence
 import sentence_features as feat_sent
 
 
+
+# display enabled modules to user
+feat_sent.display_enabled_modules()
+
+
+
 def IOB_prose_features(nested_prose_data):
     """
     IOB_prose_features()
