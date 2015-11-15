@@ -9,8 +9,20 @@ import copy
 import sqlite3
 import create_sqliteDB
 import os
+import sys
 
 import create_trie
+
+
+features_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if features_dir not in sys.path:
+    sys.path.append(features_dir)
+
+
+# find where umls tables are located
+from read_config import enabled_modules
+enabled = enabled_modules()
+umls_tables = enabled['UMLS']
 
 
 
@@ -23,12 +35,10 @@ import create_trie
 #connect to UMLS database
 def SQLConnect():
     #try to connect to the sqlite database.
-    db_path = os.path.join( os.environ['CLINER_DIR'], "umls_tables/umls.db")
-    if( os.path.isfile( db_path ) ):
-        print "\ndb exists"
-    else:
-        # Database does not exit. Make one.
-        print "\ndb doesn't exist"
+    # if database does not exit. Make one.
+    db_path = os.path.join(umls_tables, "umls.db")
+    if not os.path.isfile(db_path):
+        print "\n\tdb doesn't exist (creating one now)\n"
         create_sqliteDB.create_db()
 
     db = sqlite3.connect( db_path )

@@ -2,29 +2,47 @@ import cPickle as pickle
 import sys
 import os
 
-sys.path.append((os.environ["CLINER_DIR"] + "/cliner/features_dir"))
+import atexit
 
+
+features_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if features_dir not in sys.path:
+    sys.path.append(features_dir)
+
+# find where umls tables are located
+from read_config import enabled_modules
+enabled = enabled_modules()
+umls_tables = enabled['UMLS']
+
+
+sys.path.append((os.environ["CLINER_DIR"] + "/cliner/features_dir"))
 from utilities import load_pickled_obj
 
+
 class UmlsCache:
+
+    # static class variables
+    filename = None
+    cache = None
+
     def __init__(self):
         try:
-            prefix = os.environ['CLINER_DIR']
-            self.filename = os.path.join( prefix, 'umls_tables/umls_cache' )
-
-            self.cache = load_pickled_obj(self.filename)
+            UmlsCache.filename = os.path.join(umls_tables, 'umls_cache')
+            UmlsCache.cache = load_pickled_obj(UmlsCache.filename)
 
         except IOError:
-            self.cache = {}
+            UmlsCache.cache = {}
 
-    def has_key( self , string ):
-        return self.cache.has_key( string )
+    def has_key(self , string):
+        return UmlsCache.cache.has_key( string )
 
-    def add_map( self , string, mapping ):
-        self.cache[string] = mapping
+    def add_map(self , string, mapping):
+        UmlsCache.cache[string] = mapping
 
-    def get_map( self , string ):
-        return self.cache[string]
+    def get_map(self , string):
+        return UmlsCache.cache[string]
 
-    def __del__(self):
-        pickle.dump( self.cache, open( self.filename, "wb" ) )
+    @staticmethod
+    @atexit.register
+    def destructor():
+        pickle.dump(UmlsCache.cache, open(UmlsCache.filename,"wb"))

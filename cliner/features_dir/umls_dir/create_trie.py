@@ -3,6 +3,17 @@ import marisa_trie
 import sys
 import os
 
+features_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if features_dir not in sys.path:
+    sys.path.append(features_dir)
+
+# find where umls tables are located
+from read_config import enabled_modules
+enabled = enabled_modules()
+umls_tables = enabled['UMLS']
+
+
+
 def create_trie():
 
     """
@@ -12,16 +23,11 @@ def create_trie():
 
     @return  A trie object
     """
-
     # Is trie already built & pickled?
-    prefix = os.environ['CLINER_DIR']
-    filename = os.path.join( prefix, 'umls_tables/umls-concept.trie' )
+    filename = os.path.join(umls_tables, 'umls-concept.trie')
     try:
-
         t = marisa_trie.Trie().load(filename)
-
         return t
-
     except IOError:
         pass
 
@@ -31,7 +37,7 @@ def create_trie():
     #load data in files.
     print "opening file"
     try:
-        mrcon_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRCONSO.RRF')
+        mrcon_path = os.path.join(umls_tables, 'MRCONSO.RRF')
         MRCON_TABLE = open( mrcon_path , "r" )
     except IOError:
         print "\nNo file to use for creating MRCON table\n"

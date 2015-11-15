@@ -4,18 +4,30 @@ import os
 import sys
 import os
 
+features_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if features_dir not in sys.path:
+    sys.path.append(features_dir)
+
+
+# find where umls tables are located
+from read_config import enabled_modules
+enabled = enabled_modules()
+umls_tables = enabled['UMLS']
+
+
+
 def create_db():
 
     print "\ncreating umls.db"
     #connect to the .db file we are creating.
-    db_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/umls.db')
+    db_path = os.path.join(umls_tables, 'umls.db')
     conn = sqlite3.connect( db_path )
     conn.text_factory = str
 
     print "opening files"
     #load data in files.
     try:
-        mrsty_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRSTY.RRF')
+        mrsty_path = os.path.join(umls_tables, 'MRSTY.RRF')
         MRSTY_TABLE_FILE = open( mrsty_path, "r" )
     except IOError:
         print "\nNo file to use for creating MRSTY.RRF table\n"
@@ -23,7 +35,7 @@ def create_db():
         sys.exit()
 
     try:
-        mrcon_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRCONSO.RRF')
+        mrcon_path = os.path.join(umls_tables, 'MRCONSO.RRF')
         MRCON_TABLE_FILE = open( mrcon_path , "r" )
     except IOError:
         print "\nNo file to use for creating MRCONSO.RRF table\n"
@@ -31,7 +43,7 @@ def create_db():
         sys.exit()
 
     try:
-        mrrel_path = os.path.join(os.environ['CLINER_DIR'],'umls_tables/MRREL.RRF')
+        mrrel_path = os.path.join(umls_tables, 'MRREL.RRF')
         MRREL_TABLE_FILE = open( mrrel_path , "r" )
     except IOError:
         print "\nNo file to use for creating MRREL.RRF table\n"
