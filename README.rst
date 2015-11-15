@@ -18,42 +18,12 @@ Installation
 
 **Cloning the CliNER git repository:**
 
-::
-
-    user@your-machine:~$ git clone https://github.com/text-machine-lab/CliNER.git
-        Cloning into 'CliNER'...
-        remote: Counting objects: 1296, done.
-        remote: Compressing objects: 100% (503/503), done.
-        remote: Total 1296 (delta 812), reused 1253 (delta 781)
-        Receiving objects: 100% (1296/1296), 1001.14 KiB | 759 KiB/s, done.
-        Resolving deltas: 100% (812/812), done.
+    git clone https://github.com/text-machine-lab/CliNER.git
 
 
-**CliNER Dependencies Diagnosis**
+**Package Dependencies**
 
-We know that software installation can be a major hassle. We hate it too. That's why why made the 'install' directory. This directory contains diagnostic tools to determine what is causing the system installation to fail. We hope you'll never have to use it. To run the full suite of checks, do:
-
-    ::
-
-        user@your-machine:~$ python install/diagnose.py
-
-Good luck!
-
-
-
-**Using an installation script**
-
-Linux users can use an installation script to install this project. Note that it cannot get tools and data that require special use agreements (namely, i2b2 data and the UMLS tables), which have to be obtained separately.
-
-To invoke the script, ensure you are in a bash terminal (zsh will not work). Next, ``cd`` into the ``CliNER`` directory:
-
-::
-
-    user@your-machine:~$ cd CliNER
-    user@your-machine:~/CliNER$ source install.sh
-
-
-The script begins with a diagnostic to see what needs to be installed. If the script fails, you should ensure the following systems are installed on your system:
+Ensure the following packages are installed on your system.
 
 ::
 
@@ -66,97 +36,113 @@ The script begins with a diagnostic to see what needs to be installed. If the sc
     libopenblas-dev
     liblapack-dev
 
-For Ubuntu users, the above are the names of the packages that need to be installed.  A typical command to install a python module on a Debian-flavored Linux is:
+For instance, if you do not have gfortran, you can install it  on a Debian-flavored Linux using
+
+    sudo apt-get install gfortran
+
+
+
+**Using an installation script**
+
+Linux users can use an installation script to install this project. Note that it cannot get tools and data that require special use agreements (namely, i2b2 data and the UMLS tables), which have to be obtained separately.
+
+To invoke the script, ensure you are in a bash terminal (zsh will not work).
 
 ::
 
-    apt-get install <package-name>
+    user@your-machine:~$ cd CliNER
+    user@your-machine:~/CliNER$ source install.sh
 
 
-Although the script is able to build python dependencies via pip, this is a slow process. It would be much faster to obtain binaries of certain python modules and then run the script:
+This script is runs just a few simple steps
 
-::
-
-    numpy
-    scipy
-    scikit-learn (version 0.14)
-
-
-If the installation script encounters issues, please see the README section corresponding to the failure message.
-
-Please email wboag@cs.uml.edu with your installation questions.
+    1. set the CLINER_DIR environment variable
+    2. install python dependencies (via pip)
+    3. build the `cliner` command
+    4. Download the optional GENIA tagger and update config.txt
 
 
-**Step-by-step installation instructions:**
+**Step-by-step**
+
+    1. **CLINER_DIR** - set the CLINER_DIR env variable to refer to the project base
+
+        export CLINER_DIR=$(pwd)
+
+    2. **Python Dependencies** - install dependencies via pip
+
+        pip install -r requirements.txt
+
+        python -m nltk.downloader maxent_treebank_pos_tagger wordnet punkt
+
+    3. **Build cliner** - build the script for running cliner
+
+        python setup.py install
+
+    4. **GENIA** - this is optional. See OPTIONAL section of readme for more
 
 
-(1) Set up virtualenv
-
-    Setup a virtual environent. You must re-enable the virtual environment every new session.
-
-    ::
-
-        user@your-machine:~$ virtualenv venv_cliner
-        user@your-machine:~$ source venv_cliner/bin/activate
+Please email wboag@cs.uml.edu with your installation issues/questions.
 
 
-    reference
-        https://virtualenv.pypa.io/en/latest/
+**Diagnostic Script**
 
+We know that software installation can be a major hassle. We hate it too. That's why why made the 'install' directory. This directory contains diagnostic tools to determine what is causing the system installation to fail. We hope you'll never have to use it. To run the full suite of checks, do:
 
+    python install/diagnose.py
 
-(2) Set the CLINER_DIR environment variable
-
-    In order to run CliNER, you must define the CLINER_DIR environment variable.
-
-    **This variable must be the path of the directory created by git.**
-
-    ::
-
-        user@your-machine:~$ export CLINER_DIR=$(pwd)/CliNER
+Good luck!
 
 
 
-(3) Install dependencies
+**OPTIONAL**
 
 
-    Ensure the following packages are installed on the system (they are used for building the required Python dependencies):
+(1) virtualenv
 
-        Linux:
-            * python-pip
-            * python-virtualenv
-            * python-dev
-            * g++
-            * gfortran
-            * libopenblas-dev
-            * liblapack-dev
+    **Why would I want this?** Virtual environments are good practice for when you want to install particular versions of python packages on a per-project basis. They modify local include paths, rather than the system-wide one. They are especially useful when you do not want to disturb other users on a shared server or when your own projects require different library version numbers.
 
+    Setup a virtual environent, and make sure you specify that we're using Python 2.7
 
-        Mac OSX (e.g. using [Homebrew](http://brew.sh/)):
-            * python
-            * gfortran
+        virtualenv venv_cliner -p /usr/bin/python2.7
+
+    You must re-enable the virtual environment every new session.
+
+        source venv_cliner/bin/activate
 
 
-    Ensure the following python modules are installed:
-        * nose
-        * numpy
-        * scikit-learn (version 0.14)
-        * scipy
-        * python-crfsuite
-        * marisa-trie
-        * nltk  (AND run the NLTK downloader)
+    **reference** https://virtualenv.pypa.io/en/latest/
 
 
-    ::
+(2) GENIA
 
-        (venv_cliner)user@your-machine:~/CliNER$ sudo apt-get install python-pip python-virtualenv python-dev g++ gfortran libopenblas-dev liblapack-dev -y
-        (venv_cliner)user@your-machine:~/CliNER$ pip install nose numpy scikit-learn scipy nltk python-crfsuite marisa-trie
-        (venv_cliner)user@your-machine:~/CliNER$ python -m nltk.downloader maxent_treebank_pos_tagger punkt
+    **Why would I want this?** The GENIA tagger is a tool similar to CliNER but designed for Biomedical text. Depending on the domain of your data, this tool's pretrained model may or may not be able to improve performance for CliNER as it detects concepts.
+
+    download the GENIA tagger (use the download script we wrote for this)
+
+        bash install/genia/install_genia.sh
+
+    If you're curious to see how the script works (downloads tarball, fixes typo in genia code, compiles) feel free to open this script up in a text editor.
+
+    **reference** http://www.nactem.ac.uk/tsujii/GENIA/tagger/
+
+
+(3) UMLS tables
+
+    **Why would I want this?** The UMLS, or Unified Medical Language System, is a very comprehensive database of various medical terms and concepts. Access to it would allow CliNER to leverage domain-specific knowledge.
+
+    SORRY! This resource is contains potentially sensitive clinical data, and requires a confidentiality agreement. We can't do that part for you. Please see "Additional Resources" portion of this readme for instructions on how to obtain the UMLS tables.
+
+    **reference** https://www.nlm.nih.gov/research/umls/quickstart.html
 
 
 
+Additional Resources
+--------
 
-(4) Get i2b2 2010 shared task data
+These are resources that require login credentials to access secure data, so we can't provide you with them directly.
+
+
+(1) Get i2b2 2010 shared task data
 
     The Data Use and Confidentiality Agreement (DUA) with i2b2 forbids us from redistributing the i2b2 data. In order to gain access to the data, you must go to:
 
@@ -165,53 +151,15 @@ Please email wboag@cs.uml.edu with your installation questions.
     to register and sign the DUA. Then you will be able to request the data through them.
 
 
-    Although we cannot provide i2b2 data, there is a sample to demonstrate how the data is formatted (not actual data from i2b2, though). **Here is a very basic description of the data formats.** It is by no means a complete tutorial.
-
-        * $CLINER_DIR/examples/pretend.txt
-
-            This is a text file. Discharge summaries are written out in plaintext, just like this. It is paired with a concept file, which has its annotations.
-
-        * $CLINER_DIR/examples/pretend.con
-
-            This is a concept file. It provides annotations for the concepts (problem, treatment, test) of the text file. The format is as follows - each instance of a concept has one line. The line describes the word span, the line number and token numbers of the span (delimited by white space), and the label of the concept.
-
-        * $CLINER_DIR/examples/pretend.xml
-
-            This is an alternative way to annotate concepts from a discharge summary. Unlike the text/concept files, this format is not in a pair - it provides both the text and annotations for the discharge summary. This format is easier to read.
 
 
-
-
-
-(5) Install GENIA tagger (optional)
-
-    This is an optional part of installation. Adding the GENIA tagger will improve results of the system's predictions, but it could run without it.
-
-    Steps
-
-        1. First you must download the sources for GENIA. Do that with ``wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.1.tar.gz``
-
-        2. Untar the file ``tar xzvf geniatagger-3.0.1`` and enter the new directory ``cd geniatagger-3.0.1``.
-
-        3. In order to compile the sources, you may need to edit a C++ so that it has an additional include directive. This should be able to be accomplished by enterring the geniatagger-3.0.1/ directory and running ``echo "$(sed '1i#include <cstdlib>' morph.cpp)" > morph.cpp``
-
-        4. Compile GENIA. Just run ``make``
-
-        5. If you do not have any errors, then the tagger has been built successfully. If there were compile errors, try to resolve them (it'd be one of those "well it works for me" scenarios).
-
-        6. Set the file "$CLINER_DIR/config.txt" so that the line that has "GENIA None" is replaced with "GENIA <path-to-geniatagger-3.0.1/geniatagger>'. This file is how CliNER is able to find and run the tagger.
-
-
-
-(6) Get UMLS tables (optional)
-
-    This is an optional part of installation. Adding the UMLS tables will improve results of the system's predictions, but it could run without it.
+(2) UMLS tables
 
     In order to use the UMLS tables, you must request a license. See:
 
     http://www.nlm.nih.gov/databases/umls.html
 
-    You will need to get following tables: **MRREL.RRF, MRCONSO.RRF, MRSTY.RRF**
+    You will need to get following tables: **MRREL, MRCON, MRSTY**
 
     **Put these tables in the $CLINER_DIR/umls_tables directory.**
 
@@ -219,40 +167,107 @@ Please email wboag@cs.uml.edu with your installation questions.
 
     **The database will be built from the tables when CliNER is run for the first time.**
 
-    How to obtain UMLS tables:
-
-        1. download all the files from https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html
-        2. unzip mmsys.zip into a folder
-        3. put all other files downloaded into that folder
-        4. execute run_linux.sh
-        5. select install UMLS on gui
-        6. choose destination for umls directory
-        7. hit ok
-        8. hit new config
-        9. accept agreement
-        10. select only active UMLS sources as your default subset
-        11. select at top of gui pane, done and then select begin subset.
-        12. the destination folder should contain the necessary files needed.
-
-
-(7) Create 'cliner' executable script for command-line use
-
-    In order to run CliNER (as done in the usage examples), you must run setup.py.
-
-    As long as the Python dependencies are properly installed, you should be able to run the setup script.
-
-    If it works, you should see a brief help message when invoking cliner with the ``--help`` option:
-
-    ::
-
-            (venv_cliner)user@your-machine:~/CliNER$ python $CLINER_DIR/setup.py install
-            (venv_cliner)user@your-machine:~/CliNER$ cliner --help
 
 
 
-(8) Run unit tests
+Example Data
+--------
 
-    [this section is under construction]
+Although we cannot provide i2b2 data, there is a sample to demonstrate how the data is formatted (not actual data from i2b2, though).
+
+    examples/pretend.txt
+
+This is a text file. Discharge summaries are written out in plaintext, just like this. It is paired with a concept file, which has its annotations.
+
+    examples/pretend.con
+
+This is a concept file. It provides annotations for the concepts (problems, treatments, and tests) of the text file. The format is as follows - each instance of a concept has one line. The line shows the text span, the line number, token numbers of the span (delimited by white space), and the label of the concept.
+
+    examples/pretend.xml
+
+This is an alternative way to annotate concepts from a discharge summary. This format is easier to read in context because the concepts are embedded in the text document. Note that the .xml files still function as a concept file and will always be paried with a corresponding text file (despite redundancies).
+
+
+
+
+Usage
+--------
+
+Here are some use cases:
+
+(1) Check that CliNER installed correctly
+
+This help message will list the options available to run (train/predict/evaluate)
+
+    cliner --help
+
+
+(2) See an end-to-end run of train/predict/evaluate
+
+This script demonstrates a simple run of training, predicting, and evaluating the system.
+
+   bash examples/demo.sh
+
+
+(3) Training
+
+These examples demonstrate how to build a CliNER model which can then be used for predicting concepts in text files.
+
+    cliner train examples/pretend.txt --annotations examples/pretend.con --format i2b2 --model models/foo.model
+
+This example trains a very simple CliNER model. The (pretend.txt, pretend.con) pair form as the only document for learning to identify concepts. We must specify that these files are i2b2 format (even though the .con extension implies i2b2 format, you can never be too careful). The CliNER model is then serialized to models/foo.model as specified.
+
+Please note that multiple files could be passed by enclosing them as a glob within "" quotes.
+
+
+    cliner train examples/pretend.txt --annotations examples/pretend.con --format i2b2 --model models/foo.model --grid-search
+
+This example doesn't actually run. The input file pretend.con is too small that there are not enough data points to perform a grid search over. However, if you do wish to run grid search, it is as simple as using the --grid-search flag.
+
+
+    cliner train examples/pretend.txt --annotations examples/pretend.xml --format xml --model models/foo.model
+
+Here's one last example for training. In this example, we trained on xml-annotated data. Hopefully it's now clear why we always pair the .xml file with a .txt (it makes the interface much more consistent across data formats).
+
+
+(4) Prediction
+
+Once your CliNER model is built, you can use it to predict concepts in text files.
+
+    cliner predict examples/pretend.txt --out data/test_predictions/ --format i2b2 --model models/foo.model
+
+In this example, we use the models/foo.model CliNER model that we built up above. This model is used to predict concepts in i2b2 format for the pretend.txt file. This generates a file named "pretend.con" and stores it in the specified output directory.
+
+Notice that we trained and predicted on the same file, so we definitely overfit our way into a perfect match.
+
+    cliner predict examples/pretend.txt --out data/test_predictions/ --format xml  --model models/foo.model
+
+Once again, here's the same example as above, but with predicting xml annotations.
+
+
+(5) Evaluation
+
+This allows us to evaluate how well CliNER does by comparing it against a gold standard.
+
+    cliner evaluate examples/pretend.txt --gold examples --predictions data/test_predictions/ --format i2b2
+
+Evaluate how well the system predictions did for given discharge summaries. The prediction and reference driectories are provided with the --predictions and --gold flags, respectively. Both sets of data must be in the same format, and that format must be specified - in this case, they are both i2b2. This means that both the examples and data/test_predictions directories contain the file pretend.con.
+
+
+(6) Re-formatting (NOT WORKING)
+
+    cliner format examples/pretend.txt --annotations data/test_predictions/pretend.con --format xml
+
+WARNING! This functionality is not up-to-date. If you try to run the format command, it will likely just crash and give you an ugly error message. It's on our TODO list, we promise! In theory, this example would produce the xml-annotations that correspond to the concepts described in pretend.con.
+
+
+
+(7) Run unit tests
+
+SORRY! [this section is under construction, unfortunately]
+
+
+
 
 Deploying with Vagrant
 --------
@@ -264,54 +279,5 @@ install/build CliNER.
 The access ip is listed during deployment (usually 127.0.0.1:2222).
 The username/password is vagrant/vagrant.
 
-Usage Examples
---------
-
-    Demo Script
-    ::
-        user@your-machine:~/CliNER$ source install.sh
-        (venv_cliner)user@your-machine:~/CliNER$ bash examples/demo.sh
-
-
-    i2b2 format
-
-        Train model on i2b2-formatted data
-        ::
-            (venv_cliner)user@your-machine:~/CliNER$ cliner train $CLINER_DIR/examples/pretend.txt --annotations $CLINER_DIR/examples/pretend.con
-
-        Train model on i2b2-formatted data with SVM grid search (NOTE: Currently does not work with sample data because the sample data is too small for cross validation).
-        ::
-            (venv_cliner)user@your-machine:~/CliNER$ cliner train $CLINER_DIR/examples/pretend.txt --annotations $CLINER_DIR/examples/pretend.con --grid-search
-
-        Predict concepts and output in i2b2 format
-        ::
-            (venv_cliner)user@your-machine:~/CliNER$ cliner predict $CLINER_DIR/examples/pretend.txt --out $CLINER_DIR/data/test_predictions/
-
-        Evaluation
-        ::
-            (venv_cliner)user@your-machine:~/CliNER$ cliner evaluate $CLINER_DIR/examples/pretend.txt --gold $CLINER_DIR/examples --predictions $CLINER_DIR/data/test_predictions/ --format i2b2
-
-        Change Format
-        ::
-            (venv_cliner)user@your-machine:~/CliNER$ cliner format $CLINER_DIR/examples/pretend.txt --annotations $CLINER_DIR/data/test_predictions/pretend.con --format xml
-
-
-    xml format
-
-        Train model on xml-formatted data
-        ::
-            (venv_cliner)user@your-machine:~/CliNER$ cliner train $CLINER_DIR/examples/pretend.txt --annotations $CLINER_DIR/examples/pretend.xml --format xml
-
-        Predict concepts and output in xml format
-        ::
-            (venv_cliner)user@your-machine:~/CliNER$ cliner predict $CLINER_DIR/examples/pretend.txt --out $CLINER_DIR/data/test_predictions/ --format xml
-
-        Evaluation
-        ::
-            (venv_cliner)user@your-machine:~/CliNER$ cliner evaluate $CLINER_DIR/examples/pretend.txt --gold $CLINER_DIR/examples --predictions $CLINER_DIR/data/test_predictions/ --format xml
-
-        Change Format
-        ::
-            (venv_cliner)user@your-machine:~/CliNER$ cliner format $CLINER_DIR/data/test_predictions/pretend.xml --format i2b2
 
 
