@@ -45,6 +45,3 @@ def enabled_modules():
     return specs
 
 
-
-# Read from config file when module is imported
-print enabled_modules()

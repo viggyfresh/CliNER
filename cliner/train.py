@@ -148,7 +148,7 @@ def train(training_list, model_path, format, is_crf=True, grid=False):
     model.train(notes, grid)
 
     # Pickle dump
-    print 'pickle dump'
+    print '\nserializing model to %s\n' % model_path
     with open(model_path, "wb") as m_file:
         pickle.dump(model, m_file)
 

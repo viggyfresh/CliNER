@@ -357,8 +357,6 @@ class Note:
                 tmp.append('none')
             self.concepts.append(tmp)
 
-        seen_before = {}
-
         # Use the classifications to correct all mislabled 'none's
         for classification in self.derived_note.getClassificationTuples():
             concept    = classification[0]
@@ -369,7 +367,7 @@ class Note:
             data      = self.derived_note.getTokenizedSentences()
             text      = self.derived_note.getText()
             for span in char_spans:
-                lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span, seen_before)
+                lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span)
                 start,end = tokspan
 
             self.concepts[lineno][start] = concept
