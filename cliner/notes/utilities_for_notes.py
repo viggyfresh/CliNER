@@ -59,7 +59,7 @@ def concept_cmp(a,b):
 
 
 # Helper function
-def lineno_and_tokspan(line_inds, data, text, char_span, seen_before=None):
+def lineno_and_tokspan(line_inds, data, text, char_span):
     """ File character offsets => line number and index into line """
 
     q = False
@@ -71,22 +71,6 @@ def lineno_and_tokspan(line_inds, data, text, char_span, seen_before=None):
     # Locate line number
     for i,candidate_span in enumerate(line_inds):
         if char_span[1] <= candidate_span[1]:
-
-            # quick hack saying that if we have seen this specific line before with same candidate span
-            # then move on and try to get the next match.
-
-            if seen_before is not None:
-                if i in seen_before:
-                    if char_span in seen_before[i]:
-                        # try again.
-                        continue
-
-                    else:
-                        seen_before[i].append(char_span)
-
-                else:
-                    seen_before[i] = [char_span]
-
             lineno = i
             break
 

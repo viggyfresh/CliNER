@@ -176,17 +176,13 @@ class Note:
 
         b_count = 0
 
-        seen_before = {}
-
         # Add 'B's and 'I's from concept spans
         for classification in self.derived_note.getClassificationTuples():
             concept,char_spans = classification
 
-            """
-            print '\n\n'
-            print 'concept: ', concept
-            print 'char_spans: ', char_spans
-            """
+            #print '\n\n'
+            #print 'concept: ', concept
+            #print 'char_spans: ', char_spans
 
             # Each span (could be noncontiguous span)
             for span in char_spans:
@@ -195,7 +191,7 @@ class Note:
                 #print '\tstart_ind, end_ind: ', start_ind, end_ind
                 #print '\ttext[start_ind:end_ind]: <%s>' % text[start_ind:end_ind]
 
-                lineno, tokspan = lineno_and_tokspan(line_inds, data, text, span, seen_before)
+                lineno, tokspan = lineno_and_tokspan(line_inds, data, text, span)
                 start,end = tokspan
 
 #                print '\tlineno, tokspan: ', lineno, tokspan
@@ -205,13 +201,11 @@ class Note:
 
                 # Update concept tokens to 'B's and 'I's
                 assert iobs[lineno][start] == 'O'
-
                 iobs[lineno][start] = 'B'
                 b_count += 1
                 #print 'B: ', b_count
                 for i in range(start+1,end+1):
                     #print '\t\t\t', i
-
                     assert iobs[lineno][i] == 'O'
                     iobs[lineno][i] = 'I'
 

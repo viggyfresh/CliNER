@@ -167,6 +167,9 @@ class Note_i2b2(AbstractNote):
 
                 self.line_inds.append( (start,end) )
 
+                # 'start' picks up where 'end' leaves off
+                start = end
+
                 # FIXME - Should we be removing unprintable?
                 sent = ''.join(map(lambda x: x if (x in string.printable) else '@', sentence))
                 self.data.append(word_tokenize(sent))
