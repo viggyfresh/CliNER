@@ -14,8 +14,7 @@ echo -e "\nSee python dependency details at: \n\t$DEPENDENCIES_DIR/log_installat
 
 
 # Install python dependencies
-pip install -r $DEPENDENCIES_DIR/../../requirements.txt &>> $log
-
+cat $DEPENDENCIES_DIR/../../requirements.txt | xargs -n 1 -L 1 pip install
 
 # Install nltk data
 echo "downloading nltk data"

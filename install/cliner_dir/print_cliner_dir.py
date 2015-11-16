@@ -19,7 +19,7 @@ def main():
     # Assumes this file never moves
     base = back(back(back(os.path.abspath(__file__))))
 
-    if not base.endswith('CliNER'):
+    if 'CliNER' not in os.path.basename(base):
         print >>sys.stderr, "\n\tERROR: Do not move file print_cliner_dir.py\n"
         exit(1)
     else:

@@ -10,8 +10,10 @@
 # Virtual Environment?
 if [[ ! $VIRTUAL_ENV ]] ; then
 
+    if [[ $CLINER_DIR = "" ]]; then
+        echo "CLINER_DIR not set"
     # Exists?
-    if [[ -f $CLINER_DIR/venv_cliner ]] ; then
+    elif [[ -f $CLINER_DIR/venv_cliner ]] ; then
         source $CLINER_DIR/venv_cliner/bin/activate
     else
         old=$(pwd)
@@ -20,6 +22,5 @@ if [[ ! $VIRTUAL_ENV ]] ; then
         source venv_cliner/bin/activate
         cd $old
     fi
-
 fi
 
