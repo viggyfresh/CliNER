@@ -16,12 +16,41 @@ import sys
 
 from wordshape import getWordShapes
 from nltk import LancasterStemmer, PorterStemmer
+import numpy as np
 
+
+# What modules are available
+from read_config import enabled_modules
+enabled = enabled_modules()
+
+
+# word2vec?
+if enabled['word2vec']:
+    from word2vec.word2vec import embeddings
+else:
+    from collections import defaultdict
+    embeddings = defaultdict(lambda:np.array([]))
+
+
+# stemming
 lancaster_st = LancasterStemmer()
 porter_st = PorterStemmer()
 
+
+hit   = 0
+total = 0
 def feature_word(word):
-    return {('word', word.lower()): 1}
+    global hit, total
+    # apples to apples
+    w = word.lower()
+    total += 1
+    print 'total: ', total
+    if w in embeddings:
+        print '\thit: ', hit
+        hit += 1
+        return {('word', word.lower()): 1}
+    else:
+        return {('word', '<UNK>'): 1}
 
 def feature_stem_lancaster(word):
     return {('stem_lancaster', lancaster_st.stem(word.lower())): 1}
@@ -66,6 +95,15 @@ def feature_metric_unit(word):
 def feature_prefix(word):
     prefix = word[:4].lower()
     return {("prefix", prefix): 1}
+
+
+def feature_word_embedding(word):
+    w = embeddings[word.lower()]
+    feats = {}
+    for i,val in enumerate(w.tolist()):
+        feats[ ('word-embedding-%d'%i,None) ] = val
+    return feats
+
 
 def QANN_features(word):
     """
@@ -133,7 +171,9 @@ def feature_next_word_stem(sentence, ind):
         return {('next_word_stem', '<END>'): 1}
 
 
-enabled_IOB_prose_word_features = frozenset( [feature_generic, feature_last_two_letters, feature_word, feature_length, feature_stem_porter, feature_mitre, feature_stem_lancaster, feature_word_shape, feature_metric_unit] )
+#enabled_IOB_prose_word_features = frozenset( [feature_generic, feature_last_two_letters, feature_word, feature_length, feature_stem_porter, feature_mitre, feature_stem_lancaster, feature_word_shape, feature_metric_unit] )
+enabled_IOB_prose_word_features = frozenset( [feature_word] )
+#enabled_IOB_prose_word_features = frozenset( [feature_word_embedding] )
 
 def IOB_prose_features(word):
     """

@@ -15,44 +15,35 @@ from utilities import load_pos_tagger
 # What modules are available
 from read_config import enabled_modules
 
+
 # Import feature modules
 enabled = enabled_modules()
 if enabled['GENIA']:
     from genia_dir.genia_features import GeniaFeatures
 
+
 # Only create UMLS cache if module is available
 if enabled['UMLS']:
     import umls_dir.umls_features as feat_umls
 
+
 import word_features as feat_word
+
 
 nltk_tagger = load_pos_tagger()
 
+
 # Feature Enabling
 enabled_concept_features = frozenset( ["UMLS"])
-
-
 if enabled['GENIA']:
     feat_genia=None
 
-enabled_IOB_nonprose_sentence_features = []
-#enabled_IOB_nonprose_sentence_features.append('pos')
-#enabled_IOB_nonprose_sentence_features.append('pos_context')
-enabled_IOB_nonprose_sentence_features.append('prev')
-enabled_IOB_nonprose_sentence_features.append('next')
-enabled_IOB_nonprose_sentence_features.append('unigram_context')
-enabled_IOB_nonprose_sentence_features.append('UMLS')
 
-enabled_IOB_prose_sentence_features = []
-enabled_IOB_prose_sentence_features.append('unigram_context')
-enabled_IOB_prose_sentence_features.append('pos')
-enabled_IOB_prose_sentence_features.append('pos_context')
-enabled_IOB_prose_sentence_features.append('prev')
-enabled_IOB_prose_sentence_features.append('prev2')
-enabled_IOB_prose_sentence_features.append('next')
-enabled_IOB_prose_sentence_features.append('next2')
-enabled_IOB_prose_sentence_features.append('GENIA')
-enabled_IOB_prose_sentence_features.append('UMLS')
+#enabled_IOB_nonprose_sentence_features = ['prev', 'next', 'unigram_context', 'UMLS', 'pos', 'pos_context']
+enabled_IOB_nonprose_sentence_features = ['prev', 'next', 'unigram_context', 'UMLS']
+
+enabled_IOB_prose_sentence_features = ['unigram_context', 'pos', 'pos_context', 'prev', 'prev2', 'next', 'next2', 'GENIA', 'UMLS']
+
 
 
 def sentence_features_preprocess(data):
@@ -75,7 +66,12 @@ def IOB_prose_features(sentence):
 
     # Get a feature set for each word in the sentence
     for i,word in enumerate(sentence):
-        features_list.append(feat_word.IOB_prose_features(sentence[i]))
+        feats = feat_word.IOB_prose_features(sentence[i])
+        features_list.append(feats)
+        #print word, '\t', feats
+
+    # FIXME dev speedup
+    return features_list
 
     # Feature: Bag of Words unigram conext (window=3)
     if 'unigram_context' in enabled_IOB_prose_sentence_features:

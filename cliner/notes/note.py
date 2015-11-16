@@ -187,6 +187,7 @@ class Note:
             # Each span (could be noncontiguous span)
             for span in char_spans:
                 start_ind,end_ind = span
+
                 #print '\tstart_ind, end_ind: ', start_ind, end_ind
                 #print '\ttext[start_ind:end_ind]: <%s>' % text[start_ind:end_ind]
 
@@ -209,9 +210,6 @@ class Note:
                     iobs[lineno][i] = 'I'
 
                 #print '\t\t', iobs[lineno]
-
-            #exit()
-        #exit()
 
         # Memoize for next call
         self.iob_labels = iobs

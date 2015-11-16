@@ -28,7 +28,7 @@ def enabled_modules():
     f = open(filename, 'r')
 
     specs = {}
-    module_list = [ 'GENIA', 'UMLS' ]
+    module_list = [ 'GENIA', 'UMLS', 'word2vec' ]
 
 
     for line in f.readlines():

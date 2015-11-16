@@ -1,2 +1,3 @@
-GENIA None /home/rcampos/CliNER/cliner/features_dir/genia_dir/geniatagger-3.0.1/geniatagger
+GENIA /data1/wboag/cliner/CliNER/cliner/features_dir/genia_dir/geniatagger-3.0.1/geniatagger
 UMLS None
+word2vec /data1/wboag/cliner/CliNER/cliner/features_dir/word2vec/mimic_embeddings.bin
