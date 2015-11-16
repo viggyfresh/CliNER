@@ -163,7 +163,7 @@ These are resources that require login credentials to access secure data, so we 
 
     **Put these tables in the $CLINER_DIR/umls_tables directory.**
 
-    In order to tell CliNER that the tables are there, you must edit the file "$CLINER_DIR/config.txt" and change the line saying "UMLS  None" to "UMLS True". This command will do that ``sed -i "s/UMLS  None/UMLS  True/g" $CLINER_DIR/config.txt``
+    In order to tell CliNER that the tables are there, you must edit the file "$CLINER_DIR/config.txt" and change the line saying "UMLS  None" to "UMLS <path to dir containing tables>". This command will do that ``sed -i "s/UMLS  None/UMLS  example/umls_tables_dir/g" $CLINER_DIR/config.txt``
 
     **The database will be built from the tables when CliNER is run for the first time.**
 
