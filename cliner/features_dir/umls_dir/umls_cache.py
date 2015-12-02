@@ -49,5 +49,5 @@ class UmlsCache:
 
         if UmlsCache.filename is not None and UmlsCache.cache is not None:
 
-            pickle.dump(UmlsCache.filename, open(UmlsCache.cache,"wb"))
+            pickle.dump(UmlsCache.cache, open(UmlsCache.filename,"wb"))
 
