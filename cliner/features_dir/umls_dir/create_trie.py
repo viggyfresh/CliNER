@@ -26,6 +26,8 @@ def trie_cleanup():
 
     if success is False:
 
+        print >>sys.stderr, '\n\tError: trie was not created succesfully.\n'
+
         if trie_path is not None:
 
             try:

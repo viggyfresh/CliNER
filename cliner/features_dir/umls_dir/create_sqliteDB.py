@@ -55,6 +55,7 @@ def umls_db_cleanup():
         if db_path is not None:
             os.remove(db_path)
 
+        print >>sys.stderr, '\n\tError: umls.db was created succesfully.\n'
 
 
 def create_db():
