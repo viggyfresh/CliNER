@@ -135,6 +135,17 @@ Good luck!
     **reference** https://www.nlm.nih.gov/research/umls/quickstart.html
 
 
+    How to obtain UMLS tables:
+
+        - Download all the files from: https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html
+        - Unzip mmsys.zip into a folder and put all other files downloaded into that folder.
+        - Execute run_linux.sh and select 'Install UMLS' on gui.
+        - Choose a destination for umls directory, hit 'Ok' and then 'Create New Config'.
+        - Accept the agreement.
+        - Select 'Only Active UMLS Sources' as your default subset.
+        - Select 'Done' at the top right of gui pane and then select 'Begin Subset'.
+        - This process may take a while, the directory '<Destination_Directory_Path>/<UMLS VERSION>/META' should contain the necessary files needed.
+
 
 Additional Resources
 --------
