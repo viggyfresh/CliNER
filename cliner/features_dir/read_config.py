@@ -40,7 +40,7 @@ def enabled_modules():
                 if words[1] == 'None':
                     specs[words[0]] = None
                 else:
-                    specs[words[0]] = os.path.expandvars(words[1]).strip('\"')
+                    specs[words[0]] = os.path.expandvars(words[1]).strip('\"').strip('\'')
 
     return specs
 
