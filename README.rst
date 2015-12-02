@@ -159,7 +159,7 @@ These are resources that require login credentials to access secure data, so we 
 
     http://www.nlm.nih.gov/databases/umls.html
 
-    You will need to get following tables: **MRREL, MRCON, MRSTY**
+    You will need to get following tables: **MRREL.RRF, MRCONSO.RRF, MRSTY.RRF**
 
     **Put these tables in the $CLINER_DIR/umls_tables directory.**
 
