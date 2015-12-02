@@ -10,7 +10,7 @@
 
 
 import os
-
+import sys
 
 def enabled_modules():
     """
@@ -41,6 +41,17 @@ def enabled_modules():
                     specs[words[0]] = None
                 else:
                     specs[words[0]] = os.path.expandvars(words[1]).strip('\"').strip('\'')
+
+    # check if paths are actually valid
+    if specs["GENIA"] is not None:
+
+        if os.path.isfile(specs["GENIA"]) is False:
+            sys.exit("Invalid path to genia executable.")
+
+    if specs["UMLS"] is not None:
+
+        if os.path.isdir(specs["UMLS"]) is False:
+            sys.exit("Invalid path to directory containing UMLS database tables")
 
     return specs
 
