@@ -18,7 +18,6 @@ umls_tables = enabled['UMLS']
 sys.path.append((os.environ["CLINER_DIR"] + "/cliner/features_dir"))
 from utilities import load_pickled_obj
 
-
 class UmlsCache:
 
     # static class variables
@@ -26,7 +25,9 @@ class UmlsCache:
     cache = None
 
     def __init__(self):
+
         try:
+
             UmlsCache.filename = os.path.join(umls_tables, 'umls_cache')
             UmlsCache.cache = load_pickled_obj(UmlsCache.filename)
 
@@ -45,4 +46,8 @@ class UmlsCache:
     @staticmethod
     @atexit.register
     def destructor():
-        pickle.dump(UmlsCache.cache, open(UmlsCache.filename,"wb"))
+
+        if UmlsCache.filename is not None and UmlsCache.cache is not None:
+
+            pickle.dump(UmlsCache.filename, open(UmlsCache.cache,"wb"))
+

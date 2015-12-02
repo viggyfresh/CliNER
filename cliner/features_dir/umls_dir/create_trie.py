@@ -2,6 +2,7 @@
 import marisa_trie
 import sys
 import os
+import atexit
 
 features_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if features_dir not in sys.path:
@@ -12,9 +13,35 @@ from read_config import enabled_modules
 enabled = enabled_modules()
 umls_tables = enabled['UMLS']
 
+trie_path = None
+success = False
+MRCON_TABLE = None
+
+@atexit.register
+def trie_cleanup():
+
+    global trie_path
+    global MRCON_TABLE
+    global success
+
+    if success is False:
+
+        if trie_path is not None:
+
+            try:
+                os.remove(trie_path)
+            except:
+                pass
+
+    if MRCON_TABLE is not None:
+        MRCON_TABLE.close()
 
 
 def create_trie():
+
+    global trie_path
+    global MRCON_TABLE
+    global success
 
     """
     create_trie()
@@ -24,9 +51,10 @@ def create_trie():
     @return  A trie object
     """
     # Is trie already built & pickled?
-    filename = os.path.join(umls_tables, 'umls-concept.trie')
+    trie_path = os.path.join(umls_tables, 'umls-concept.trie')
     try:
-        t = marisa_trie.Trie().load(filename)
+        t = marisa_trie.Trie().load(trie_path)
+        success = True
         return t
     except IOError:
         pass
@@ -41,7 +69,6 @@ def create_trie():
         MRCON_TABLE = open( mrcon_path , "r" )
     except IOError:
         print "\nNo file to use for creating MRCON table\n"
-        conn.close()
         sys.exit()
 
     print "inserting data into concept-trie"
@@ -76,7 +103,9 @@ def create_trie():
 
     # Pickle trie
 
-    t.save(filename)
+    t.save(trie_path)
+
+    success = True
 
     return t
 

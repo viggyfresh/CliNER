@@ -40,8 +40,12 @@ def enabled_modules():
                 if words[1] == 'None':
                     specs[words[0]] = None
                 else:
-                    specs[words[0]] = words[1]
+                    specs[words[0]] = os.path.expandvars(words[1]).strip('\"')
 
     return specs
+
+if __name__ == "__main__":
+
+    print enabled_modules()
 
 

@@ -3,6 +3,7 @@ import sqlite3
 import os
 import sys
 import os
+import atexit
 
 features_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if features_dir not in sys.path:
@@ -14,9 +15,57 @@ from read_config import enabled_modules
 enabled = enabled_modules()
 umls_tables = enabled['UMLS']
 
+# set to True when create_db() is succesful
+success = False
+db_path = None
+conn = None
+
+MRSTY_TABLE_FILE = None
+MRCON_TABLE_FILE = None
+MRREL_TABLE_FILE = None
+
+
+# this ensure files are closed properly and umls.db is removed if not succesful
+@atexit.register
+def umls_db_cleanup():
+
+    global success
+    global conn
+    global db_path
+
+    global MRSTY_TABLE_FILE
+    global MRCON_TABLE_FILE
+    global MRREL_TABLE_FILE
+
+    if conn is not None:
+        conn.close()
+
+    if MRSTY_TABLE_FILE is not None:
+        MRSTY_TABLE_FILE.close()
+
+    if MRCON_TABLE_FILE is not None:
+        MRCON_TABLE_FILE.close()
+
+    if MRREL_TABLE_FILE is not None:
+        MRREL_TABLE_FILE.close()
+
+    if success is False:
+
+        # remove umls.db, it is junk now
+        if db_path is not None:
+            os.remove(db_path)
+
 
 
 def create_db():
+
+    global success
+    global conn
+    global db_path
+
+    global MRSTY_TABLE_FILE
+    global MRCON_TABLE_FILE
+    global MRREL_TABLE_FILE
 
     print "\ncreating umls.db"
     #connect to the .db file we are creating.
@@ -31,7 +80,6 @@ def create_db():
         MRSTY_TABLE_FILE = open( mrsty_path, "r" )
     except IOError:
         print "\nNo file to use for creating MRSTY.RRF table\n"
-        conn.close()
         sys.exit()
 
     try:
@@ -39,7 +87,6 @@ def create_db():
         MRCON_TABLE_FILE = open( mrcon_path , "r" )
     except IOError:
         print "\nNo file to use for creating MRCONSO.RRF table\n"
-        conn.close()
         sys.exit()
 
     try:
@@ -47,7 +94,6 @@ def create_db():
         MRREL_TABLE_FILE = open( mrrel_path , "r" )
     except IOError:
         print "\nNo file to use for creating MRREL.RRF table\n"
-        conn.close()
         sys.exit()
 
     print "creating tables"
@@ -74,7 +120,6 @@ def create_db():
 
         c.execute( "INSERT INTO MRSTY( CUI, TUI, STN, STY, ATUI, CVF ) values( ?, ?, ?, ?, ?, ?)" , tuple(line))
 
-    MRSTY_TABLE_FILE.close()
 
     print "inserting data into MRCON table"
     for line in MRCON_TABLE_FILE:
@@ -92,7 +137,6 @@ def create_db():
 
         c.execute( "INSERT INTO MRCON( CUI, LAT, TS, LUI, STT, SUI, ISPREF, AUI, SAUI, SCUI, SDUI, SAB, TTY, CODE, STR, SRL, SUPPRESS, CVF ) values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", tuple(line))
 
-    MRCON_TABLE_FILE.close()
 
     print "inserting data into MRREL table"
     for line in MRREL_TABLE_FILE:
@@ -110,7 +154,6 @@ def create_db():
 
         c.execute( "INSERT INTO MRREL(  CUI1, AUI1, STYPE1, REL, CUI2, AUI2, STYPE2, RELA, RUI, SRUI, SAB, SL, RG, DIR, SUPPRESS, CVF ) values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )" , tuple(line))
 
-    MRREL_TABLE_FILE.close()
 
     print "creating indices"
 
@@ -125,10 +168,9 @@ def create_db():
     #save changes to .db
     conn.commit()
 
+    success = True
     print "\nsqlite database created"
 
-    #close connection
-    conn.close()
 
 if __name__ == "__main__":
     create_db()
