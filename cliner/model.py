@@ -153,9 +153,10 @@ class Model:
         prose    =    nested_prose_feats
         nonprose = nested_nonprose_feats
 
-        #for p in prose:
-        #    for x in p:
-        #        print x
+        #for toks,p in zip(nested_prose_data,prose):
+        #    for tok,x in zip(toks,p):
+        #        print tok
+        #        print sorted(x.items())[:3]
         #        print '\n'
         #    print '\n\n\n'
         #print len(sum(prose, []))
@@ -232,8 +233,7 @@ class Model:
 
 
 
-    def __first_predict(self, data):
-
+    def __first_predict(self, data, dev=False):
         """
         Model::__first_predict()
 
@@ -281,8 +281,10 @@ class Model:
                 iobs.append( nonprose_iobs[-1] )
 
         # list of list of IOB labels
-        return iobs
-
+        if dev == True:
+            return iobs, prose_iobs, nonprose_iobs
+        else:
+            return iobs
 
 
 
@@ -462,6 +464,15 @@ class Model:
         predictions  = reconstruct_list(out, offsets)
         return predictions
 
+
+
+    #########################################################################
+    ##                            Debugging                                ##
+    #########################################################################
+    def first_train(self, tokenized_sentences, Y, do_grid=False):
+        return self.__first_train(tokenized_sentences, Y, do_grid)
+    def first_predict(self, data):
+        return self.__first_predict(data, dev=True)
 
 
 

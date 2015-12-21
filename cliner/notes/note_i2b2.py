@@ -23,6 +23,13 @@ from abstract_note import AbstractNote
 from utilities_for_notes import classification_cmp, lineno_and_tokspan
 from utilities_for_notes import NoteException
 
+from utilities_for_notes import WordTokenizer, SentenceTokenizer
+
+
+word_tokenizer =     WordTokenizer()
+sent_tokenizer = SentenceTokenizer()
+
+
 
 
 class Note_i2b2(AbstractNote):
@@ -56,19 +63,8 @@ class Note_i2b2(AbstractNote):
         for classification in self.classifications:
             concept,lineno,tok_start,tok_end = classification
 
-            #q = lineno==12 and tok_start==19
-            if q:
-                print '\n\n\n\n'
-                print 'concept: ', concept
-                print 'lineno: ', lineno
-                print 'tok_start: ', tok_start
-                print 'tok_end:   ', tok_end
-                print 'line: <%s>' % self.data[lineno-1]
-
             # character offset of beginning of line
             begin = self.line_inds[lineno-1][0]
-
-            if q: print "BEGIN: ", self.line_inds[lineno-1]
 
             # Sweep through line to get character offsets from line start
             start = 0
@@ -134,7 +130,6 @@ class Note_i2b2(AbstractNote):
         end = 0
 
         sent_tokenize = lambda text: text.split('\n')
-        #word_tokenize = lambda text: text.split(' ')
         word_tokenize = lambda text: text.split()
 
         # Read in the medical text
@@ -151,6 +146,7 @@ class Note_i2b2(AbstractNote):
                 start += self.text[start:].index(sentence)
                 end = start + len(sentence)
 
+                #print i
                 #print '<%s>' % sentence
                 #print '\n\n||||||||||\n\n'
                 #print start, end
@@ -164,17 +160,17 @@ class Note_i2b2(AbstractNote):
                 #print '[[%s]]' % self.text[start+2]
                 #print '[[%s]]' % self.text[start+3]
                 #print '\n'*10
+                #i += 1
 
                 self.line_inds.append( (start,end) )
 
-                # 'start' picks up where 'end' leaves off
                 start = end
 
                 # FIXME - Should we be removing unprintable?
                 sent = ''.join(map(lambda x: x if (x in string.printable) else '@', sentence))
                 self.data.append(word_tokenize(sent))
 
-                #i += 1
+
                 #if i < 4: continue
                 #exit()
 
