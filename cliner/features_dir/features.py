@@ -82,3 +82,18 @@ def concept_features(sentence, chunk_inds):
     features_list = feat_sent.concept_features_for_sentence(sentence,chunk_inds)
     return features_list
 
+
+def extract_third_pass_features(chunks, inds, bow=None):
+
+    unvectorized_X = []
+
+    for lineno,indices in enumerate(inds):
+
+        features = feat_sent.third_pass_features(chunks[lineno],indices, bow_model=bow)
+
+        unvectorized_X += features
+
+    return unvectorized_X
+
+
+

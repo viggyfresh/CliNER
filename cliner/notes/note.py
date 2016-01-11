@@ -15,6 +15,9 @@ __date__   = 'Nov. 6, 2014'
 
 
 import re
+import string
+from copy import copy
+import nltk.data
 import os.path
 
 from utilities_for_notes import lineno_and_tokspan
@@ -47,6 +50,8 @@ class Note:
         self.iob_labels      = []
         self.text_chunks     = []
 
+        self.txtPath = None
+        self.conPath = None
 
 
     @staticmethod
@@ -102,6 +107,16 @@ class Note:
     ####          Pass right on to derived format note            ####
     ####     (does not change as new formats are introduced)      ####
     ##################################################################
+    def getText(self):
+        """ obtain the raw text for a document """
+        # TODO: add to other note classes.
+
+        text = None
+
+        if self.format == "semeval":
+            text = self.derived_note.getText()
+
+        return text
 
     def getExtension(self):
         """
@@ -113,8 +128,15 @@ class Note:
         """
         Purpose: Call derived object's reader
         """
-        retVal = self.derived_note.read(txt_file, con_file,)
-        self.getIOBLabels()
+        retVal = self.derived_note.read(txt_file, con_file)
+
+        self.txtPath = txt_file
+        self.conPath = con_file
+
+        if self.format == "semeval":
+            self.get_disjoint_IOBLabels()
+        else:
+            self.getIOBLabels()
         return retVal
 
     def write(self, con_file=None):
@@ -131,9 +153,15 @@ class Note:
             self.data = self.derived_note.getTokenizedSentences()
         return self.data
 
+    def setFileName(self, fname):
+        """
+        Purpose: Some formats (like semeval) need the filename as part of format
+        """
+        self.derived_note.setFileName(fname)
+
     def read_standard(self, txt, con=None):
         """
-        Purpose: Every note must be able to read from standard format
+        Purpose: Every note must be able to read from standard forat
         """
         self.derived_note.read_standard(txt,con)
         self.getIOBLabels()
@@ -152,6 +180,88 @@ class Note:
         """
         classifications = self.derived_note.getClassificationTuples()
         return [  c[0]  for  c  in  classifications  ]
+
+
+
+    def getNonContiguousSpans(self):
+        """
+        Purpose: Return a list of classification tuples (contains noncontig info)
+
+        How to Use: return value is a list of (concept,lineno,chunk_inds)
+                    *** where chunk_inds is a list of indices of chunks
+                        that belong in the same noncontiguous span      ***
+        """
+
+        j = 0
+        data = self.derived_note.data
+
+        # Create mapping from token indices to chunk indices
+        tok_to_chunk_index_map = []
+        for iobs in self.getIOBLabels():
+            # One line of chunked phrases
+            line = {}
+            seen_chunks = 0
+
+            # Word-by-word grouping
+            for i,iob in enumerate(iobs):
+                if iob == 'O':
+                    seen_chunks += 1
+                if iob == 'B':
+                    line[i] = seen_chunks
+                    seen_chunks += 1
+
+            j += 1
+            tok_to_chunk_index_map.append(line)
+
+
+        # Return value
+        tok_classifications = []
+
+        # Used for converting character offset -> token index
+        self.getTokenizedSentences()
+        line_inds = self.derived_note.getLineIndices()
+        data = self.derived_note.data
+        text = self.derived_note.text
+
+        #for i,line in enumerate(data): print i, ': ', line
+        #print '\n\n\n'
+
+        # For each concept instance
+        for classification in self.derived_note.getClassificationTuples():
+            concept,char_spans = classification
+
+            #print
+            #print char_spans
+
+            # Each span (could be noncontiguous span)
+            tok_spans = []
+            first_lineno = None
+
+            #print '-'*80
+
+            for span in char_spans:
+                # character offset span --> lineno and list of token index spans
+                lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span, self.format)
+                tok_spans.append(tokspan)
+                #if p: exit()
+
+                # Ensure all noncontig spans are together on one line
+                if first_lineno == None: first_lineno = lineno
+                #print
+                #print lineno
+                #print first_lineno
+                assert (lineno == first_lineno)
+
+            # list of token index spans --> list of chunk indices
+            chunk_inds = []
+            for span in tok_spans:
+                ind = tok_to_chunk_index_map[lineno][span[0]]
+                chunk_inds.append(ind)
+
+            tok_classifications.append( (concept, lineno, chunk_inds)  )
+
+
+        return tok_classifications
 
 
     def getIOBLabels(self):
@@ -181,23 +291,20 @@ class Note:
             concept,char_spans = classification
 
             #print '\n\n'
-            #print 'concept: ', concept
-            #print 'char_spans: ', char_spans
+            #print concept
+            #print char_spans
 
             # Each span (could be noncontiguous span)
             for span in char_spans:
                 start_ind,end_ind = span
 
-                #print '\tstart_ind, end_ind: ', start_ind, end_ind
-                #print '\ttext[start_ind:end_ind]: <%s>' % text[start_ind:end_ind]
-
-                lineno, tokspan = lineno_and_tokspan(line_inds, data, text, span)
+                lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span, "i2b2")
                 start,end = tokspan
 
-#                print '\tlineno, tokspan: ', lineno, tokspan
-#                print '\t\tdata[linenp]: ', data[lineno]
-#                print '\t\ttokspan: ', data[lineno][tokspan[0]:tokspan[1]+1]
-#                print '\t\tiobs: ', iobs[lineno]
+                #print '\t', lineno, tokspan
+                #print '\t\t', data[lineno]
+                #print '\t\t', data[lineno][tokspan[0]:tokspan[1]+1]
+                #print '\t\t', iobs[lineno]
 
                 # Update concept tokens to 'B's and 'I's
                 assert iobs[lineno][start] == 'O'
@@ -210,6 +317,88 @@ class Note:
                     iobs[lineno][i] = 'I'
 
                 #print '\t\t', iobs[lineno]
+
+            #exit()
+        #exit()
+
+        # Memoize for next call
+        self.iob_labels = iobs
+        return iobs
+
+
+    def get_disjoint_IOBLabels(self):
+        """
+        Purpose: return a list of list of IOB labels
+        """
+
+        # Only comput if not already memoized
+        if self.iob_labels: return self.iob_labels
+
+
+        # Build list of proper dimensions (1:1 with self.data)
+        self.getTokenizedSentences()
+#        iobs = [ ['O' for tok in sent] for sent in self.derived_note.data ]
+        iobs = [ ['O' for tok in sent] for sent in self.data]
+
+        line_inds = self.derived_note.getLineIndices()
+        data = self.derived_note.data
+        text = self.derived_note.text
+
+        #print '\n\n'+'/'*40+'\n\n'
+
+        '''
+        # Hack: Throw away subsumed spans
+        # ex. "left and right atrial dilitation" from 02136-017465.text
+        classifs = reduce(lambda a,b: a+b,map(lambda t:t[1],classifications))
+        classifs = list(set(classifs))
+        classifs = sorted(classifs, key=lambda s:s[0])
+        #print classifs
+
+        from utilities_for_notes import span_relationship
+
+        newClassifications = []
+        for c in classifications:
+
+            for span in c[1]:
+                #print span
+
+                # Slow!
+                # Determine if any part of span is subsumed by other span
+                ignore = False
+                for cand in classifs:
+                    # Don't let identity spans mess up comparison
+                    if span == cand: continue
+
+                    # Is current span subsumed?
+                    rel = span_relationship(span,cand)
+                    if rel == 'subsumes':
+                        ignore = True
+
+            # Only add if no spans are subsumed by others
+            if not ignore:
+                newClassifications.append(c)
+        '''
+
+   #     print self.derived_note.getClassificationTuples()
+
+        # Add 'B's and 'I's from concept spans
+        for classification in self.derived_note.getClassificationTuples():
+            concept,char_spans = classification
+
+            # Each span (could be noncontiguous span)
+            for span in char_spans:
+                lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span, "semeval")
+                start,end = tokspan
+
+    #            print "lineno: ", lineno
+    #            print "start: ", start
+    #            print "iobs: ", iobs[lineno]
+    #            print iobs[lineno][start]
+
+                # Update concept tokens to 'B's and 'I's
+                iobs[lineno][start] = 'B'
+                for i in range(start+1,end+1):
+                    iobs[lineno][i] = 'I'
 
         # Memoize for next call
         self.iob_labels = iobs
@@ -237,7 +426,7 @@ class Note:
         """
 
         # Memoized?
-        if self.text_chunks: return self.text_chunks()
+        if self.text_chunks: return self.text_chunks
 
         # Line-by-line chunking
         text = self.getTokenizedSentences()
@@ -274,11 +463,9 @@ class Note:
 
 
     def getConceptIndices(self):
+
         # Return value
         inds_list = []
-
-        #print len(filter(lambda l:l=='B', sum(self.iob_labels,[])))
-        #exit()
 
         # Line-by-line chunking
         for iobs in self.iob_labels:
@@ -299,6 +486,7 @@ class Note:
 
             # Add line from file
             inds_list.append(line)
+
 
         return inds_list
 
@@ -367,7 +555,7 @@ class Note:
             data      = self.derived_note.getTokenizedSentences()
             text      = self.derived_note.getText()
             for span in char_spans:
-                lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span)
+                lineno,tokspan = lineno_and_tokspan(line_inds, data, text, span, self.format)
                 start,end = tokspan
 
             self.concepts[lineno][start] = concept

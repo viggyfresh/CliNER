@@ -1,3 +1,4 @@
+
 #database.py creates a .db file for performing umls searches.
 import marisa_trie
 import sys

@@ -5,6 +5,7 @@ from sklearn.feature_extraction  import DictVectorizer
 import features_dir.features as feat_obj
 
 from features_dir.utilities import load_pickled_obj, is_prose_sentence
+from features_dir.BagOfWords import BagOfWords
 
 from machine_learning import sci
 from machine_learning import crf
@@ -12,6 +13,8 @@ from machine_learning import crf
 from notes.note import concept_labels, reverse_concept_labels
 from notes.note import     IOB_labels,     reverse_IOB_labels
 from tools      import flatten, save_list_structure, reconstruct_list
+
+from collections import defaultdict
 
 # Stores the verbosity
 import globals_cliner
@@ -37,16 +40,29 @@ class Model:
         self._first_prose_vec    = None
         self._first_nonprose_vec = None
         self._second_vec         = None
+        self.third_vec           = None
 
         # Classifiers
         self._first_prose_clf    = None
         self._first_nonprose_clf = None
         self._second_clf         = None
+        self.third_clf           = None
 
 
+        self.cui_freq            = None
+        self.bow                 = None
 
 
-    def train(self, notes, do_grid=False):
+    def set_cui_freq(self, cui_freq):
+        self.cui_freq = cui_freq
+
+
+    def get_cui_freq(self):
+        assert self.cui_freq is not None
+        return self.cui_freq
+
+
+    def train(self, notes, do_grid=False, do_third=False):
 
         """
         Model::train()
@@ -65,9 +81,15 @@ class Model:
         self.__first_train(tokenized_sentences , iob_labels, do_grid)
         self.__second_train(chunks, indices    , con_labels, do_grid)
 
+        if do_third is True:
+
+            self.__third_train(tokenized_sentences, notes, do_grid)
 
 
-    def predict(self, note):
+
+
+
+    def predict(self, note, do_third=False):
 
         """
         Model::predict()
@@ -85,10 +107,6 @@ class Model:
         # Extract formatted data
         tokenized_sentences =  first_pass_data(note)
 
-        #for s in tokenized_sentences:
-        #    print s
-        #exit()
-
         # Predict IOB labels
         iobs = self.__first_predict(tokenized_sentences)
         note.setIOBLabels(iobs)
@@ -103,7 +121,24 @@ class Model:
         # Predict concept labels
         classifications = self.__second_predict(chunked_sentences, inds)
 
-        return classifications
+        result = classifications
+
+        # TODO: make third pass work other formattings.
+        if note.format == "semeval":
+            # Third pass enabled?
+            if do_third is True:
+
+                if globals_cliner.verbosity > 0:
+                    print 'third pass'
+                clustered = self.__third_predict(chunked_sentences, classifications, inds)
+                result = clustered
+
+            else:
+                # Treat each as its own set of spans (each set containing one tuple)
+                clustered = [ (c[0],c[1],[(c[2],c[3])]) for c in classifications ]
+                result = clustered
+
+        return result
 
 
 
@@ -129,15 +164,10 @@ class Model:
         if globals_cliner.verbosity > 0: print 'first pass'
         if globals_cliner.verbosity > 0: print '\textracting  features (pass one)'
 
-        #for sent,labels in zip(tokenized_sentences,Y):
-        #    for x,y in zip(sent,labels):
-        #        print y, '\t', x
-        #    print
-        #exit()
-
         # Seperate into prose v nonprose
         nested_prose_data   ,    nested_prose_Y = zip(*filter(lambda line_iob_tup:     is_prose_sentence(line_iob_tup[0]), zip(tokenized_sentences,Y) ))
         nested_nonprose_data, nested_nonprose_Y = zip(*filter(lambda line_iob_tup: not is_prose_sentence(line_iob_tup[0]), zip(tokenized_sentences,Y) ))
+
 
         #extract features
         nested_prose_feats    = feat_obj.IOB_prose_features(      nested_prose_data)
@@ -152,21 +182,6 @@ class Model:
         nchunks  = nonprose_Y
         prose    =    nested_prose_feats
         nonprose = nested_nonprose_feats
-
-        #for p in prose:
-        #    for x in p:
-        #        print x
-        #        print '\n'
-        #    print '\n\n\n'
-        #print len(sum(prose, []))
-        #print len(pchunks)
-        #exit()
-        #for x,y in zip(sum(prose,[]),pchunks):
-        #    print y
-        #    print x.keys()
-        #    print
-        #print '\n\n\n'
-        #exit()
 
         # Train classifiers for prose and nonprose
         pvec, pclf = self.__generic_first_train(   'prose',    prose, pchunks, do_grid)
@@ -230,6 +245,82 @@ class Model:
         # Train the model
         self._second_clf = sci.train(vectorized_features,numeric_labels,do_grid)
 
+
+
+
+    def __third_train(self, tokenized_sentences, notes, do_grid):
+
+        print 'third pass'
+
+        print '\textracting  features (pass three)'
+        # Get data and annotations of which spans actaully should be grouped
+        classifications = []
+        chunks = []
+        for note in notes:
+
+            # Annotations for groups
+            seen = len(chunks)
+            non_offset = note.getNonContiguousSpans()
+            offset = [ (c[0],c[1]+seen,c[2]) for c in non_offset ]
+            classifications += offset
+
+            # Chunked text
+            chunks += note.getChunkedText()
+
+        self.bow = BagOfWords()
+
+        fit_bag_of_words(self.bow, chunks)
+
+        indices = [  note.getConceptIndices()  for  note  in  notes  ]
+
+        inds  = reduce( concat, indices )
+
+        # Useful for encoding annotations
+        # query line number & chunk index to get list of shared chunk indices
+        relations = defaultdict(lambda:defaultdict(lambda:[]))
+        for concept,lineno,spans in classifications:
+            for i in range(len(spans)):
+                key = spans[i]
+                for j in range(len(spans)):
+                    if i == j: continue
+                    relations[lineno][key].append(spans[j])
+
+        # Extract features between pairs of chunks
+        unvectorized_X = feat_obj.extract_third_pass_features(chunks, inds, bow=self.bow)
+
+        print '\tvectorizing features (pass three)'
+
+        # Construct boolean vector of annotations
+        Y = []
+
+        for lineno,indices in enumerate(inds):
+            # Cannot have pairwise relationsips with either 0 or 1 objects
+            if len(indices) < 2: continue
+
+            # Build (n choose 2) booleans
+            bools = []
+            for i in range(len(indices)):
+                for j in range(i+1,len(indices)):
+                    # Does relationship exist between this pair?
+                    if indices[j] in relations[lineno][indices[i]]:
+                        #print indices[i], indices[j]
+                        shared = 1
+                    else:
+                        shared = 0
+                    # Positive or negative result for training
+                    bools.append(shared)
+
+            Y += bools
+
+        self.third_vec = DictVectorizer()
+
+        # Vectorize features
+        X = self.third_vec.fit_transform(unvectorized_X)
+
+        print '\ttraining classifier  (pass three)'
+
+        # Train classifier
+        self.third_clf = sci.train(X, Y, do_grid, default_label=0)
 
 
     def __first_predict(self, data):
@@ -343,6 +434,78 @@ class Model:
 
         # Return classifications
         return classifications
+
+
+    def __third_predict(self, chunks, classifications, inds):
+
+        print '\textracting  features (pass three)'
+
+        # Extract features between pairs of chunks
+        unvectorized_X = feat_obj.extract_third_pass_features(chunks, inds, bow=self.bow)
+
+        print '\tvectorizing features (pass three)'
+
+        # Vectorize features
+        X = self.third_vec.transform(unvectorized_X)
+
+        print '\tpredicting    labels (pass three)'
+
+        # Predict concept labels
+        predicted_relationships = sci.predict(self.third_clf, X)
+
+        classifications_cpy = list(classifications)
+
+        # Stitch SVM output into clustered token span classifications
+        clustered = []
+        for indices in inds:
+
+            # Cannot have pairwise relationsips with either 0 or 1 objects
+            if len(indices) == 0:
+                continue
+
+            elif len(indices) == 1:
+                # Contiguous span (adjust format to (length-1 list of tok spans)
+                tup = list(classifications_cpy.pop(0))
+                tup = (tup[0],tup[1],[(tup[2],tup[3])])
+                clustered.append(tup)
+
+            else:
+
+                # Number of classifications on the line
+                tups = []
+                for _ in range(len(indices)):
+                    tup = list(classifications_cpy.pop(0))
+                    tup = (tup[0],tup[1],[(tup[2],tup[3])])
+                    tups.append(tup)
+
+                # Pairwise clusters
+                clusters = {}
+
+                # ASSUMPTION: All classifications have same label
+                concept = tups[0][0]
+                lineno = tups[0][1]
+                spans = map(lambda t:t[2][0], tups)
+
+                # Keep track of non-clustered spans
+                singulars = list(tups)
+
+                # Get all pairwise relationships for the line
+                for i in range(len(indices)):
+                    for j in range(i+1,len(indices)):
+                        pair = predicted_relationships.pop(0)
+                        if pair == 1:
+                            tup = (concept,lineno,[spans[i],spans[j]])
+                            clustered.append(tup)
+
+                            # No longer part of a singular span
+                            if tups[i] in singulars:
+                                singulars.remove(tups[i])
+                            if tups[j] in singulars:
+                                singulars.remove(tups[j])
+
+                clustered += singulars
+
+        return clustered
 
 
 
@@ -606,7 +769,25 @@ def second_pass_data(note):
 
     return chunked_sentences, inds
 
+def fit_bag_of_words(bow_obj, data, unlabeled_data=None):
+
+    global bow
+
+    """ needs to be a list of strings """
+
+    corpus = data
+
+    if unlabeled_data is not None:
+
+        corpus += unlabeled_data
+
+    if bow_obj.is_fitted() is False:
+
+        docs = [' '.join(chunk) for chunk in corpus]
+
+        bow_obj.fit(docs)
 
 
 def concat(a,b):
     return a+b
+

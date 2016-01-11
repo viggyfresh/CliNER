@@ -17,9 +17,13 @@ class TrivialClassifier:
 
 
 
-def train(X, Y, do_grid):
+def train(X, Y, do_grid, default_label=0):
 
     # scikit-learn requires you train data with more than one label
+    if len(Y) == 0:
+        return TrivialClassifier(default_label)
+
+
     if len(Y) and all( [ (y==Y[0]) for y in Y ] ):
         return TrivialClassifier(Y[0])
 
@@ -35,8 +39,7 @@ def train(X, Y, do_grid):
         parameters = [ {'C':C_range } ]
 
         # Find best classifier
-        clf = GridSearchCV(estimates, parameters, score_func = f1_score,
-                           n_jobs = cpu_count()                        )
+        clf = GridSearchCV(estimates, parameters, score_func = f1_score)
         clf.fit(X, Y)
 
     else:

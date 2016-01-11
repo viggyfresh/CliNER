@@ -1,6 +1,21 @@
+import os
+import sys
 import cPickle as pickle
 import interface_umls
 
+sys.path.append((os.environ["CLINER_DIR"] + "/cliner/normalization/spellCheck"))
+sys.path.append((os.environ["CLINER_DIR"] + "/cliner/lib/java/metamap"))
+
+import time
+import nltk
+
+from spellChecker import spellCheck
+from spellChecker import getPWL
+from umls_cache import UmlsCache
+
+from cuiLookup import MetaMap
+
+metamap = None
 
 def umls_semantic_type_word( umls_string_cache , sentence ):
     # Already cached?
@@ -73,7 +88,6 @@ def umls_semantic_context_of_words( umls_string_cache, sentence ):
                                 umls_context_list[i].append(val)
 
 
-
     #create a list of sublists
     #  each sublist represents the contexts for which the word appears
     mappings = []
@@ -137,9 +151,51 @@ def umls_semantic_type_sentence( cache , sentence ):
     mappings = [ span2concept(span) for span in longestSpans ]
     return mappings
 
+def abr_lookup( cache, word):
+    """ get expansions of an abbreviation """
+    if cache.has_key( word + "--abrs"):
+        abbreviations = cache.get_map( word + "--abrs")
+    else:
+        abbreviations = interface_umls.abr_lookup(word)
 
+        if abbreviations != []:
 
-# Get the semantic types for a given word
+            # the lookup returns a list of tuples so now it will be converted to a list of strings
+            abbreviations =  [tuple[0] for tuple in abbreviations]
+
+        cache.add_map( word + "--abrs", abbreviations)
+    return abbreviations
+
+def get_cuis_for_abr(cache, word):
+    """ gets cui for each possible expansion of abbreviation """
+    if cache.has_key( word + "--cuis_of_abr"):
+        cuis_of_abr = cache.get_map( word + "--cuis_of_abr" )
+    else:
+        cuis_of_abr = {}
+        for phrase in abr_lookup(cache, word):
+            # prevents circular loop
+            cuis_of_abr[phrase] = get_cui(cache, phrase)
+
+        cache.add_map( word + "cuis_of_abr", cuis_of_abr )
+
+    return cuis_of_abr
+
+def get_tui( cache, cuiStr ):
+    """ get tui of a cui """
+    if cache.has_key( cuiStr + "--tui"):
+        tui = cache.get_map( cuiStr + "--tui")
+    else:
+        # list of singleton tuples
+        tui = interface_umls.tui_lookup(cuiStr)
+
+        # change to list of strings
+        tui = [semanticType[0] for semanticType in tui]
+
+        cache.add_map(cuiStr + "--tui", tui)
+
+    return tui
+
+# Get the umls concept id for a given word
 def get_cui( cache , word ):
 
     # If already in cache
@@ -151,13 +207,182 @@ def get_cui( cache , word ):
 
         # Get cui
         cuis = interface_umls.cui_lookup(word)
+        cuis = [c[0] for c in cuis]
 
         # Eliminate duplicates
         cuis = list(set(cuis))
-        cuis = [c[0] for c in cuis]
 
         # Store result in cache
         cache.add_map( word + '--cuis', cuis )
 
     return cuis
+
+def get_list_all_possible_cuis_for_abrv(cache, phrase):
+    """
+    get cuis for every possible possible abbreviation expansion.
+
+    To define your own filter go to:
+
+    page 3:
+
+    http://semanticnetwork.nlm.nih.gov/SemGroups/Papers/2003-medinfo-atm.pdf
+
+    look up categories and semantic types and get the tui from:
+
+    http://metamap.nlm.nih.gov/Docs/SemanticTypes_2013AA.txt
+
+    """
+
+    phrases = get_cuis_for_abr(cache, phrase)
+
+    results = set()
+
+    # change fromdictionary to a set of strings.
+    for phrase in phrases:
+        for cui in phrases[phrase]:
+            results.add(cui)
+
+    return list(results)
+
+
+def get_most_freq_cui(cui_list, cui_freq):
+    """
+    from a list of strings get the cui string that appears the most frequently.
+
+    Note: if there is no frequency stored then this will crash.
+    """
+
+    cui_highest_freq = None
+
+    for cui in cui_list:
+
+        if cui in cui_freq:
+
+            # sets an initial cui
+            if cui_highest_freq is None:
+                cui_highest_freq = cui
+
+            # assign new highest
+            elif cui_freq[cui] > cui_freq[cui_highest_freq]:
+                cui_highest_freq = cui
+
+    # at this point we have not found any concept ids with a frequency greater than 0.
+    # good chance it is CUI-less
+    if cui_highest_freq is None:
+        cui_highest_freq = "CUI-less"
+
+    return cui_highest_freq
+
+def filter_cuis_by_tui(cache, cuis, filter=["T020", # acquired abnormality
+                                         "T190", # Anatomical Abnormality
+                                         "T049", # Cell or Molecular Dysfunction
+                                         "T019", # Congenital Abnormality
+                                         "T047", # Disease or Syndrome
+                                         "T050", # Experimental Model of Disease
+                                         "T033", # Finding
+                                         "T037", # Injury or Poisoning
+                                         "T048", # Mental or Behavioral Dysfunction
+                                         "T191", # Neoplastic Process
+                                         "T046", # Pathologic Function
+                                         "T184"]):
+    """ removes cuis that do not have tui that is in the filter """
+    results = set()
+
+    for cui in cuis:
+
+        for tui in get_tui(cache, cui):
+
+            if tui in filter:
+                results.add(cui)
+                break
+
+    return list(results)
+
+def normalize_phrase(phrase, PyPwl=None):
+
+    norm = ""
+    for char in phrase:
+        if char.isalnum() is True or char.isspace() is True:
+            norm += char
+
+    phrase = norm
+
+    phrase = nltk.PorterStemmer().stem(phrase)
+
+    if PyPwl is not None:
+
+        init_time = time.time()
+
+        phrase = spellCheck(phrase, PyPwl=PyPwl)
+
+        print time.time() - init_time
+
+    return phrase
+
+
+def is_valid_phrase(phrase):
+
+    valid_chars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+    phrase = set(phrase)
+
+    ret_val = len(valid_chars.intersection(phrase)) > 0
+
+    return ret_val
+
+
+def obtain_concept_ids(cache, phrase, PyPwl=None, cui_freq={}):
+
+    global metamap
+
+    # phrases that do not contain alphanumerica characters will cause metamap to crash.
+    if is_valid_phrase(phrase) is False:
+        return ['CUI-less']
+
+    #phrases = [normalize_phrase(phrase, PyPwl=PyPwl) for phrase in phrases]
+
+    if metamap is None:
+        metamap = MetaMap()
+
+    # lvgnorm is used within the metamap java code for efficiency reasons.
+    conceptIds = metamap.getConceptIds(phrase)
+
+    retVal = []
+
+    assert(len(conceptIds) == 1)
+
+    for conceptId in conceptIds:
+
+        cuis = set()
+
+        for key in conceptId["mappings"]:
+            cuis = cuis.union(conceptId["mappings"][key])
+
+        for normPhrase in conceptId["norms"]:
+            cuis = cuis.union(get_list_all_possible_cuis_for_abrv(cache, normPhrase) + get_cui(cache, normPhrase))
+
+        if (len(cuis) == 1 and 'CUI-less' in cuis):
+            for corrected_phrase in normalize_phrase(phrase, PyPwl=PyPwl):
+                cuis = cuis.union(get_list_all_possible_cuis_for_abrv(cache, corrected_phrase) + get_cui(cache, corrected_phrase))
+
+    cuis = filter_cuis_by_tui(cache, cuis)
+
+    retVal = get_most_freq_cui(cuis, cui_freq)
+
+    return retVal
+
+
+if __name__ == "__main__":
+
+    strings = ["MCA Aneurysm", "middle cerebral arterial aneurysm"]
+
+    cache = UmlsCache()
+
+    for phrase in strings:
+
+        print "PHRASE: ", phrase
+        print "CUI: ", obtain_concept_ids(cache, phrase)
+
+    print "nothing to do"
+
+#EOF
 

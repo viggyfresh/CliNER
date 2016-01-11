@@ -22,12 +22,7 @@ import glob
 # Ensure CLINER_DIR is set (TODO set properly?)
 if 'CLINER_DIR' not in os.environ:
     print >>sys.stderr, '\n\tError: You must set the CLINER_DIR path to continue\n'
-    sys.exit()
-
-if os.path.isdir(os.environ["CLINER_DIR"]) is False:
-    print >>sys.stderr, '\n\tError: The CLINER_DIR path set is not a directory.\n'
-    sys.exit()
-
+    exit()
 sys.path.append( os.environ['CLINER_DIR'] + "/cliner/notes" )
 
 
@@ -48,8 +43,10 @@ supported_formats_help = "Data format ( " + ' | '.join(Note.supportedFormats()) 
 @click.option('--format'        ,help=supported_formats_help                    )
 @click.option('--grid/--no-grid',help='Flag to enable grid search',default=False)
 @click.option('--crf/--no-crf'  ,help='Flag to enable crfsuite'   ,default=True )
+@click.option('--discontiguous_spans/--no-discontiguous_spans', help='Flag to enable detection and merging of discontiguous spans', default=False)
+@click.option('--umls_disambiguation/--no-umls_disambiguation', help='Flag to enable mapping detecting entities to UMLS', default=False)
 @click.argument('input')
-def train(annotations, model, format, grid, crf, input):
+def train(annotations, model, format, grid, crf, discontiguous_spans, umls_disambiguation, input):
 
     # Base directory
     BASE_DIR = os.environ.get('CLINER_DIR')
@@ -73,6 +70,10 @@ def train(annotations, model, format, grid, crf, input):
         cmd += ['-g']
     if not crf:
         cmd += ['-no-crf']
+    if discontiguous_spans:
+        cmd += ['-discontiguous_spans']
+    if umls_disambiguation:
+        cmd += ['-umls_disambiguation']
 
     # Execute train.py
     subprocess.call(cmd)
@@ -85,8 +86,10 @@ def train(annotations, model, format, grid, crf, input):
 @click.option('--out'     , help='The directory to write the output'           )
 @click.option('--model'   , help='Model used to predict on files'              )
 @click.option('--format'  , help=supported_formats_help                        )
+@click.option('--discontiguous_spans/--no-discontiguous_spans', help='Flag to enable detection and merging of discontiguous spans', default=False)
+@click.option('--umls_disambiguation/--no-umls_disambiguation', help='Flag to enable mapping detecting entities to UMLS', default=False)
 @click.argument('input')
-def predict(out, model, format, input):
+def predict(out, model, format, discontiguous_spans, umls_disambiguation, input):
 
     # Base directory
     BASE_DIR = os.environ.get('CLINER_DIR')
@@ -106,6 +109,10 @@ def predict(out, model, format, input):
         cmd += ['-m',  model]
     if format:
         cmd += ['-f', format]
+    if discontiguous_spans:
+        cmd += ['-discontiguous_spans']
+    if umls_disambiguation:
+        cmd += ['-umls_disambiguation']
 
     # Execute predict.py
     subprocess.call(cmd)

@@ -16,9 +16,24 @@ import sys
 import glob
 import argparse
 import helper
+import re
+import string
+import time
+import itertools
+import cPickle as pickle
+import copy
 
 from model import Model
 from notes.note import Note
+from multiprocessing import Pool
+
+sys.path.append(os.path.join(*[os.environ["CLINER_DIR"], "cliner", "features_dir"]))
+
+from read_config import enabled_modules
+from disambiguation import cui_disambiguation
+
+# Import feature modules
+enabled = enabled_modules()
 
 
 def main():
@@ -51,6 +66,18 @@ def main():
         default = None
     )
 
+    parser.add_argument("-discontiguous_spans",
+        dest = "third",
+        help = "A flag indicating whether to have third/clustering pass",
+        action = "store_true"
+    )
+
+    parser.add_argument("-umls_disambiguation",
+        dest = "disambiguate",
+        help = "A flag indicating whether to disambiguate CUI ID for identified entities in semeval",
+        action = "store_true"
+    )
+
     args = parser.parse_args()
 
     # Error check: Ensure that file paths are specified
@@ -72,19 +99,29 @@ def main():
     files = glob.glob(args.input)
     helper.mkpath(args.output)
 
+    third = args.third
+
     if args.format:
         format = args.format
     else:
         print '\n\tERROR: must provide "format" argument\n'
         exit()
 
+    if third is True and args.format == "i2b2":
+        exit("i2b2 formatting does not support disjoint spans")
+
+    # Tell user if not predicting
+    if not files:
+        print >>sys.stderr, "\n\tNote: You did not supply any input files\n"
+        exit()
 
     # Predict
-    predict(files, args.model, args.output, format=format)
+    predict(files, args.model, args.output, format=format, third=third, disambiguate=args.disambiguate)
 
 
 
-def predict(files, model_path, output_dir, format):
+
+def predict(files, model_path, output_dir, format, third=False, disambiguate=False):
 
     # Must specify output format
     if format not in Note.supportedFormats():
@@ -109,39 +146,37 @@ def predict(files, model_path, output_dir, format):
     for i,txt in enumerate(sorted(files)):
 
         note = Note(format)
+        note.read(txt)
 
         # Output file
         extension = note.getExtension()
         fname = os.path.splitext(os.path.basename(txt))[0] + '.' + extension
         out_path = os.path.join(output_dir, fname)
-        '''
-        if os.path.exists(out_path):
-            #print '\tWARNING: prediction file already exists (%s)' % out_path
-            continue
-        '''
+        #if os.path.exists(out_path):
+        #    print '\tWARNING: prediction file already exists (%s)' % out_path
+        #    continue
 
-        # Read the data into a Note object
-        note.read(txt)
-
-
-        print '-' * 30
-        print '\n\t%d of %d' % (i+1,n)
-        print '\t', txt, '\n'
-
+        if format == "semevaL":
+            note.setFileName(os.path.split(txt)[-1])
 
         # Predict concept labels
-        labels = model.predict(note)
+        labels = model.predict(note, third)
 
         # Get predictions in proper format
         output = note.write(labels)
 
+        # TODO: make a flag to enable or disable looking up concept ids.
+        if format == "semeval":
+
+            print "\nencoding concept ids"
+            if enabled["UMLS"] is not None and disambiguate is True:
+                output = cui_disambiguation.disambiguate(output, txt, model.get_cui_freq())
 
         # Output the concept predictions
         print '\n\nwriting to: ', out_path
         with open(out_path, 'w') as f:
             print >>f, output
         print
-
 
 
 if __name__ == '__main__':

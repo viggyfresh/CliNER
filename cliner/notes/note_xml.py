@@ -23,6 +23,7 @@ from copy import copy
 from abstract_note       import AbstractNote
 from utilities_for_notes import classification_cmp, lineno_and_tokspan
 
+from preprocessor 	 import PreProcessor
 
 class Note_xml(AbstractNote):
 
@@ -31,8 +32,8 @@ class Note_xml(AbstractNote):
         self.data            = []  # list of list of tokens
         self.classifications = []  # list of concept tuples
         self.line_inds       = []  # list of (start,end) line character offsets
-
-
+	self.pre_processor   = PreProcessor()
+	
     def getExtension(self):
         return 'xml'
 
@@ -92,6 +93,8 @@ class Note_xml(AbstractNote):
 
     def read(self, txt, con=None):
 
+	print "called xml read"
+
         """
         Note_xml::read()
 
@@ -101,6 +104,11 @@ class Note_xml(AbstractNote):
 
         start = 0
         end = 0
+
+        start = 0
+        end = 0
+
+        # TODO: need to fix tokenization when predicting
 
         # Read in the medical text
         with open(txt) as f:
@@ -112,7 +120,7 @@ class Note_xml(AbstractNote):
             for line in text.split('\n'):
 
                 # Keep track of line's character offsets
-                for word in line.split():
+                for word in line.split() if con is not None else self.pre_processor.tokenizeSentence(line):
                     end += len(word) + 1
                 self.line_inds.append( (start,end-1) )
                 start = end
@@ -121,8 +129,7 @@ class Note_xml(AbstractNote):
                 line = filter(lambda x: x in string.printable, line)
 
                 # Add sentence to the data list
-                self.data.append(line.split())
-
+                self.data.append(line.split() if con is not None else self.pre_processor.tokenizeSentence(line)) 
 
         # Read in the medical text
         if con:

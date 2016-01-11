@@ -9,10 +9,15 @@ import copy
 import sqlite3
 import create_sqliteDB
 import os
-import sys
 
 import create_trie
+import difflib
+import string
+import sys
 
+sys.path.append((os.environ["CLINER_DIR"] + "/cliner/normalization/spellCheck"))
+
+from spellChecker import spellCheck
 
 features_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if features_dir not in sys.path:
@@ -84,19 +89,64 @@ def cui_lookup( string ):
     except sqlite3.ProgrammingError, e:
         return []
 
+def abr_lookup( string ):
+    """ searches for an abbreviation and returns possible expansions for that abbreviation"""
+    try:
+        c.execute( "SELECT str FROM LRABR WHERE abr = ?;", (string,))
+        return c.fetchall()
+    except sqlite3.ProgrammingError, e:
+        return []
 
 def concept_exists(string):
     """ Fast query for set membership in trie """
     return unicode(string) in trie
 
 
-if __name__ == "__main__":
 
- #   print string_lookup("blood")
-#    print cui_lookup("blood")
-#    print concept_exists("blood")
-    pass
+def tui_lookup( string ):
+    """ takes in a concept id string (ex: C00342143) and returns the TUI of that string which represents the semantic type is belongs to """
+    try:
+        c.execute( "SELECT tui FROM MRSTY WHERE cui = ?;", (string,))
+        return c.fetchall()
+    except sqlite3.ProgrammingError, e:
+        return []
+
+def substrs_that_exists( lOfStrs , pwl):
+    """ sees if a sub string exists within trie"""
+
+    lOfNormStrs = [string.strip() for string in lOfStrs]
+    lOfNormStrs = [strip_punct(string) for string in lOfNormStrs]
+    lOfNormStrs = [( string, string.lower() ) for string in lOfNormStrs]
+
+    retVal = False
+
+    numThatExist = 0
+
+    # strings are case sensitive.
+    for normStr1, normStr2 in lOfNormStrs:
+
+        strs = difflib.get_close_matches(normStr1, trie.keys( unicode( normStr1 ) ), cutoff=.8)
+        if len(strs) == 0:
+            if normStr2 != normStr1:
+                strs = difflib.get_close_matches(normStr2, trie.keys( unicode( normStr2 ) ), cutoff=.8)
+            if len(strs) == 0:
+
+                spellChecked = spellCheck(normStr1, PyPwl=pwl)
+                strs = difflib.get_close_matches(spellChecked, trie.keys( unicode( spellChecked ) ), cutoff=.8)
+
+            if len(strs) == 0:
+                spellChecked = spellCheck(normStr2, PyPwl=pwl)
+                strs = difflib.get_close_matches(spellChecked, trie.keys( unicode( spellChecked ) ), cutoff=.8)
 
 
+        if len(strs) > 0:
+            numThatExist += 1
 
+    return numThatExist
 
+def strip_punct(stringArg):
+
+    for c in string.punctuation:
+        stringArg = string.replace(stringArg, c, "")
+
+    return stringArg

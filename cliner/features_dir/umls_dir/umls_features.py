@@ -132,7 +132,7 @@ def concept_features_for_chunk(sentence, ind):
     for word in sentence[ind].split():
         word_feats = features_for_word(word)
         features.update(word_feats)
-    
+
 
     # Feature: UMLS semantic type for the sentence
     # a list of the uml semantic of the largest substring(s).
@@ -160,7 +160,6 @@ def concept_features_for_chunk(sentence, ind):
             features[('umls_semantic_context',concept)] = 1
 
     return features
-
 
 
 def concept_features_for_chunks(sentence, inds):

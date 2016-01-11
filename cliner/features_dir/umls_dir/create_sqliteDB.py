@@ -23,7 +23,7 @@ conn = None
 MRSTY_TABLE_FILE = None
 MRCON_TABLE_FILE = None
 MRREL_TABLE_FILE = None
-
+LRABR_TABLE_FILE = None
 
 # this ensure files are closed properly and umls.db is removed if not succesful
 @atexit.register
@@ -36,6 +36,7 @@ def umls_db_cleanup():
     global MRSTY_TABLE_FILE
     global MRCON_TABLE_FILE
     global MRREL_TABLE_FILE
+    global LRABR_TABLE_FILE
 
     if conn is not None:
         conn.close()
@@ -49,14 +50,16 @@ def umls_db_cleanup():
     if MRREL_TABLE_FILE is not None:
         MRREL_TABLE_FILE.close()
 
+    if LRABR_TABLE_FILE is not None:
+        LRABR_TABLE_FILE.close()
+
     if success is False:
 
         # remove umls.db, it is junk now
         if db_path is not None:
             os.remove(db_path)
 
-        print >>sys.stderr, '\n\tError: umls.db was not created succesfully.\n'
-
+            print >>sys.stderr, '\n\tError: umls.db was not created succesfully.\n'
 
 def create_db():
 
@@ -67,6 +70,7 @@ def create_db():
     global MRSTY_TABLE_FILE
     global MRCON_TABLE_FILE
     global MRREL_TABLE_FILE
+    global LRABR_TABLE_FILE
 
     print "\ncreating umls.db"
     #connect to the .db file we are creating.
@@ -97,6 +101,13 @@ def create_db():
         print "\nNo file to use for creating MRREL.RRF table\n"
         sys.exit()
 
+    try:
+        lrabr_path = os.path.join(umls_tables, 'LRABR')
+        LRABR_TABLE_FILE = open( lrabr_path , "r" )
+    except IOError:
+        print "\nNo file to use for creating LRABR table\n"
+        sys.exit()
+
     print "creating tables"
     c = conn.cursor()
 
@@ -104,6 +115,7 @@ def create_db():
     c.execute( "CREATE TABLE MRSTY( CUI, TUI, STN, STY, ATUI, CVF  ) ;" )
     c.execute( "CREATE TABLE MRCON( CUI, LAT, TS, LUI, STT, SUI, ISPREF, AUI, SAUI, SCUI, SDUI, SAB, TTY, CODE, STR, SRL, SUPPRESS, CVF ) ;" )
     c.execute( "CREATE TABLE MRREL( CUI1, AUI1, STYPE1, REL, CUI2, AUI2, STYPE2, RELA, RUI, SRUI, SAB, SL, RG, DIR, SUPPRESS, CVF );")
+    c.execute( "CREATE TABLE LRABR( EUI1, ABR, TYPE, EUI2, STR);")
 
     print "inserting data into MRSTY table"
     for line in MRSTY_TABLE_FILE:
@@ -120,7 +132,6 @@ def create_db():
         assert len(line) == 6
 
         c.execute( "INSERT INTO MRSTY( CUI, TUI, STN, STY, ATUI, CVF ) values( ?, ?, ?, ?, ?, ?)" , tuple(line))
-
 
     print "inserting data into MRCON table"
     for line in MRCON_TABLE_FILE:
@@ -156,6 +167,21 @@ def create_db():
         c.execute( "INSERT INTO MRREL(  CUI1, AUI1, STYPE1, REL, CUI2, AUI2, STYPE2, RELA, RUI, SRUI, SAB, SL, RG, DIR, SUPPRESS, CVF ) values( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )" , tuple(line))
 
 
+    print "inserting into LRABR table"
+    for line in LRABR_TABLE_FILE:
+
+        line = line.strip('\n')
+
+        assert line[-1] == '|', "str: {}, char: ".format(line, line[-1])
+
+        line = line.split('|')
+
+        line.pop()
+
+        assert len(line) == 5
+
+        c.execute( "INSERT INTO LRABR( EUI1, ABR, TYPE, EUI2, STR) values( ?, ?, ?, ?,?)" , tuple(line) )
+
     print "creating indices"
 
     #create indices for faster queries
@@ -165,13 +191,14 @@ def create_db():
     c.execute( "CREATE INDEX mrrel_cui2_map ON MRREL( CUI2 )" )
     c.execute( "CREATE INDEX mrrel_cui1_map on MRREL( CUI1 ) " )
     c.execute( "CREATE INDEX mrrel_rel_map on MRREL( REL )" )
+    c.execute( "CREATE INDEX lrabr_abr_map on LRABR(ABR)")
+    c.execute( "CREATE INDEX lrabr_str_map on LRABR(STR)")
 
     #save changes to .db
     conn.commit()
 
     success = True
     print "\nsqlite database created"
-
 
 if __name__ == "__main__":
     create_db()
