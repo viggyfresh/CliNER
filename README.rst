@@ -151,6 +151,17 @@ Good luck!
         - This process may take a while, the directory '<Destination_Directory_Path>/<UMLS VERSION>/META' should contain the necessary files needed.
 
 
+Out-of-the-Box Model
+--------
+
+Although i2b2 licensing prevents us from releasing our cliner models trained on i2b2 data, we generated some comprable models from automatically-annotated MIMIC II text.
+
+This silver MIMIC model can be found at http://text-machine.cs.uml.edu/cliner/models/mimic-silver.cliner
+
+
+
+
+
 Additional Resources
 --------
 
