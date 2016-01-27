@@ -143,6 +143,9 @@ class Model:
         nested_prose_feats    = feat_obj.IOB_prose_features(      nested_prose_data)
         nested_nonprose_feats = feat_obj.IOB_nonprose_features(nested_nonprose_data)
 
+        print "nested_prose_feats: ", nested_prose_feats
+        print "nested_nonprose_feats", nested_nonprose_feats
+
         # Flatten lists (because classifier will expect flat)
         prose_Y        = flatten(nested_prose_Y       )
         nonprose_Y     = flatten(nested_nonprose_Y    )
@@ -256,6 +259,9 @@ class Model:
         # rename because code uses it
         prose    =    nested_prose_feats
         nonprose = nested_nonprose_feats
+
+        print prose
+        print nonprose
 
         # Predict labels for IOB prose and nonprose text
         nlist = self.__generic_first_predict('nonprose', nonprose, self._first_nonprose_vec, self._first_nonprose_clf)
@@ -470,8 +476,10 @@ class Model:
     ##                            Debugging                                ##
     #########################################################################
     def first_train(self, tokenized_sentences, Y, do_grid=False):
+        print "\n\t CALLED FIRST TRAIN"
         return self.__first_train(tokenized_sentences, Y, do_grid)
     def first_predict(self, data):
+        print "\n\t CALLED FIRST PREDICT"
         return self.__first_predict(data, dev=True)
 
 

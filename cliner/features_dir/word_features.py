@@ -14,6 +14,8 @@ import re
 import os
 import sys
 
+import math
+
 from wordshape import getWordShapes
 from nltk import LancasterStemmer, PorterStemmer
 import numpy as np
@@ -40,17 +42,31 @@ porter_st = PorterStemmer()
 hit   = 0
 total = 0
 def feature_word(word):
-    global hit, total
+   # global hit, total
     # apples to apples
-    w = word.lower()
-    total += 1
-    print 'total: ', total
-    if w in embeddings:
-        print '\thit: ', hit
-        hit += 1
-        return {('word', word.lower()): 1}
-    else:
-        return {('word', '<UNK>'): 1}
+   # w = word.lower()
+   # total += 1
+   # print 'total: ', total
+#    return {('word', word.lower()): 1}
+
+#    if w in embeddings:
+#        print '\thit: ', hit
+#        hit += 1
+#        return {('word', word.lower()): 1}
+#    else:
+#        return {('word', '<UNK>'): 1}
+
+
+    # slightly worse
+
+    features = {}
+
+#    for i, vector_val in enumerate(embeddings[word]):
+
+
+#        features.update({('vector_val_{}'.format(i), word):vector_val})
+
+    return features
 
 def feature_stem_lancaster(word):
     return {('stem_lancaster', lancaster_st.stem(word.lower())): 1}
@@ -199,7 +215,8 @@ def IOB_prose_features(word):
     return features
 
 
-enabled_IOB_nonprose_word_features = frozenset( [feature_word, feature_word_shape, feature_mitre, QANN_features] )
+#enabled_IOB_nonprose_word_features = frozenset( [feature_word, feature_word_shape, feature_mitre, QANN_features] )
+enabled_IOB_nonprose_word_features = frozenset( [feature_word] )
 
 def IOB_nonprose_features(word):
     """

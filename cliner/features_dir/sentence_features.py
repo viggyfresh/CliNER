@@ -39,10 +39,27 @@ if enabled['GENIA']:
     feat_genia=None
 
 
+# TODO: investigate this.
 #enabled_IOB_nonprose_sentence_features = ['prev', 'next', 'unigram_context', 'UMLS', 'pos', 'pos_context']
-enabled_IOB_nonprose_sentence_features = ['prev', 'next', 'unigram_context', 'UMLS']
 
-enabled_IOB_prose_sentence_features = ['unigram_context', 'pos', 'pos_context', 'prev', 'prev2', 'next', 'next2', 'GENIA', 'UMLS']
+
+# word2vec debugging...
+enabled_IOB_nonprose_sentence_features = ['word2vec_context']
+enabled_IOB_prose_sentence_features = ['word2vec_context']
+
+
+#enabled_IOB_nonprose_sentence_features = ['unigram_context']
+#enabled_IOB_prose_sentence_features = ['unigram_context']
+
+import numpy
+
+from word2vec.word2vec import embeddings
+
+#enabled_IOB_nonprose_sentence_features = []
+#enabled_IOB_prose_sentence_features = []
+
+#enabled_IOB_nonprose_sentence_features = ['prev', 'next', 'unigram_context', 'UMLS']
+#enabled_IOB_prose_sentence_features = ['unigram_context', 'pos', 'pos_context', 'prev', 'prev2', 'next', 'next2', 'GENIA', 'UMLS']
 
 
 
@@ -67,6 +84,7 @@ def sentence_features_preprocess(data):
 
 
 def IOB_prose_features(sentence):
+
     """
     IOB_prose_features
 
@@ -82,8 +100,105 @@ def IOB_prose_features(sentence):
         features_list.append(feats)
         #print word, '\t', feats
 
-    # FIXME dev speedup
-    return features_list
+    # Feature: Bag of Words unigram conext (window=3)
+    if 'word2vec_context' in enabled_IOB_prose_sentence_features:
+
+        window = 3
+        n = len(sentence)
+
+        # hacky
+        vect_sum = numpy.array([0.0]*300)
+
+        # Previous unigrams
+        for i in range(n):
+
+            end = min(i, window)
+            unigrams = sentence[i-end:i]
+
+            for j,u in enumerate(unigrams):
+
+                # average of vect of previous 3 unigrams
+                vect_sum += embeddings[u]
+
+                #features_list[i][('prev_unigrams-%d'%j,u)] = 1
+
+            #vec_avg = vect_sum / 3
+
+            #for j, v in enumerate(vec_avg):
+
+            #    features_list[i]['average_prev_unigrams_vect_val_{}'.format(j)] = v
+
+            end = min(i + window, n-1)
+            unigrams = sentence[i+1:end+1]
+
+#            for u in unigrams:
+#                features_list[i][('next_unigrams-%d'%j,u)] = 1
+
+            for j,u in enumerate(unigrams):
+
+                # average of vect of previous 3 unigrams
+                vect_sum += embeddings[u]
+
+                #features_list[i][('prev_unigrams-%d'%j,u)] = 1
+
+            vec_avg = vect_sum / 6
+
+            for j, v in enumerate(vec_avg):
+
+                features_list[i]['avg_surrounding_word2vec{}'.format(j)] = v
+
+        """
+        window = 3
+        n = len(sentence)
+
+        # hacky
+        vect_sum = numpy.array([0.0]*300)
+
+        # Previous unigrams
+        for i in range(n):
+
+            end = min(i, window)
+            unigrams = sentence[i-end:i]
+
+            for j,u in enumerate(unigrams):
+
+                # average of vect of previous 3 unigrams
+                vect_sum += embeddings[u]
+
+                #features_list[i][('prev_unigrams-%d'%j,u)] = 1
+
+            vec_avg = vect_sum /3
+
+            for j, v in enumerate(vec_avg):
+
+                features_list[i]['average_prev_unigrams_vect_val_{}'.format(j)] = v
+
+        # hacky
+        vect_sum = numpy.array([0.0]*300)
+
+        # Next     unigrams
+        for i in range(n):
+
+            end = min(i + window, n-1)
+            unigrams = sentence[i+1:end+1]
+
+#            for u in unigrams:
+#                features_list[i][('next_unigrams-%d'%j,u)] = 1
+
+            for j,u in enumerate(unigrams):
+
+                # average of vect of previous 3 unigrams
+                vect_sum += embeddings[u]
+
+                #features_list[i][('prev_unigrams-%d'%j,u)] = 1
+
+            vec_avg = vect_sum / 3
+
+            for j, v in enumerate(vec_avg):
+
+                features_list[i]['average_next_unigrams_vect_val_{}'.format(j)] = v
+
+        """
 
     # Feature: Bag of Words unigram conext (window=3)
     if 'unigram_context' in enabled_IOB_prose_sentence_features:
@@ -235,6 +350,105 @@ def IOB_nonprose_features(sentence):
         word_feats = feat_word.IOB_nonprose_features(sentence[i])
         features_list.append( word_feats )
 
+
+    # Feature: Bag of Words unigram conext (window=3)
+    if 'word2vec_context' in enabled_IOB_nonprose_sentence_features:
+        window = 3
+        n = len(sentence)
+
+        # hacky
+        vect_sum = numpy.array([0.0]*300)
+
+        # Previous unigrams
+        for i in range(n):
+
+            end = min(i, window)
+            unigrams = sentence[i-end:i]
+
+            for j,u in enumerate(unigrams):
+
+                # average of vect of previous 3 unigrams
+                vect_sum += embeddings[u]
+
+                #features_list[i][('prev_unigrams-%d'%j,u)] = 1
+
+            #vec_avg = vect_sum / 3
+
+            #for j, v in enumerate(vec_avg):
+
+            #    features_list[i]['average_prev_unigrams_vect_val_{}'.format(j)] = v
+
+            end = min(i + window, n-1)
+            unigrams = sentence[i+1:end+1]
+
+#            for u in unigrams:
+#                features_list[i][('next_unigrams-%d'%j,u)] = 1
+
+            for j,u in enumerate(unigrams):
+
+                # average of vect of previous 3 unigrams
+                vect_sum += embeddings[u]
+
+                #features_list[i][('prev_unigrams-%d'%j,u)] = 1
+
+            vec_avg = vect_sum / 6
+
+            for j, v in enumerate(vec_avg):
+
+                features_list[i]['avg_surrounding_word2vec{}'.format(j)] = v
+
+        """
+        window = 3
+        n = len(sentence)
+
+        # hacky
+        vect_sum = numpy.array([0.0]*300)
+
+        # Previous unigrams
+        for i in range(n):
+
+            end = min(i, window)
+            unigrams = sentence[i-end:i]
+
+            for j,u in enumerate(unigrams):
+
+                # average of vect of previous 3 unigrams
+                vect_sum += embeddings[u]
+
+                #features_list[i][('prev_unigrams-%d'%j,u)] = 1
+
+            vec_avg = vect_sum /3
+
+            for j, v in enumerate(vec_avg):
+
+                features_list[i]['average_prev_unigrams_vect_val_{}'.format(j)] = v
+
+        # hacky
+        vect_sum = numpy.array([0.0]*300)
+
+        # Next     unigrams
+        for i in range(n):
+
+            end = min(i + window, n-1)
+            unigrams = sentence[i+1:end+1]
+
+#            for u in unigrams:
+#                features_list[i][('next_unigrams-%d'%j,u)] = 1
+
+            for j,u in enumerate(unigrams):
+
+                # average of vect of previous 3 unigrams
+                vect_sum += embeddings[u]
+
+                #features_list[i][('prev_unigrams-%d'%j,u)] = 1
+
+            vec_avg = vect_sum / 3
+
+            for j, v in enumerate(vec_avg):
+
+                features_list[i]['average_next_unigrams_vect_val_{}'.format(j)] = v
+
+        """
 
     # Feature: Bag of Words unigram conext (window=3)
     if 'unigram_context' in enabled_IOB_nonprose_sentence_features:

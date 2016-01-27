@@ -10,26 +10,75 @@ from model            import Model
 
 from features_dir import utilities
 
-
-
+import argparse
+import helper
 
 def main():
 
-    if 'all' in sys.argv:
-        txts = glob.glob( os.path.join(os.getenv('CLICON_DIR'),'data/test_data/*.txt') )
-        txts = [ os.path.split(f)[-1]  for f in txts ]
-    elif 'big' in sys.argv:
-        txts = glob.glob( os.path.join(os.getenv('CLICON_DIR'),'data/test_data/00[2345]*.txt') )
-        txts = [ os.path.split(f)[-1]  for f in txts ]
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-i",
+        dest = "input",
+        help = "The input files to predict",
+    )
+
+    parser.add_argument("-c",
+        dest = "concept",
+        help = "The concept files for input files",
+    )
+
+    parser.add_argument("-o",
+        dest = "output",
+        help = "The directory to write the output",
+    )
+
+    parser.add_argument("-m",
+        dest = "model",
+        help = "The model to use for prediction",
+    )
+
+    parser.add_argument("-f",
+        dest = "format",
+        help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )",
+    )
+
+    parser.add_argument("-crf",
+        dest = "with_crf",
+        help = "Specify where to find crfsuite",
+        default = None
+    )
+
+    args = parser.parse_args()
+
+    # Error check: Ensure that file paths are specified
+    if not args.input:
+        print >>sys.stderr, '\n\tError: Must provide text files\n'
+        exit(1)
+    if not args.output:
+        print >>sys.stderr, '\n\tError: Must provide output directory\n'
+        exit(1)
+    if not args.model:
+        print >>sys.stderr, '\n\tError: Must provide path to model\n'
+        exit(1)
+    if not os.path.exists(args.model):
+        print >>sys.stderr, '\n\tError: Model does not exist: %s\n' % args.model
+        exit(1)
+
+
+    # Parse arguments
+    files = glob.glob(args.input)
+    con_files = glob.glob(args.concept)
+    helper.mkpath(args.output)
+
+    if args.format:
+        format = args.format
     else:
-        txts = ['record-15.txt']
-        #txts = ['record-65.txt']
-        #txts = ['0033.txt']
-        #txts = ['record-58.txt']
-        #txts = ['0106.txt']
+        print '\n\tERROR: must provide "format" argument\n'
+        exit()
 
-
-    txts = sorted(txts)
+    # Collect training data file paths
+    txt_files_map = helper.map_files(files) # ex. {'record-13': 'record-13.con'}
+    con_files_map = helper.map_files(con_files)
 
     # Confusion matrix
     labels_map = {'B':0, 'I':1, 'O':2}
@@ -42,90 +91,81 @@ def main():
     pincorrect = defaultdict(lambda:[])
     nincorrect = defaultdict(lambda:[])
 
+    predict_list = []
 
-    for t in txts:
+    for k in txt_files_map:
+        if k in con_files_map:
+            predict_list.append((txt_files_map[k], con_files_map[k], k))
 
-        if '.txt' not in t: continue
+    for txt, con, base in predict_list:
 
-        #try:
-        for i in range(1):
+        print "\n\t predicting on: {}".format(txt)
 
-            base = t[:-4]
-            print base
+        if '.txt' not in txt:
+            print "\n\t skippping file: {}".format(txt)
+            continue
 
-            # Read data
-            note = Note('i2b2')
+        # Read data
+        note = Note(args.format)
+        note.read(txt,con)
 
-            if 'record' in base:
-                txt = os.path.join(os.getenv('CLICON_DIR'),'data/concept_assertion_relation_training_data/beth/txt/%s.txt' % base)
-                con = os.path.join(os.getenv('CLICON_DIR'),'data/concept_assertion_relation_training_data/beth/concept/%s.con' % base)
-            elif base[0] == '0':
-                txt = os.path.join(os.getenv('CLICON_DIR'),'data/test_data/%s.txt' % base)
-                con = os.path.join(os.getenv('CLICON_DIR'),'data/reference_standard_for_test_data/concepts/%s.con' % base)
+        # Get the data and annotations from the Note objects
+        data   = note.getTokenizedSentences()
+
+
+        # Predict IOB labels
+        model= os.path.join(os.getenv('CLINER_DIR'), args.model)
+        m = Model.load(model)
+        iobs, piobs, niobs = m.first_predict(data)
+
+
+        # Parition prose and nonprose into two different lists
+        gold = note.getIOBLabels()
+        pdata   = []
+        ndata   = []
+        plabels = []
+        nlabels = []
+        for line,labs in zip(data,gold):
+            if utilities.is_prose_sentence(line):
+                plabels.append(labs)
+                pdata.append(line)
             else:
-                print 'Cound not locate concept file: ', base
-                continue
-
-            note.read(txt,con)
+                nlabels.append(labs)
+                ndata.append(line)
 
 
-            # Get the data and annotations from the Note objects
-            data   = note.getTokenizedSentences()
-
-
-            # Predict IOB labels
-            model= os.path.join(os.getenv('CLINER_DIR'),'models/dev-word2vec-first.model')
-            m = Model.load(model)
-            iobs, piobs, niobs = m.first_predict(data)
-
-
-            # Parition prose and nonprose into two different lists
-            gold = note.getIOBLabels()
-            pdata   = []
-            ndata   = []
-            plabels = []
-            nlabels = []
-            for line,labs in zip(data,gold):
-                if utilities.is_prose_sentence(line):
-                    plabels.append(labs)
-                    pdata.append(line)
-                else:
-                    nlabels.append(labs)
-                    ndata.append(line)
-
-
-            # FIXME - Do same for nonprose
-            # Detect where prediction errors occured
-            for i in range(len(pdata)):
-                error = False
-                for j in range(len(pdata[i])):
-                    if piobs[i][j] != plabels[i][j]:
-                        begin = j-2 if j-2>0 else 0
-                        phrase =   pdata[i][begin:j+3]
-                        pred   =   piobs[i][begin:j+3]
-                        ref    = plabels[i][begin:j+3]
-                        pincorrect[base].append( (phrase, pred, ref) )
+        # FIXME - Do same for nonprose
+        # Detect where prediction errors occured
+        for i in range(len(pdata)):
+            error = False
+            for j in range(len(pdata[i])):
+                if piobs[i][j] != plabels[i][j]:
+                    begin = j-2 if j-2>0 else 0
+                    phrase =   pdata[i][begin:j+3]
+                    pred   =   piobs[i][begin:j+3]
+                    ref    = plabels[i][begin:j+3]
+                    pincorrect[base].append( (phrase, pred, ref) )
 
 
 
-            # Translate labels
-            label_lu = lambda l: labels_map[l]
-            p_predictions = [ map(label_lu, x) for x in piobs ]
-            n_predictions = [ map(label_lu, x) for x in niobs ]
+        # Translate labels
+        label_lu = lambda l: labels_map[l]
+        p_predictions = [ map(label_lu, x) for x in piobs ]
+        n_predictions = [ map(label_lu, x) for x in niobs ]
 
-            p_reference   = [ map(label_lu, x) for x in plabels ]
-            n_reference   = [ map(label_lu, x) for x in nlabels ]
+        p_reference   = [ map(label_lu, x) for x in plabels ]
+        n_reference   = [ map(label_lu, x) for x in nlabels ]
 
 
-            # Confusion matrix for prose
-            for c, r in zip( p_predictions, p_reference ):
-                for c, r in zip(c, r):
-                    p_confusion[r][c] += 1
+        # Confusion matrix for prose
+        for c, r in zip( p_predictions, p_reference ):
+            for c, r in zip(c, r):
+                p_confusion[r][c] += 1
 
-            # Confusion matrix for prose
-            for c, r in zip( n_predictions, n_reference ):
-                for c, r in zip(c, r):
-                    n_confusion[r][c] += 1
+        # Confusion matrix for prose
+        for c, r in zip( n_predictions, n_reference ):
+            for c, r in zip(c, r):
+                n_confusion[r][c] += 1
 
 
         #except Exception, e:
@@ -200,7 +240,6 @@ def main():
         f1 = sum(f1) / len(f1)
 
         print "Average: %.4f\t%.4f\t%.4f\t%.4f" % (precision, recall, specificity, f1)
-
 
 
 
