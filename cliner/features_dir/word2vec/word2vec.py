@@ -50,6 +50,7 @@ def load_bin(fname, bin_mode=False):
                     if ch != '\n':
                         word.append(ch)
 
+#                print word
                 word_vecs[word] = np.fromstring(f.read(binary_len), dtype='float32')
 
     else:
@@ -89,10 +90,7 @@ if embeddings is None:
     # Load word vectors
     vectors_bin = path.join(path.dirname(path.abspath(__file__)), 'mimic3_vect.bin')
 
-    print vectors_bin
-
-#i    pretrained = load_bin('/data2/kwacome/clicon_home/word2vec_cliner/word2_vec_test/mimic3_vect.bin')
-    pretrained = load_bin(vectors_bin,True)
+    pretrained = load_bin(vectors_bin, bin_mode=True)
 
     # be able to handle OOV by giving them 0 vectors
     embeddings = defaultdict(lambda:np.zeros(len(pretrained.values()[0])))
@@ -141,7 +139,6 @@ def get_candidates(vector):
 
     return candidates[0:10]
 
-print get_candidates(embeddings["joint"] * embeddings["pain"])
-print get_candidates(embeddings["heart"] * embeddings["disease"])
+print "blood" in embeddings
 
 

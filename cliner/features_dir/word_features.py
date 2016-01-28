@@ -208,9 +208,9 @@ def IOB_prose_features(word):
     features = {('dummy', None): 1}  # always have >0 dimensions
 
     # Extract all enabled features
-    for feature in enabled_IOB_prose_word_features:
-        current_feat = feature(word)
-        features.update(current_feat)
+#    for feature in enabled_IOB_prose_word_features:
+#        current_feat = feature(word)
+#        features.update(current_feat)
 
     return features
 
@@ -235,9 +235,9 @@ def IOB_nonprose_features(word):
     features = {('dummy', None): 1}  # always have >0 dimensions
 
     # Extract all enabled features
-    for feature in enabled_IOB_nonprose_word_features:
-        current_feat = feature(word)
-        features.update(current_feat)
+#    for feature in enabled_IOB_nonprose_word_features:
+#        current_feat = feature(word)
+#        features.update(current_feat)
 
     return features
 
