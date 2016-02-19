@@ -13,8 +13,6 @@ from spellChecker import spellCheck
 from spellChecker import getPWL
 from umls_cache import UmlsCache
 
-from cuiLookup import MetaMap
-
 metamap = None
 
 def umls_semantic_type_word( umls_string_cache , sentence ):
@@ -340,7 +338,9 @@ def obtain_concept_ids(cache, phrase, PyPwl=None, cui_freq={}):
 
     #phrases = [normalize_phrase(phrase, PyPwl=PyPwl) for phrase in phrases]
 
+    # assumes dependencies are installed properly if this function is called.
     if metamap is None:
+        from cuiLookup import MetaMap
         metamap = MetaMap()
 
     # lvgnorm is used within the metamap java code for efficiency reasons.
