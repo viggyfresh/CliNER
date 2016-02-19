@@ -28,7 +28,7 @@ def enabled_modules():
     f = open(filename, 'r')
 
     specs = {}
-    module_list = [ 'GENIA', 'UMLS', "BROWN" ]
+    module_list = [ 'GENIA', 'UMLS', "BROWN", "PY4J" ]
 
 
     for line in f.readlines():
@@ -57,6 +57,11 @@ def enabled_modules():
 
         if os.path.isfile(specs["BROWN"]) is False:
             sys.exit("Invalid path to generated brown clusters.")
+
+    if specs["PY4J"] is not None:
+
+        if os.path.isfile(specs["PY4J"]) is False:
+            sys.exit("Invalid path to py4j0.x.jar, consult https://www.py4j.org/install.html to locate it.")
 
     return specs
 
