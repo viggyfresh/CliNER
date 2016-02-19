@@ -30,7 +30,6 @@ from multiprocessing import Pool
 sys.path.append(os.path.join(*[os.environ["CLINER_DIR"], "cliner", "features_dir"]))
 
 from read_config import enabled_modules
-from disambiguation import cui_disambiguation
 
 # Import feature modules
 enabled = enabled_modules()
@@ -140,6 +139,8 @@ def predict(files, model_path, output_dir, format, third=False, disambiguate=Fal
         print >>sys.stderr, "\n\tNote: You did not supply any input files\n"
         exit()
 
+    if enabled["UMLS"] is not None and disambiguate is True:
+        from disambiguation import cui_disambiguation
 
     # For each file, predict concept labels
     n = len(files)

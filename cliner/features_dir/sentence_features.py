@@ -69,10 +69,8 @@ enabled_IOB_prose_sentence_features.append('next2')
 enabled_IOB_prose_sentence_features.append('GENIA')
 enabled_IOB_prose_sentence_features.append('UMLS')
 
-sys.path.append(os.path.join(*[os.environ["CLINER_DIR"], "cliner", "lib", "java", "stanford_nlp"]))
-from stanfordParse import DependencyParser
 
-dependency_parser = DependencyParser()
+dependency_parser = None
 
 
 def display_enabled_modules():
@@ -445,6 +443,20 @@ def getShortestList(lists):
     return shortestList
 
 def third_pass_features(line, indices, bow_model=None):
+
+    """ extract third pass features
+        running this assumes all the dependencies are properly installed.
+    """
+
+    global dependency_parser
+
+    # only instantiate once.
+    if dependency_parser is None:
+
+        sys.path.append(os.path.join(*[os.environ["CLINER_DIR"], "cliner", "lib", "java", "stanford_nlp"]))
+        from stanfordParse import DependencyParser
+
+        dependency_parser = DependencyParser()
 
     heads = []
 

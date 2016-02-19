@@ -141,7 +141,7 @@ def lineno_and_tokspan(line_inds, data, text, char_span, format):
                 if len(buf) == 0:
                     # Verify that this is the right span
                     tokspan = (tokens[0], tokens[-1])
-                    span = lno_and_tokspan__to__char_span(line_inds,data,text,lineno,tokspan)
+                    span = lno_and_tokspan__to__char_span(line_inds,data,text,lineno,tokspan, "i2b2")
                     # If this is the wrong span, then reset
                     if span != char_span:
                         buf = phrase.strip()

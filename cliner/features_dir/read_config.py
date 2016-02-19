@@ -28,7 +28,7 @@ def enabled_modules():
     f = open(filename, 'r')
 
     specs = {}
-    module_list = [ 'GENIA', 'UMLS' ]
+    module_list = [ 'GENIA', 'UMLS', "BROWN" ]
 
 
     for line in f.readlines():
@@ -51,7 +51,12 @@ def enabled_modules():
     if specs["UMLS"] is not None:
 
         if os.path.isdir(specs["UMLS"]) is False:
-            sys.exit("Invalid path to directory containing UMLS database tables")
+            sys.exit("Invalid path to directory containing UMLS database tables.")
+
+    if specs["BROWN"] is not None:
+
+        if os.path.isfile(specs["BROWN"]) is False:
+            sys.exit("Invalid path to generated brown clusters.")
 
     return specs
 
