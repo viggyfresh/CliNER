@@ -5,7 +5,6 @@
 #
 # NOTE: Must be run with 'source'
 #
-
 # 'install' directory
 BASE_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
@@ -20,3 +19,7 @@ bash $BASE_DIR/install/build_cliner/build_cliner.sh
 
 # genia tagger
 bash $BASE_DIR/install/genia/install_genia.sh
+
+# install stanford parser
+bash $BASE_DIR/install/java_dependencies/stanford-corenlp_install.sh
+
