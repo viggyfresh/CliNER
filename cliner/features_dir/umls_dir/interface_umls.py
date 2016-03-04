@@ -17,7 +17,7 @@ import sys
 
 sys.path.append((os.environ["CLINER_DIR"] + "/cliner/normalization/spellCheck"))
 
-from spellChecker import spellCheck
+# from spellChecker import spellCheck
 
 features_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if features_dir not in sys.path:

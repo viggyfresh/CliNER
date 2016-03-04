@@ -61,8 +61,8 @@ class DependencyParser:
     def getSentenceStructure(self, string):
         return self.parser.getSentenceStructure(string)
 
-    def _parse_string(self, string):
-        return self.parser.getDependencyTree(string)
+    def _parse_string(self):
+        return self.parser.getDependencyTree()
 
     def _get_output_field(self, line, field):
         """
@@ -124,11 +124,12 @@ class DependencyParser:
         # [ [  [ lines of outut for a sentence, ...  ], ...  ], ...  ]
         return output_from_parser
 
-    def get_collapsed_dependencies(self, string):
+    def get_collapsed_dependencies(self, tokenized_sentence):
 
-        output_from_parser = self._parse_string(string)
+        for token in tokenized_sentence:
+            self.addTokenToProcess(token)
 
-        print output_from_parser
+        output_from_parser = self._parse_string()
 
         sentence = self._process_parser_output(output_from_parser)
 
@@ -145,70 +146,171 @@ class DependencyParser:
 
         return dependency_group
 
-    def follow_dependency_path(self, token1, token2, dependency_group):
+    def get_related_tokens(self, target_index, sentence, dependency_group):
 
-        """
-        note: I am assuming token1 and token2 are different since
-        semeval is disjoint spans
+        # input indices should be in base 0, but will be handled as base 1 throughout document...
 
-        TODO: not sure if there are ways for multiple paths to occur.
-        """
+        target_index  += 1
 
-        start_points = []
+        if target_index not in dependency_group:
+            return {}
 
-        token1_count = 0
-        token2_count = 0
+        assert dependency_group[target_index]["source_token"] == sentence[target_index - 1]
 
-        for index in dependency_group:
-            if dependency_group[index]["source_token"] == token1:
-                start_points.append(dependency_group[index])
-                token1_count += 1
-            if dependency_group[index]["source_token"] == token2:
-                start_points.append(dependency_group[index])
-                token2_count += 1
+        dependencies = {}
 
-        if token1_count == 0 or token2_count == 0:
-            # no possible path between tokens.
-            return []
+        feature_name = "source_dep"
 
-        paths = []
+        start_index  = target_index
 
-        for start_point in start_points:
+        tmp_dependencies = {}
+        curr_node    = dependency_group[start_index]
 
-            end_token = token2 if start_point["source_token"] == token1 else token1
+        while True:
 
-            path = []
+            # root
+            if curr_node["target_index"] == 0:
+                break
 
-            entry = start_point
+            tmp_dependencies[(feature_name,
+                              dependency_group[curr_node["target_index"]]["source_token"])] = 1
+
+            # TODO: will this be a problem?
+            if curr_node["target_index"] == target_index:
+                exit("circuluar dependency path, TODO: investigate...")
+
+            curr_node = dependency_group[curr_node["target_index"]]
+
+        dependencies.update(tmp_dependencies)
+
+        for i in dependency_group:
+
+            if i == target_index:
+                continue
+
+            dependencies.update(self.related_tokens_between(i-1, target_index-1, sentence, dependency_group))
+
+        return dependencies
+
+
+    def related_tokens_between(self, start_index, end_index, sentence, dependency_group):
+
+        # TODO: amend this so it actually gets depenencies on relation path, for third pass...
+
+        # input indices should be in base 0, but will be handled as base 1 throughout document...
+
+        start_index  += 1
+        end_index += 1
+
+        if start_index not in dependency_group:
+            return {}
+        if end_index not in dependency_group:
+            return {}
+
+        assert dependency_group[start_index]["source_token"] == sentence[start_index - 1]
+        assert dependency_group[end_index]["source_token"] == sentence[end_index - 1]
+
+        dependencies = {}
+
+        feature_name = "target_dep"
+
+        tmp_dependencies = {}
+        curr_node    = dependency_group[start_index]
+
+        tmp_dependencies[(feature_name,
+                          curr_node["source_token"])] = 1
+
+        while True:
+
+            # root
+            if curr_node["target_index"] == 0:
+                tmp_dependencies = {}
+                break
+
+            if curr_node["target_index"] == end_index:
+                break
+            else:
+                tmp_dependencies[(feature_name,
+                                  dependency_group[curr_node["target_index"]]["source_token"])] = 1
+
+            # TODO: will this be a problem?
+            if curr_node["target_index"] == start_index:
+                exit("circuluar dependency path, TODO: investigate...")
+
+            curr_node = dependency_group[curr_node["target_index"]]
+
+        dependencies.update(tmp_dependencies)
+
+        return dependencies
+
+    def __related_tokens_between(self, target_index, sibling_index, sentence, dependency_group):
+
+        # TODO: amend this so it actually gets depenencies on relation path, for third pass...
+
+        # input indices should be in base 0, but will be handled as base 1 throughout document...
+
+        target_index  += 1
+        sibling_index += 1
+
+        assert target_index in dependency_group
+        assert sibling_index in dependency_group
+
+        assert dependency_group[target_index]["source_token"] == sentence[target_index - 1]
+        assert dependency_group[sibling_index]["source_token"] == sentence[sibling_index - 1]
+
+        dependencies = {}
+
+
+        for feature_name, start_index, end_index in (("source_dep", target_index, sibling_index),
+                                                     ("target_dep", sibling_index, target_index)):
+
+            tmp_dependencies = {}
+            curr_node    = dependency_group[start_index]
 
             while True:
 
-                path.append(entry["source_token"])
-                path.append(entry["rel_type"])
-
-                if entry["source_token"] == end_token:
-                    path = path[0:-1]
+                # root
+                if curr_node["target_index"] == 0:
+                    tmp_dependencies = {}
                     break
 
-                if entry["target_index"] == 0:
-                    path = []
+                tmp_dependencies[(feature_name,
+                                  dependency_group[curr_node["target_index"]]["source_token"])] = 1
+
+                if curr_node["target_index"] == end_index:
                     break
 
-                entry = dependency_group[entry["target_index"]]
+                curr_node = dependency_group[curr_node["target_index"]]
 
-            if len(path) > 0:
-                paths.append(path)
+            dependencies.update(tmp_dependencies)
 
-        return paths
+        return dependencies
+
+    def addTokenToProcess(self, token):
+
+        """py4j cannot convert python lists to java objects.
+           a stack approach is be used.
+        """
+
+        self.parser.addTokenToProcess(token)
 
 
 if __name__ == "__main__":
 
     p = DependencyParser()
 
-    d = p.get_collapsed_dependencies("He ran really fast to his classroom. He was late to class, unfortunately.")
+#    d = p.get_collapsed_dependencies("He ran really fast to his classroom. He was late to class, unfortunately.")
+
+    d = p.get_collapsed_dependencies(["He", "ran", "to", "his classroom"])
 
     print d
+    print p.get_related_tokens(2, ["He", "ran", "to", "his classroom"], d)
+
+    d = p.get_collapsed_dependencies(["The", "man", "was", "admitted", "to", "the", "emergency room"])
+
+    print d
+    print p.get_related_tokens(6, ["The", "man", "was", "admitted", "to", "the", "emergency room"], d)
+
 
 # EOF
 

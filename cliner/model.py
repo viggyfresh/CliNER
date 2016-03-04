@@ -6,6 +6,7 @@ import features_dir.features as feat_obj
 
 from features_dir.utilities import load_pickled_obj, is_prose_sentence
 from features_dir.BagOfWords import BagOfWords
+from features_dir.read_config import enabled_modules
 
 from machine_learning import sci
 from machine_learning import crf
@@ -18,7 +19,13 @@ from collections import defaultdict
 
 # Stores the verbosity
 import globals_cliner
+import numpy as np
 
+if enabled_modules()["WORD2VEC"]:
+
+    from features_dir.word2vec_dir import clustering
+    from features_dir.word2vec_dir.ngrams import get_char_gram_mappings
+    from features_dir.word2vec_dir.clustering import get_sequence_vector_clusters
 
 
 class Model:
@@ -52,6 +59,11 @@ class Model:
         self.cui_freq            = None
         self.bow                 = None
 
+        # clustered vectors
+        self.skipgram_mappings   = None
+        self.seq_clusters        = None
+        self.seq_lex_clusters    = None
+
 
     def set_cui_freq(self, cui_freq):
         self.cui_freq = cui_freq
@@ -77,16 +89,37 @@ class Model:
         tokenized_sentences, iob_labels =  first_pass_data_and_labels(notes)
         chunks, indices    , con_labels = second_pass_data_and_labels(notes)
 
+        if enabled_modules()["WORD2VEC"]:
+
+            self.set_char_gram_maps(tokenized_sentences)
+
+            clustering.skipgram_mappings  = self.skipgram_mappings
+
+            self.set_clusters(chunks, indices)
+
+            # setting as globals within module so they don't have to be passed as parameters...
+            clustering.lexical_cluster    = self.seq_lex_clusters
+            clustering.embedding_clusters = self.seq_clusters
+
         # Train classifiers for 1st pass and 2nd pass
         self.__first_train(tokenized_sentences , iob_labels, do_grid)
         self.__second_train(chunks, indices    , con_labels, do_grid)
 
         if do_third is True:
-
             self.__third_train(tokenized_sentences, notes, do_grid)
 
 
+    def set_char_gram_maps(self, tokenized_sentences):
 
+        self.skipgram_mappings = get_char_gram_mappings(tokenized_sentences, 200)
+
+        return
+
+    def set_clusters(sef, chunked_sentences, chunked_indices):
+
+        self.seq_clusters, self.seq_lex_clusters = get_sequence_vector_clusters(chunked_sentences, chunked_indices)
+
+        return
 
 
     def predict(self, note, do_third=False):
@@ -99,6 +132,13 @@ class Model:
         @param note. A Note object (containing text and annotations)
         @return      <list> of Classification objects
         """
+
+        if enabled_modules["WORD2VEC"]:
+
+            # setting as globals within module so they don't have to be passed as parameters...
+            clustering.lexical_cluster    = self.seq_lex_clusters
+            clustering.embedding_clusters = self.seq_clusters
+            clustering.skipgram_mappings  = self.skipgram_mappings
 
         # First pass (IOB Chunking)
         if globals_cliner.verbosity > 0:
@@ -226,6 +266,7 @@ class Model:
             print '\textracting  features (pass two)'
 
         text_features = [ feat_obj.concept_features(s,inds) for s,inds in zip(chunked_data,inds_list) ]
+
         flattened_text_features = flatten(text_features)
 
 
@@ -790,4 +831,5 @@ def fit_bag_of_words(bow_obj, data, unlabeled_data=None):
 
 def concat(a,b):
     return a+b
+
 

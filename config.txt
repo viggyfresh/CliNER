@@ -1,4 +1,6 @@
 GENIA None
-UMLS  None
+UMLS None
 BROWN None
-PY4J  None
+PY4J None
+WORD2VEC None
+

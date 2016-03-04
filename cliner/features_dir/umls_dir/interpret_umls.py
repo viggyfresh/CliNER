@@ -9,8 +9,8 @@ sys.path.append((os.environ["CLINER_DIR"] + "/cliner/lib/java/metamap"))
 import time
 import nltk
 
-from spellChecker import spellCheck
-from spellChecker import getPWL
+#from spellChecker import spellCheck
+#from spellChecker import getPWL
 from umls_cache import UmlsCache
 
 metamap = None

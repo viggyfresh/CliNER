@@ -5,20 +5,20 @@
 
 package gateway;
 
-import metamap.MetaMap;
+//import metamap.MetaMap;
 import parser.DependencyParser;
 //import opennlp.tokenizer.OpenNLPTokenizer;
 import py4j.GatewayServer;
 
 class EntryPoint {
 
-    MetaMap metaMapApi;
+//    MetaMap metaMapApi;
     DependencyParser stanfordParser;
     //OpenNLPTokenizer openNlpTokenizer;
 
     public EntryPoint() {
         try {
-            metaMapApi = new MetaMap();
+  //          metaMapApi = new MetaMap();
             stanfordParser = new DependencyParser();
       //      openNlpTokenizer = new OpenNLPTokenizer();
         }
@@ -27,11 +27,11 @@ class EntryPoint {
         }
     }
 
-    public MetaMap getMetaMapObj() {
+    //public MetaMap getMetaMapObj() {
 
-        return metaMapApi;
+      //  return metaMapApi;
 
-    }
+  //  }
 
     public DependencyParser getStanfordParserObj() {
 
@@ -50,9 +50,9 @@ class EntryPoint {
 
         try {
 
-            ep.getMetaMapObj().getCuis("test");
+            //ep.getMetaMapObj().getCuis("test");
 
-            System.out.println(ep.getStanfordParserObj().getDependencyTree("this is a test sentence"));
+            //System.out.println(ep.getStanfordParserObj().getDependencyTree("this is a test sentence"));
 
             //ep.getOpenNlpTokenizer().preProcess("This is a test sentence");
 

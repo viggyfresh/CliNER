@@ -21,6 +21,9 @@ import java.util.Properties;
 import edu.stanford.nlp.util.CoreMap;
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.trees.CollinsHeadFinder;
+import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
+import edu.stanford.nlp.ling.Word;
+
 
 
 public class DependencyParser {
@@ -32,6 +35,10 @@ public class DependencyParser {
     Properties props;
 
     StanfordCoreNLP pipeline;
+
+    List<CoreLabel> tokenized_sentence;
+    List<Word> sentence;
+
 
     public DependencyParser() {
 
@@ -45,13 +52,14 @@ public class DependencyParser {
         props.put("annotators", "tokenize, ssplit, parse");
         pipeline = new StanfordCoreNLP(props);
 
+        tokenized_sentence = new ArrayList<CoreLabel>();
+        sentence = new ArrayList<Word>();
+
     };
 
     public static void main(String[] args) throws Exception {
-        DependencyParser p = new DependencyParser();
-        System.out.println(p.getDependencyTree(new String("This is a test sentence.")));
-
-        System.out.println(p.getNounPhraseHeads(new String("This is a test sentence")));
+        //DependencyParser p = new DependencyParser();
+        //System.out.println(p.getNounPhraseHeads(new String("This is a test sentence")));
 
     }
 
@@ -112,26 +120,41 @@ public class DependencyParser {
 
      }
 
-    public String getDependencyTree(String sentence)  {
+    public String getDependencyTree()  {
 
         /* Process all tokens within the tokens data member then clear the list.
-           this is done because I could not figure out how to pass objects in py4j */
+           this is done because you cannot pass native python objects to py4j */
 
-        Tokenizer<CoreLabel> tok = tokenizerFactory.getTokenizer(new StringReader(sentence));
-        List<CoreLabel> rawWords = tok.tokenize();
+        Tree parse = lp.parse(sentence);
 
-        Tree parse = lp.apply(rawWords);
         TreebankLanguagePack tlp = lp.treebankLanguagePack(); // PennTreebankLanguagePack for English
         GrammaticalStructureFactory gsf = tlp.grammaticalStructureFactory();
         GrammaticalStructure gs = gsf.newGrammaticalStructure(parse);
 
-        Annotation document = new Annotation(sentence);
-        pipeline.annotate(document);
+        CoreMap document = new CoreLabel();
+        document.set(TokensAnnotation.class, tokenized_sentence);
 
-        return gs.dependenciesToCoNLLXString(gs, document);
+        String dependencies = gs.dependenciesToCoNLLXString(gs, document);
+
+        tokenized_sentence.clear();
+        sentence.clear();
+
+        return dependencies;
 
     }
 
+    public void addTokenToProcess(String token) {
+
+        CoreLabel label = new CoreLabel();
+        label.setWord(token);
+        label.setValue(token);
+        tokenized_sentence.add(label);
+
+        Word word = new Word();
+        word.setWord(token);
+        sentence.add(word);
+
+    }
 
 }
 

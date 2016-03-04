@@ -7,8 +7,11 @@
 ######################################################################
 
 
+
 __author__ = 'Willie Boag'
 __date__   = 'Apr. 27, 2014'
+
+
 
 import sys
 import os
@@ -18,6 +21,8 @@ from utilities import load_pos_tagger
 
 # What modules are available
 from read_config import enabled_modules
+
+CLINER_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), *["..", ".."])
 
 # Import feature modules
 enabled = enabled_modules()
@@ -30,7 +35,6 @@ if enabled["BROWN"]:
 
 # Only create UMLS cache if module is available
 if enabled['UMLS']:
-
     from umls_dir import interface_umls
     from umls_dir import interpret_umls
 
@@ -45,7 +49,7 @@ import word_features as feat_word
 nltk_tagger = load_pos_tagger()
 
 # Feature Enabling
-enabled_concept_features = frozenset( ["UMLS"])
+enabled_concept_features = frozenset( ["UMLS", "grammar_features"] )
 
 if enabled['GENIA']:
     feat_genia=None
@@ -70,7 +74,18 @@ enabled_IOB_prose_sentence_features.append('GENIA')
 enabled_IOB_prose_sentence_features.append('UMLS')
 
 
+
 dependency_parser = None
+
+
+if enabled["PY4J"]:
+
+    stanford_dir = os.path.join(CLINER_DIR, *["cliner", "lib", "java", "stanford_nlp"])
+    sys.path.append(stanford_dir)
+
+    from stanfordParse import DependencyParser
+    dependency_parser = DependencyParser()
+
 
 
 def display_enabled_modules():
@@ -367,11 +382,17 @@ def concept_features_for_sentence(sentence, chunk_inds):
     @return             A list of feature dictionaries
     """
 
+    global dependency_parser
+
     # Get a feature set for each word in the sentence
     features_list = []
     for ind in chunk_inds:
         features_list.append( feat_word.concept_features_for_chunk(sentence,ind) )
 
+    dependencies = None
+
+    if dependency_parser is not None:
+        dependencies = dependency_parser.get_collapsed_dependencies(sentence)
 
     # Allow for particular features to be enabled
     for feature in enabled_concept_features:
@@ -382,6 +403,16 @@ def concept_features_for_sentence(sentence, chunk_inds):
             for i in range(len(chunk_inds)):
                 features_list[i].update( umls_features[i] )
 
+        if (feature == "grammar_features" and enabled["PY4J"]):
+            print "getting grammar features"
+            for i, target_index in enumerate(chunk_inds):
+                if dependencies is not None:
+                    features_list[i].update(dependency_parser.get_related_tokens(target_index, sentence, dependencies))
+
+    if enabled_modules()["WORD2VEC"]:
+        print "getting vectors..."
+        for i, chunk_index in enumerate(chunk_inds):
+            features_list[i].update({("cluster", get_sequence_cluster(sentence[chunk_index])[0]):1})
 
     return features_list
 

@@ -28,7 +28,7 @@ def enabled_modules():
     f = open(filename, 'r')
 
     specs = {}
-    module_list = [ 'GENIA', 'UMLS', "BROWN", "PY4J" ]
+    module_list = [ 'GENIA', 'UMLS', "BROWN", "PY4J", "WORD2VEC" ]
 
 
     for line in f.readlines():
@@ -62,6 +62,11 @@ def enabled_modules():
 
         if os.path.isfile(specs["PY4J"]) is False:
             sys.exit("Invalid path to py4j0.x.jar, consult https://www.py4j.org/install.html to locate it.")
+
+    if specs["WORD2VEC"] is not None:
+
+        if os.path.isfile(specs["WORD2VEC"]) is False:
+            sys.exit("Invalid path to <word2vec_embeddings>.bin")
 
     return specs
 
