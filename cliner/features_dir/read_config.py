@@ -12,6 +12,8 @@
 import os
 import sys
 
+CLINER_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), *["..", ".."])
+
 def enabled_modules():
     """
     enabled_modules()
@@ -24,7 +26,7 @@ def enabled_modules():
     True
     """
     # Open config file
-    filename = os.path.join( os.getenv('CLINER_DIR'), 'config.txt' )
+    filename = os.path.join(CLINER_DIR, 'config.txt' )
     f = open(filename, 'r')
 
     specs = {}
