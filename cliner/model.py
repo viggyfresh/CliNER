@@ -115,7 +115,7 @@ class Model:
 
         return
 
-    def set_clusters(sef, chunked_sentences, chunked_indices):
+    def set_clusters(self, chunked_sentences, chunked_indices):
 
         self.seq_clusters, self.seq_lex_clusters = get_sequence_vector_clusters(chunked_sentences, chunked_indices)
 

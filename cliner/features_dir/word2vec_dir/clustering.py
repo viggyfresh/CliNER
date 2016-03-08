@@ -1,5 +1,6 @@
 
 import vectors
+import numpy as np
 
 from word2vec import embeddings
 from sklearn.cluster import KMeans
@@ -55,9 +56,9 @@ def get_sequence_vector_clusters(chunked_sentences, chunk_indices):
 
             vector = vectors.get_sequence_vectors(l[i], skipgram_mappings, embeddings)
 
-            D = vector.shape[0]
+            print vector.shape
 
-            print D
+            D = vector.shape[0]
 
             assert D == 200 or D == 500
 
@@ -66,6 +67,14 @@ def get_sequence_vector_clusters(chunked_sentences, chunk_indices):
             else:
                 chunk_embeddings.append(vector)
 
+
+    # need atleast one example to train
+    # TODO: what problems may arise from this?
+    if len(chunk_embeddings) == 0:
+        chunk_embeddings.append(np.random.randn(500))
+
+    if len(chunk_lexical) == 0:
+        chunk_lexical.append(np.random.randn(200))
 
     embedding_clusters = KMeans(max_iter=120, n_clusters=min(len(chunk_embeddings), 1024))
     lexical_clusters = KMeans(max_iter=120, n_clusters=min(len(chunk_lexical), 1024))

@@ -10,6 +10,7 @@
 __author__ = 'Willie Boag'
 __date__   = 'Jan. 27, 2014'
 
+import time
 
 from wordshape import getWordShapes
 from utilities import is_prose_sentence

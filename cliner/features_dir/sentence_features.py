@@ -54,6 +54,9 @@ enabled_concept_features = frozenset( ["UMLS", "grammar_features"] )
 if enabled['GENIA']:
     feat_genia=None
 
+if enabled["WORD2VEC"]:
+    from word2vec_dir.clustering import predict_sequence_cluster
+
 enabled_IOB_nonprose_sentence_features = []
 #enabled_IOB_nonprose_sentence_features.append('pos')
 #enabled_IOB_nonprose_sentence_features.append('pos_context')
@@ -412,7 +415,11 @@ def concept_features_for_sentence(sentence, chunk_inds):
     if enabled_modules()["WORD2VEC"]:
         print "getting vectors..."
         for i, chunk_index in enumerate(chunk_inds):
-            features_list[i].update({("cluster", get_sequence_cluster(sentence[chunk_index])[0]):1})
+
+            chunk = sentence[chunk_index]
+            cluster = predict_sequence_cluster(chunk)
+
+            features_list[i].update({("cluster", cluster):1})
 
     return features_list
 
