@@ -59,12 +59,30 @@ def genia(geniatagger, data):
         print '\t\tRunning  GENIA tagger'
         genia_dir = os.path.dirname(geniatagger)
         stream = getstatusoutput('cd %s ; ./geniatagger -nt %s' %(genia_dir,out))
-        print '\t\tFinished GENIA tagger'
+
+        #print 'stream: ', stream
+
+        #print '\t\tFinished GENIA tagger'
 
         # Organize tagger output
         linetags = []
         tagged = []
-        for tag in stream[1].split('\n')[4:]:
+
+        # if the sentence is too long genia outputs an error.
+        stream_lines = stream[1].split('\n')
+
+        # get the line the warning might be on.
+        potential_warning = "" if len(stream_lines[4:5]) == 0 else stream_lines[4:5][0]
+
+        genia_stream = None
+
+        if "warning: the sentence seems" in potential_warning:
+            # skip over warning
+            genia_stream = stream_lines[5:]
+        else:
+            genia_stream = stream_lines[4:]
+
+        for tag in genia_stream:
             if tag.split():               # Part of line
                 linetags.append(tag)
             else:                         # End  of line
@@ -77,6 +95,9 @@ def genia(geniatagger, data):
 
         # Remove temp file
         os.close(os_handle)
+
+        #print 'GENIA OUTPUT: ', open(out,"rb").read()
+
         os.remove(out)
 
 
@@ -84,10 +105,15 @@ def genia(geniatagger, data):
     linefeats = []
     retlist = []
     for line in data:
+
+        #print 'line: ', line
+
         line = ' '.join(line)
 
         # Get tagged output from cache
         tags = cache.get_map(line)
+
+        #print 'tags: ', tags
 
         for tag in tags:
             tag = tag.split()
@@ -102,6 +128,7 @@ def genia(geniatagger, data):
         retlist.append(linefeats)
         linefeats = []
 
+    #print 'retlist: ', retlist
 
     return retlist
 
