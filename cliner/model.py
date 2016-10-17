@@ -133,7 +133,7 @@ class Model:
         @return      <list> of Classification objects
         """
 
-        if enabled_modules["WORD2VEC"]:
+        if enabled_modules()["WORD2VEC"]:
 
             # setting as globals within module so they don't have to be passed as parameters...
             clustering.lexical_cluster    = self.seq_lex_clusters
