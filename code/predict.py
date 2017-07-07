@@ -33,22 +33,22 @@ def main():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-i",
+    parser.add_argument("-input",
         dest = "input",
         help = "The input files to predict",
     )
 
-    parser.add_argument("-o",
+    parser.add_argument("-out",
         dest = "output",
         help = "The directory to write the output",
     )
 
-    parser.add_argument("-m",
+    parser.add_argument("-model",
         dest = "model",
         help = "The model to use for prediction",
     )
 
-    parser.add_argument("-f",
+    parser.add_argument("-format",
         dest = "format",
         help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )",
     )
