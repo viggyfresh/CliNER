@@ -131,8 +131,8 @@ def train(training_list, model_path, format, use_lstm, logfile=None):
     # Create a Machine Learning model
     model = ClinerModel(use_lstm)
 
-    # Train the model using the Note's data
-    model.
+    # Train the model using the Documents's data
+    model.fit_from_documents(docs)
 
     # Pickle dump
     print '\nserializing model to %s\n' % model_path
