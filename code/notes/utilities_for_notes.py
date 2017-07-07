@@ -1,5 +1,5 @@
 ######################################################################
-#  CliNER - utilities.py                                             #
+#  CliNER - utilities_for_notes.py                                   #
 #                                                                    #
 #  Willie Boag                                      wboag@cs.uml.edu #
 #                                                                    #
@@ -14,8 +14,6 @@ import re
 import string
 import os
 import sys
-
-CLINER_PATH = os.environ["CLINER_DIR"]
 
 class NoteException(Exception):
     pass

@@ -2,7 +2,9 @@ import cPickle as pickle
 import os
 import sys
 
-sys.path.append((os.environ["CLINER_DIR"] + "/cliner/features_dir"))
+parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parentdir not in sys.path:
+    sys.path.append(parentdir)
 
 from utilities import load_pickled_obj
 

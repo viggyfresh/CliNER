@@ -10,11 +10,6 @@ from __future__ import with_statement
 ######################################################################
 
 
-__author__ = 'Willie Boag'
-__date__   = 'Nov. 6, 2014'
-
-
-
 import re
 import string
 from copy import copy
@@ -26,18 +21,9 @@ import sys
 from utilities_for_notes import concept_cmp, SentenceTokenizer, WordTokenizer, lno_and_tokspan__to__char_span, lineno_and_tokspan, remove_non_ascii
 from abstract_note       import AbstractNote
 
-#CLINER_PATH = os.environ["CLINER_DIR"]
-#OPEN_NLP_PATH = CLINER_PATH + "/cliner/lib/java/openNLP"
-
-#sys.path.append(OPEN_NLP_PATH)
-
-#from openNLP_tokenizer import OpenNLPTokenizer
-
 class Note_semeval(AbstractNote):
 
     def __init__(self):
-        # For parsing text file
-#        self.opennlp_tokenizer = OpenNLPTokenizer();
 
         self.sent_tokenizer = SentenceTokenizer()
         self.word_tokenizer = WordTokenizer()
