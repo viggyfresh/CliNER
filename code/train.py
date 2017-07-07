@@ -16,22 +16,12 @@ import sys
 
 import helper
 from sets import Set
-from model import Model
-from notes.note import Note
-from notes.utilities_for_notes import NoteException
+from model import ClinerModel
+from documents import Document 
 
 # base directory
 CLINER_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
-from read_config import enabled_modules
-
-# Import feature modules
-enabled = enabled_modules()
-
-if enabled["UMLS"]:
-
-    from disambiguation import cui_disambiguation
 
 def main():
     parser = argparse.ArgumentParser()
@@ -46,20 +36,30 @@ def main():
         help = "The files that contain the labels for the training examples",
     )
 
-    parser.add_argument("-models",
+    parser.add_argument("-model",
         dest = "model",
         help = "Path to the model that should be generated",
     )
 
-    parser.add_argument("-format",
-        dest = "format",
-        help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )",
+    parser.add_argument("--log",
+        dest = "log",
+        help = "Path to the log file for training info",
+        default = os.path.join(CLINER_DIR, 'models', 'train.log')
     )
+    parser.add_argument("--use-lstm",
+        dest = "use_lstm",
+        help = "Whether to use an LSTM model",
+        action = 'store_true',
+        default = False
+    )
+    parser.add_argument("--format",
+        dest = "format",
+        help = "Data format ( i2b2 )"
+    )
+
 
     # Parse the command line arguments
     args = parser.parse_args()
-    is_crf = not args.nocrf
-    third = args.third
 
     # Error check: Ensure that file paths are specified
     if not args.txt:
@@ -80,12 +80,7 @@ def main():
         print >>sys.stderr,  ''
         exit(1)
 
-    if "PY4J_DIR_PATH" not in os.environ and args.third is True:
-        exit("please set environ var PY4J_DIR_PATH to the dir of the folder containg py4j<version>.jar")
-
-
-    # A list of text    file paths
-    # A list of concept file paths
+    # A list of txt and concept file paths
     txt_files = glob.glob(args.txt)
     con_files = glob.glob(args.con)
 
@@ -93,12 +88,6 @@ def main():
     # data format
     if args.format:
         format = args.format
-    else:
-        print '\n\tERROR: must provide "format" argument\n'
-        exit()
-
-    if third is True and args.format == "i2b2":
-        exit("i2b2 formatting does not support disjoint spans")
 
     # Must specify output format
     if format not in Note.supportedFormats():
@@ -109,64 +98,49 @@ def main():
 
 
     # Collect training data file paths
-    txt_files_map = helper.map_files(txt_files) # ex. {'record-13': 'record-13.con'}
+    txt_files_map = helper.map_files(txt_files) 
     con_files_map = helper.map_files(con_files)
 
-    training_list = []                          # ex. training_list =  [ ('record-13.txt', 'record-13.con') ]
+    training_list = []
+
     for k in txt_files_map:
         if k in con_files_map:
             training_list.append((txt_files_map[k], con_files_map[k]))
 
     # Train the model
-    train(training_list, args.model, format, is_crf=is_crf, grid=args.grid, third=third, disambiguate=args.umls_disambiguation)
+    train(training_list, args.model, args.format, args.use_lstm, logfile=args.log)
 
-def train(training_list, model_path, format, is_crf=True, grid=False, third=False, disambiguate=False):
 
-    """
-    train()
 
-    Purpose: Train a model for given clinical data.
 
-    @param training_list  list of (txt,con) file path tuples (training instances)
-    @param model_path     string filename of where to pickle model object
-    @param format         concept file data format (ex. i2b2, semeval)
-    @param is_crf         whether first pass should use CRF classifier
-    @param grid           whether second pass should perform grid search
-    @param third          whether to perform third/clustering pass
-    """
+def train(training_list, model_path, format, use_lstm, logfile=None):
 
-    # Read the data into a Note object
-    notes = []
+    # Read the data into a Document object
+    docs = []
     for txt, con in training_list:
 
-        note_tmp = Note(format)   # Create Note
-        note_tmp.read(txt, con)   # Read data into Note
-        notes.append(note_tmp)    # Add the Note to the list
+        doc_tmp = Document(txt,con)
+        notes.append(doc_tmp)
 
 
     # file names
-    if not notes:
+    if not docs:
         print 'Error: Cannot train on 0 files. Terminating train.'
         return 1
 
     # Create a Machine Learning model
-    model = Model(is_crf=is_crf)
-
-    # disambiguation
-    if format == "semeval" and disambiguate is True and enabled["UMLS"] != None:
-        model.set_cui_freq(cui_disambiguation.calcFreqOfCuis(training_list))
+    model = ClinerModel(use_lstm)
 
     # Train the model using the Note's data
-    model.train(notes, grid, do_third=third)
+    model.
 
     # Pickle dump
     print '\nserializing model to %s\n' % model_path
     with open(model_path, "wb") as m_file:
         pickle.dump(model, m_file)
-
-    # return trained model
-    return model
-
+    model.log(logfile   , model_file=model_path)
+    model.log(sys.stdout, model_file=model_path)
+    
 
 if __name__ == '__main__':
     main()
