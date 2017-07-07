@@ -17,7 +17,7 @@ import sys
 import helper
 from sets import Set
 from model import ClinerModel
-from documents import Document 
+from notes.note import Note
 
 # base directory
 CLINER_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -26,31 +26,22 @@ CLINER_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-txt",
+    parser.add_argument("--txt",
         dest = "txt",
         help = "The files that contain the training examples",
     )
-
-    parser.add_argument("-annotations",
+    parser.add_argument("--annotations",
         dest = "con",
         help = "The files that contain the labels for the training examples",
     )
-
-    parser.add_argument("-model",
+    parser.add_argument("--model",
         dest = "model",
         help = "Path to the model that should be generated",
     )
-
     parser.add_argument("--log",
         dest = "log",
         help = "Path to the log file for training info",
         default = os.path.join(CLINER_DIR, 'models', 'train.log')
-    )
-    parser.add_argument("--use-lstm",
-        dest = "use_lstm",
-        help = "Whether to use an LSTM model",
-        action = 'store_true',
-        default = False
     )
     parser.add_argument("--format",
         dest = "format",
@@ -108,19 +99,20 @@ def main():
             training_list.append((txt_files_map[k], con_files_map[k]))
 
     # Train the model
-    train(training_list, args.model, args.format, args.use_lstm, logfile=args.log)
+    train(training_list, args.model, args.format, logfile=args.log)
 
 
 
 
-def train(training_list, model_path, format, use_lstm, logfile=None):
+def train(training_list, model_path, format, logfile=None):
 
     # Read the data into a Document object
     docs = []
     for txt, con in training_list:
+        doc_tmp = Note(format)
+        doc_tmp.read(txt,con)
 
-        doc_tmp = Document(txt,con)
-        notes.append(doc_tmp)
+        docs.append(doc_tmp)
 
 
     # file names
@@ -129,17 +121,17 @@ def train(training_list, model_path, format, use_lstm, logfile=None):
         return 1
 
     # Create a Machine Learning model
-    model = ClinerModel(use_lstm)
+    model = ClinerModel()
 
     # Train the model using the Documents's data
-    model.fit_from_documents(docs)
+    model.train(docs)
 
     # Pickle dump
     print '\nserializing model to %s\n' % model_path
     with open(model_path, "wb") as m_file:
         pickle.dump(model, m_file)
-    model.log(logfile   , model_file=model_path)
-    model.log(sys.stdout, model_file=model_path)
+    #model.log(logfile   , model_file=model_path)
+    #model.log(sys.stdout, model_file=model_path)
     
 
 if __name__ == '__main__':

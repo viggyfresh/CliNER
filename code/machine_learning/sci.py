@@ -17,7 +17,7 @@ class TrivialClassifier:
 
 
 
-def train(X, Y, do_grid, default_label=0):
+def train(X, Y, default_label=0):
 
     # scikit-learn requires you train data with more than one label
     if len(Y) == 0:
@@ -32,6 +32,7 @@ def train(X, Y, do_grid, default_label=0):
     gamma_range = 10.0 ** np.arange( -5, 9 )
 
     # Grid search?
+    do_grid = False
     if do_grid:
         print '\t\tperforming grid search'
 

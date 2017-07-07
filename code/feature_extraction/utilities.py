@@ -15,7 +15,7 @@ import os
 # used as a default path for stashing pos tagger.
 dname = os.path.dirname
 CLINER_DIR = dname(dname(dname(os.path.abspath(__file__))))
-pos_tagger_path = os.path.join( CLINER_DIR, 'code', 'features_dir', 'taggers', 'maxent_treebank_pos_tagger.pickle')
+pos_tagger_path = os.path.join( CLINER_DIR, 'code', 'feature_extraction', 'taggers', 'maxent_treebank_pos_tagger.pickle')
 
 def load_pickled_obj(path_to_pickled_obj):
 

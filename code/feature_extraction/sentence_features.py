@@ -23,10 +23,6 @@ enabled = enabled_modules()
 if enabled['GENIA']:
     from genia_dir.genia_features import GeniaFeatures
 
-if enabled["BROWN"]:
-    from BrownCluster import BrownCluster
-    bc = BrownCluster(enabled["BROWN"])
-
 # Only create UMLS cache if module is available
 if enabled['UMLS']:
     from umls_dir import interface_umls
@@ -48,9 +44,6 @@ enabled_concept_features = frozenset( ["UMLS", "grammar_features"] )
 if enabled['GENIA']:
     feat_genia=None
 
-if enabled["WORD2VEC"]:
-    from word2vec_dir.clustering import predict_sequence_cluster
-
 enabled_IOB_nonprose_sentence_features = []
 #enabled_IOB_nonprose_sentence_features.append('pos')
 #enabled_IOB_nonprose_sentence_features.append('pos_context')
@@ -70,18 +63,6 @@ enabled_IOB_prose_sentence_features.append('next2')
 enabled_IOB_prose_sentence_features.append('GENIA')
 enabled_IOB_prose_sentence_features.append('UMLS')
 
-
-
-dependency_parser = None
-
-
-if enabled["PY4J"]:
-
-    stanford_dir = os.path.join(CLINER_DIR, *["cliner", "lib", "java", "stanford_nlp"])
-    sys.path.append(stanford_dir)
-
-    from stanfordParse import DependencyParser
-    dependency_parser = DependencyParser()
 
 
 
@@ -379,17 +360,10 @@ def concept_features_for_sentence(sentence, chunk_inds):
     @return             A list of feature dictionaries
     """
 
-    global dependency_parser
-
     # Get a feature set for each word in the sentence
     features_list = []
     for ind in chunk_inds:
         features_list.append( feat_word.concept_features_for_chunk(sentence,ind) )
-
-    dependencies = None
-
-    if dependency_parser is not None:
-        dependencies = dependency_parser.get_collapsed_dependencies(sentence)
 
     # Allow for particular features to be enabled
     for feature in enabled_concept_features:
@@ -400,232 +374,4 @@ def concept_features_for_sentence(sentence, chunk_inds):
             for i in range(len(chunk_inds)):
                 features_list[i].update( umls_features[i] )
 
-        if (feature == "grammar_features" and enabled["PY4J"]):
-            print "getting grammar features"
-            for i, target_index in enumerate(chunk_inds):
-                if dependencies is not None:
-                    features_list[i].update(dependency_parser.get_related_tokens(target_index, sentence, dependencies))
-
-    if enabled_modules()["WORD2VEC"]:
-        print "getting vectors..."
-        for i, chunk_index in enumerate(chunk_inds):
-
-            chunk = sentence[chunk_index]
-            cluster = predict_sequence_cluster(chunk)
-
-            features_list[i].update({("cluster", cluster):1})
-
     return features_list
-
-
-
-def getTypesOfRel(start, end, dependencies):
-    """
-    returns a list of list of tokens indicating the types of relations between
-
-    dependencies.
-    """
-
-    global dependency_parser
-
-    lOflOfRelations = []
-
-    # list of list of strings
-    paths = dependency_parser.follow_dependency_path(start, end, dependencies)
-
-    for l in paths:
-        # get relations from ordered token list
-        indices = range(1, len(l), 2)
-        tmpL = [l[i] for i in indices]
-
-        lOflOfRelations.append(tmpL)
-
-    return getShortestList( lOflOfRelations )
-
-def getTokens(start, end, dependencies):
-    """ get the tokens between two words within a dependency path """
-
-    lOflOftokens = []
-
-    paths = dependency_parser.follow_dependency_path(start, end, dependencies)
-
-    for l in paths:
-        # get relations from ordered token list
-        indices = range(0, len(l), 2)
-        tmpL = [l[i] for i in indices]
-
-        lOflOftokens.append(tmpL[1:-1]) # only want the tokens between the start and end.
-
-    return getShortestList( lOflOftokens )
-
-def getNumOfObjects(lOfObjects):
-    return len( lOfObjects )
-
-def getShortestList(lists):
-
-    shortestList = []
-
-    for l in lists:
-
-        if len(shortestList) is 0:
-            shortestList = l
-        elif len(l) < len(shortestList):
-            shortestList = l
-
-    return shortestList
-
-def third_pass_features(line, indices, bow_model=None):
-
-    """ extract third pass features
-        running this assumes all the dependencies are properly installed.
-    """
-
-    global dependency_parser
-
-    # only instantiate once.
-    if dependency_parser is None:
-
-        sys.path.append(os.path.join(*[os.environ["CLINER_DIR"], "cliner", "lib", "java", "stanford_nlp"]))
-        from stanfordParse import DependencyParser
-
-        dependency_parser = DependencyParser()
-
-    heads = []
-
-    tagged_line = None
-    sentence = " ".join(line)
-
-    # Cannot have pairwise relationsips with either 0 or 1 objects
-    if len(indices) < 2:
-        return []
-
-    else:
-
-        # get dependency paths for tokens in line.
-        if len(line) <= 100:
-            heads = dependency_parser.getNounPhraseHeads(sentence)
-
-
-            # the parser takes way too long to run for really long strings.
-            dependencies = dependency_parser.get_collapsed_dependencies(" ".join(line))
-        else:
-            dependencies = []
-
-        tagged_line = nltk_tagger.tag(line)
-
-    features_list = []
-
-    # Build (n choose 2) booleans
-    for i in range(len(indices)):
-        for j in range(i+1,len(indices)):
-
-            feats = {}
-
-            start = line[indices[i]].lower()
-            end = line[indices[j]].lower()
-
-            between_tokens = line[indices[i] + 1 : indices[j]]
-            bow = bow_model.transform([' '.join(between_tokens)])[0]
-
-            for _,pos in tagged_line[indices[i] + 1 : indices[j]]:
-                feats[('pos',pos)] = 1
-
-            for key in bow:
-                feats[('bow', key)] = bow[key]
-
-            start_tokens = start.split()
-            start_tokens = [re.sub("[^A-Za-z0-9]", "", token) for token in start_tokens]
-            start_tokens = [token for token in start_tokens if token != '']
-
-            if enabled["BROWN"]:
-
-                for token in start_tokens:
-                    cluster_str = bc.get_first_n_bits(token, -1)
-
-                    feats[("brown_cluster_first_2_bits_start_word", token)] = cluster_str[:2]
-                    feats[("brown_cluster_first_4_bits_start_word", token)] = cluster_str[:4]
-                    feats[("brown_cluster_first_6_bits_start_word", token)] = cluster_str[:6]
-                    feats[("brown_cluster_first_8_bits_start_word", token)] = cluster_str[:8]
-
-                end_tokens = end.split()
-                end_tokens = [re.sub("[^A-Za-z0-9]", "", token) for token in end_tokens]
-                end_tokens = [token for token in end_tokens if token != '']
-
-                for token in end_tokens:
-                    cluster_str = bc.get_first_n_bits(token, -1)
-
-                    feats[("brown_cluster_first_2_bits_end_word", token)] = cluster_str[:2]
-                    feats[("brown_cluster_first_4_bits_end_word", token)] = cluster_str[:4]
-                    feats[("brown_cluster_first_6_bits_end_word", token)] = cluster_str[:6]
-                    feats[("brown_cluster_first_8_bits_end_word", token)] = cluster_str[:8]
-
-            if len(heads) > 0:
-
-                contains = 0
-                for head in heads:
-                    if head in start:
-                        contains = 1
-                        break
-
-                feats[('contains_NP_head', start)] = contains
-
-                contains = 0
-                for head in heads:
-                    if head in end:
-                        contains = 1
-                        break
-
-                feats[('contains_NP_head', end)] = contains
-
-            get_cui = interpret_umls.obtain_concept_ids
-
-            start_cui =  get_cui(umls_cache, start, PyPwl=None)
-            end_cui = get_cui(umls_cache, end, PyPwl=None)
-            disjoint_cui = get_cui(umls_cache, "{} {}".format(start, end), PyPwl=None)
-
-            feats[('start_cui', start_cui)] = 1
-            feats[('end_cui', end_cui)] = 1
-            feats[('disjoint_cui', disjoint_cui)] = 1
-
-            # Features of pair relationship
-            lOfRels = getTypesOfRel(start, end, dependencies)
-
-            feats[('dependency_relation', None)] = (len(lOfRels) > 0)
-
-            numOfRels = getNumOfObjects(lOfRels)
-
-            lOfTokes = getTokens(start, end, dependencies)
-
-            numOfTokes = getNumOfObjects( lOfTokes )
-
-            feats[('rels_btwn_depen', None)] = numOfRels
-            feats['num_of_depen_tokes'] = numOfTokes
-
-            #feats[("tokes_that_exists_in_umls_db",None)] = interface_umls.substrs_that_exists([start, end], pwl)
-
-            # Feature: Left Unigrams
-            for tok in line[indices[i]].split():
-                tok = tok.lower()
-                feats[('left_unigram' ,tok)] = 1
-
-            # Feature: Right Unigrams
-            for tok in line[indices[j]].split():
-                tok = tok.lower()
-                feats[('right_unigram',tok)] = 1
-
-            # Feature: Unigrams between spans
-            for tok in ' '.join(line[indices[i+1]:indices[j]]).split():
-                tok = tok.lower()
-                feats[('inner_unigram',tok)] = 1
-
-            # Feature: Number of chunks between spans
-            feats[('span_dist',None)] = len(line[indices[i+1]:indices[j]])
-
-            # Add pair features to list of data points
-            features_list.append(feats)
-
-    return features_list
-
-
-
-

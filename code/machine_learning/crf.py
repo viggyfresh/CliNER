@@ -99,7 +99,7 @@ def pycrf_instances(fi, labeled):
 
 
 
-def train(X, Y, do_grid):
+def train(X, Y):
 
     # Sanity Check detection: features & label
     #with open('a','w') as f:
@@ -115,10 +115,6 @@ def train(X, Y, do_grid):
     trainer = pycrfsuite.Trainer(verbose=False)
     for xseq, yseq in pycrf_instances(feats, labeled=True):
         trainer.append(xseq, yseq)
-
-    # Set paramters
-    if do_grid:
-        'Grid Search not implemented yet'
 
     # Train the model
     os_handle,tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="crf_temp")

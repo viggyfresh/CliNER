@@ -1,12 +1,12 @@
 from __future__ import with_statement
 
 from sklearn.feature_extraction  import DictVectorizer
+import os
 
-import features_dir.features as feat_obj
+import feature_extraction.features as feat_obj
 
-from features_dir.utilities import load_pickled_obj, is_prose_sentence
-from features_dir.BagOfWords import BagOfWords
-from features_dir.read_config import enabled_modules
+from feature_extraction.utilities import load_pickled_obj, is_prose_sentence
+from feature_extraction.read_config import enabled_modules
 
 from machine_learning import sci
 from machine_learning import crf
@@ -25,14 +25,8 @@ import numpy as np
 CLINER_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-if enabled_modules()["WORD2VEC"]:
 
-    from features_dir.word2vec_dir import clustering
-    from features_dir.word2vec_dir.ngrams import get_char_gram_mappings
-    from features_dir.word2vec_dir.clustering import get_sequence_vector_clusters
-
-
-class Model:
+class ClinerModel:
 
     @staticmethod
     def load(filename='awesome.model'):
@@ -43,7 +37,6 @@ class Model:
 
 
     def __init__(self, is_crf=True):
-
         # Use python-crfsuite
         self._crf_enabled = is_crf
 
@@ -51,37 +44,16 @@ class Model:
         self._first_prose_vec    = None
         self._first_nonprose_vec = None
         self._second_vec         = None
-        self.third_vec           = None
 
         # Classifiers
         self._first_prose_clf    = None
         self._first_nonprose_clf = None
         self._second_clf         = None
-        self.third_clf           = None
 
 
-        self.cui_freq            = None
-        self.bow                 = None
-
-        # clustered vectors
-        self.skipgram_mappings   = None
-        self.seq_clusters        = None
-        self.seq_lex_clusters    = None
-
-
-    def set_cui_freq(self, cui_freq):
-        self.cui_freq = cui_freq
-
-
-    def get_cui_freq(self):
-        assert self.cui_freq is not None
-        return self.cui_freq
-
-
-    def train(self, notes, do_grid=False, do_third=False):
-
+    def train(self, notes):
         """
-        Model::train()
+        ClinerModel::train()
 
         Purpose: Train a Machine Learning model on annotated data
 
@@ -93,57 +65,20 @@ class Model:
         tokenized_sentences, iob_labels =  first_pass_data_and_labels(notes)
         chunks, indices    , con_labels = second_pass_data_and_labels(notes)
 
-        if enabled_modules()["WORD2VEC"]:
-
-            self.set_char_gram_maps(tokenized_sentences)
-
-            clustering.skipgram_mappings  = self.skipgram_mappings
-
-            self.set_clusters(chunks, indices)
-
-            # setting as globals within module so they don't have to be passed as parameters...
-            clustering.lexical_cluster    = self.seq_lex_clusters
-            clustering.embedding_clusters = self.seq_clusters
-
         # Train classifiers for 1st pass and 2nd pass
-        self.__first_train(tokenized_sentences , iob_labels, do_grid)
-        self.__second_train(chunks, indices    , con_labels, do_grid)
-
-        if do_third is True:
-            self.__third_train(tokenized_sentences, notes, do_grid)
+        self.__first_train(tokenized_sentences , iob_labels)
+        self.__second_train(chunks, indices    , con_labels)
 
 
-    def set_char_gram_maps(self, tokenized_sentences):
-
-        self.skipgram_mappings = get_char_gram_mappings(tokenized_sentences, 200)
-
-        return
-
-    def set_clusters(self, chunked_sentences, chunked_indices):
-
-        self.seq_clusters, self.seq_lex_clusters = get_sequence_vector_clusters(chunked_sentences, chunked_indices)
-
-        return
-
-
-    def predict(self, note, do_third=False):
-
+    def predict(self, note):
         """
-        Model::predict()
+        ClinerModel::predict()
 
         Purpose: Predict concept annotations for a given note
 
         @param note. A Note object (containing text and annotations)
         @return      <list> of Classification objects
         """
-
-        if enabled_modules()["WORD2VEC"]:
-
-            # setting as globals within module so they don't have to be passed as parameters...
-            clustering.lexical_cluster    = self.seq_lex_clusters
-            clustering.embedding_clusters = self.seq_clusters
-            clustering.skipgram_mappings  = self.skipgram_mappings
-
         # First pass (IOB Chunking)
         if globals_cliner.verbosity > 0:
             print 'first pass'
@@ -166,24 +101,7 @@ class Model:
         classifications = self.__second_predict(chunked_sentences, inds)
 
         result = classifications
-
-        # TODO: make third pass work other formattings.
-        if note.format == "semeval":
-            # Third pass enabled?
-            if do_third is True:
-
-                if globals_cliner.verbosity > 0:
-                    print 'third pass'
-                clustered = self.__third_predict(chunked_sentences, classifications, inds)
-                result = clustered
-
-            else:
-                # Treat each as its own set of spans (each set containing one tuple)
-                clustered = [ (c[0],c[1],[(c[2],c[3])]) for c in classifications ]
-                result = clustered
-
         return result
-
 
 
 
@@ -191,16 +109,15 @@ class Model:
     ##           Mid-level reformats data and sends to lower level         ##
     #########################################################################
 
-    def __first_train(self, tokenized_sentences, Y, do_grid=False):
+    def __first_train(self, tokenized_sentences, Y):
 
         """
-        Model::__first_train()
+        ClinerModel::__first_train()
 
         Purpose: Train the first pass classifiers (for IOB chunking)
 
         @param tokenized_sentences. <list> of tokenized sentences
         @param Y.                   <list-of-lists> of IOB labels for words
-        @param do_grid.             <boolean> whether to perform a grid search
 
         @return          None
         """
@@ -228,8 +145,8 @@ class Model:
         nonprose = nested_nonprose_feats
 
         # Train classifiers for prose and nonprose
-        pvec, pclf = self.__generic_first_train(   'prose',    prose, pchunks, do_grid)
-        nvec, nclf = self.__generic_first_train('nonprose', nonprose, nchunks, do_grid)
+        pvec, pclf = self.__generic_first_train(   'prose',    prose, pchunks)
+        nvec, nclf = self.__generic_first_train('nonprose', nonprose, nchunks)
 
         # Save vectorizers
         self._first_prose_vec    = pvec
@@ -241,11 +158,9 @@ class Model:
 
 
 
-
-    def __second_train(self, chunked_data, inds_list, con_labels, do_grid=False):
-
+    def __second_train(self, chunked_data, inds_list, con_labels):
         """
-        Model::__second_train()
+        ClinerModel::__second_train()
 
         Purpose: Train the first pass classifiers (for IOB chunking)
 
@@ -257,8 +172,6 @@ class Model:
         @param con_labels <list> of concept label strings
                            - assertion: there are sum(len(inds_list)) labels
                               AKA each index from inds_list maps to a label
-        @param do_grid   <boolean> indicating whether to perform a grid search
-
         @return          None
         """
 
@@ -288,90 +201,14 @@ class Model:
             print '\ttraining  classifier (pass two)'
 
         # Train the model
-        self._second_clf = sci.train(vectorized_features,numeric_labels,do_grid)
+        self._second_clf = sci.train(vectorized_features,numeric_labels)
 
-
-
-
-    def __third_train(self, tokenized_sentences, notes, do_grid):
-
-        print 'third pass'
-
-        print '\textracting  features (pass three)'
-        # Get data and annotations of which spans actaully should be grouped
-        classifications = []
-        chunks = []
-        for note in notes:
-
-            # Annotations for groups
-            seen = len(chunks)
-            non_offset = note.getNonContiguousSpans()
-            offset = [ (c[0],c[1]+seen,c[2]) for c in non_offset ]
-            classifications += offset
-
-            # Chunked text
-            chunks += note.getChunkedText()
-
-        self.bow = BagOfWords()
-
-        fit_bag_of_words(self.bow, chunks)
-
-        indices = [  note.getConceptIndices()  for  note  in  notes  ]
-
-        inds  = reduce( concat, indices )
-
-        # Useful for encoding annotations
-        # query line number & chunk index to get list of shared chunk indices
-        relations = defaultdict(lambda:defaultdict(lambda:[]))
-        for concept,lineno,spans in classifications:
-            for i in range(len(spans)):
-                key = spans[i]
-                for j in range(len(spans)):
-                    if i == j: continue
-                    relations[lineno][key].append(spans[j])
-
-        # Extract features between pairs of chunks
-        unvectorized_X = feat_obj.extract_third_pass_features(chunks, inds, bow=self.bow)
-
-        print '\tvectorizing features (pass three)'
-
-        # Construct boolean vector of annotations
-        Y = []
-
-        for lineno,indices in enumerate(inds):
-            # Cannot have pairwise relationsips with either 0 or 1 objects
-            if len(indices) < 2: continue
-
-            # Build (n choose 2) booleans
-            bools = []
-            for i in range(len(indices)):
-                for j in range(i+1,len(indices)):
-                    # Does relationship exist between this pair?
-                    if indices[j] in relations[lineno][indices[i]]:
-                        #print indices[i], indices[j]
-                        shared = 1
-                    else:
-                        shared = 0
-                    # Positive or negative result for training
-                    bools.append(shared)
-
-            Y += bools
-
-        self.third_vec = DictVectorizer()
-
-        # Vectorize features
-        X = self.third_vec.fit_transform(unvectorized_X)
-
-        print '\ttraining classifier  (pass three)'
-
-        # Train classifier
-        self.third_clf = sci.train(X, Y, do_grid, default_label=0)
 
 
     def __first_predict(self, data):
 
         """
-        Model::__first_predict()
+        ClinerModel::__first_predict()
 
         Purpose: Predict IOB chunks on data
 
@@ -559,17 +396,16 @@ class Model:
     ############################################################################
 
 
-    def __generic_first_train(self, p_or_n, text_features, iob_labels, do_grid=False):
+    def __generic_first_train(self, p_or_n, text_features, iob_labels):
 
         '''
-        Model::__generic_first_train()
+        ClinerModel::__generic_first_train()
 
         Purpose: Train that works for both prose and nonprose
 
         @param p_or_n.        <string> either "prose" or "nonprose"
         @param text_features. <list-of-lists> of feature dictionaries
         @param iob_labels.    <list> of "I", "O", and "B" labels
-        @param do_grid.       <boolean> indicating whether to perform grid search
         '''
 
         # Must have data to train on
@@ -615,16 +451,15 @@ class Model:
         #exit()
 
         # Train classifier
-        clf  = lib.train(X_feats, Y_labels, do_grid)
+        clf  = lib.train(X_feats, Y_labels)
 
         return dvect,clf
 
 
 
-    def __generic_first_predict(self, p_or_n, text_features, dvect, clf, do_grid=False):
-
+    def __generic_first_predict(self, p_or_n, text_features, dvect, clf):
         '''
-        Model::__generic_first_predict()
+        ClinerModel::__generic_first_predict()
 
         Purpose: Train that works for both prose and nonprose
 
@@ -632,7 +467,6 @@ class Model:
         @param text_features. <list-of-lists> of feature dictionaries
         @param dvect.         <DictVectorizer>
         @param clf.           scikit-learn classifier
-        @param do_grid.       <boolean> indicating whether to perform grid search
         '''
 
         # If nothing to predict, skip actual prediction
