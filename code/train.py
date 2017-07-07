@@ -24,7 +24,6 @@ from model import Model
 from notes.note import Note
 from notes.utilities_for_notes import NoteException
 
-sys.path.append(os.path.join(*[os.environ["CLINER_DIR"], "cliner", "features_dir"]))
 
 from read_config import enabled_modules
 

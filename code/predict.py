@@ -7,10 +7,6 @@
 ######################################################################
 
 
-__author__ = 'Willie Boag'
-__date__   = 'Oct. 5, 2014'
-
-
 import os
 import sys
 import glob
@@ -26,8 +22,6 @@ import copy
 from model import Model
 from notes.note import Note
 from multiprocessing import Pool
-
-sys.path.append(os.path.join(*[os.environ["CLINER_DIR"], "cliner", "features_dir"]))
 
 from read_config import enabled_modules
 

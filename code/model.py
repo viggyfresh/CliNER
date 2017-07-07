@@ -21,6 +21,10 @@ from collections import defaultdict
 import globals_cliner
 import numpy as np
 
+
+CLINER_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
 if enabled_modules()["WORD2VEC"]:
 
     from features_dir.word2vec_dir import clustering
