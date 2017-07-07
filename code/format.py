@@ -7,11 +7,6 @@
 ######################################################################
 
 
-__author__ = 'Willie Boag'
-__date__   = 'Jul. 3, 2014'
-
-
-
 import argparse
 import sys
 import os
@@ -35,23 +30,23 @@ def main():
     # Argument Parser
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-t",
+    parser.add_argument("-txt",
         dest = "txt",
         help = "The files that contain the training examples",
     )
 
-    parser.add_argument("-a",
+    parser.add_argument("-annotations",
         dest = "annotations",
         help = "The files that contain the labels for the training examples",
     )
 
-    parser.add_argument("-o",
+    parser.add_argument("-out",
         dest = "out",
         default = None,
         help = "Directory to output data",
     )
 
-    parser.add_argument("-f",
+    parser.add_argument("-format",
         dest = "format",
         help = "Output format (%s)"%str(' or '.join(Note.supportedFormats())),
     )

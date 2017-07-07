@@ -7,11 +7,6 @@
 ######################################################################
 
 
-__author__ = 'Kevin Wacome'
-__date__   = 'Aug. 20, 2014'
-
-
-
 import os
 import sys
 import argparse
@@ -354,30 +349,30 @@ def main():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-t",
+    parser.add_argument("-txt",
         help = "Text files that were used to generate predictions",
         dest = "txt",
         default = os.path.join(os.getenv('CLINER_DIR'), 'data/test_data/*')
     )
 
-    parser.add_argument("-c",
+    parser.add_argument("-annotations",
         help = "The directory that contains predicted concept files organized into subdirectories for svm, lin, srf",
         dest = "con",
         default = os.path.join(os.getenv('CLINER_DIR'), 'data/predictions/')
     )
 
-    parser.add_argument("-r",
+    parser.add_argument("-ref",
         help = "The directory that contains reference gold standard concept files",
         dest = "ref",
         default = os.path.join(os.getenv('CLINER_DIR'), 'data/reference_standard_for_test_data/concepts/')
     )
 
-    parser.add_argument("-f",
+    parser.add_argument("-format",
         dest = "format",
         help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )",
     )
 
-    parser.add_argument("-o",
+    parser.add_argument("-out",
         help = "Write the evaluation to a file rather than STDOUT",
         dest = "output",
         default = None
