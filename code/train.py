@@ -7,10 +7,6 @@
 ######################################################################
 
 
-__author__ = 'Willie Boag'
-__date__   = 'Oct. 5, 2014'
-
-
 import os
 import os.path
 import glob
@@ -23,6 +19,9 @@ from sets import Set
 from model import Model
 from notes.note import Note
 from notes.utilities_for_notes import NoteException
+
+# base directory
+CLINER_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 from read_config import enabled_modules
@@ -37,56 +36,25 @@ if enabled["UMLS"]:
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-t",
+    parser.add_argument("-txt",
         dest = "txt",
         help = "The files that contain the training examples",
     )
 
-    parser.add_argument("-c",
+    parser.add_argument("-annotations",
         dest = "con",
         help = "The files that contain the labels for the training examples",
     )
 
-    parser.add_argument("-m",
+    parser.add_argument("-models",
         dest = "model",
         help = "Path to the model that should be generated",
     )
 
-    parser.add_argument("-f",
+    parser.add_argument("-format",
         dest = "format",
         help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )",
     )
-
-    parser.add_argument("-g",
-        dest = "grid",
-        help = "A flag indicating whether to perform a grid search",
-        action = "store_true"
-    )
-
-    parser.add_argument("-no-crf",
-        dest = "nocrf",
-        help = "A flag indicating whether to use crfsuite for pass one.",
-        action = "store_true"
-    )
-
-    parser.add_argument("-discontiguous_spans",
-        dest = "third",
-        help = "A flag indicating whether to have third/clustering pass",
-        action = "store_true"
-    )
-
-    parser.add_argument("-umls_disambiguation",
-        dest = "umls_disambiguation",
-        action = "store_true",
-        help = "A flag indicating wheter to disambiguate CUI id for detected entities in semeval format",
-    )
-
-    """
-    parser.add_argument("-unlabeled",
-        dest = "unlabeled",
-        help = "Path to dir containing unlabelled data used for unsupervised methods",
-    )
-    """
 
     # Parse the command line arguments
     args = parser.parse_args()
