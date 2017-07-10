@@ -19,56 +19,31 @@ import itertools
 import cPickle as pickle
 import copy
 
-from model import Model
+from model import ClinerModel
 from notes.note import Note
-from multiprocessing import Pool
-
-from read_config import enabled_modules
-
-# Import feature modules
-enabled = enabled_modules()
-
 
 def main():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-input",
-        dest = "input",
-        help = "The input files to predict",
+    parser.add_argument("--txt",
+        dest = "TXT",
+        help = ".txt files of discharge summaries",
     )
 
-    parser.add_argument("-out",
+    parser.add_argument("--out",
         dest = "output",
         help = "The directory to write the output",
     )
 
-    parser.add_argument("-model",
+    parser.add_argument("--model",
         dest = "model",
         help = "The model to use for prediction",
     )
 
-    parser.add_argument("-format",
+    parser.add_argument("--format",
         dest = "format",
         help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )",
-    )
-
-    parser.add_argument("-crf",
-        dest = "with_crf",
-        help = "Specify where to find crfsuite",
-        default = None
-    )
-
-    parser.add_argument("-discontiguous_spans",
-        dest = "third",
-        help = "A flag indicating whether to have third/clustering pass",
-        action = "store_true"
-    )
-
-    parser.add_argument("-umls_disambiguation",
-        dest = "disambiguate",
-        help = "A flag indicating whether to disambiguate CUI ID for identified entities in semeval",
-        action = "store_true"
     )
 
     args = parser.parse_args()
@@ -87,12 +62,9 @@ def main():
         print >>sys.stderr, '\n\tError: Model does not exist: %s\n' % args.model
         exit(1)
 
-
     # Parse arguments
     files = glob.glob(args.input)
     helper.mkpath(args.output)
-
-    third = args.third
 
     if args.format:
         format = args.format
@@ -100,21 +72,13 @@ def main():
         print '\n\tERROR: must provide "format" argument\n'
         exit()
 
-    if third is True and args.format == "i2b2":
-        exit("i2b2 formatting does not support disjoint spans")
-
-    # Tell user if not predicting
-    if not files:
-        print >>sys.stderr, "\n\tNote: You did not supply any input files\n"
-        exit()
-
     # Predict
-    predict(files, args.model, args.output, format=format, third=third, disambiguate=args.disambiguate)
+    predict(files, args.model, args.output, format=format)
 
 
 
 
-def predict(files, model_path, output_dir, format, third=False, disambiguate=False):
+def predict(files, model_path, output_dir, format):
 
     # Must specify output format
     if format not in Note.supportedFormats():
@@ -132,11 +96,7 @@ def predict(files, model_path, output_dir, format, third=False, disambiguate=Fal
     if not files:
         print >>sys.stderr, "\n\tNote: You did not supply any input files\n"
         exit()
-
-    if enabled["UMLS"] is not None and disambiguate is True:
-        from disambiguation import cui_disambiguation
-
-    # For each file, predict concept labels
+    
     n = len(files)
     for i,txt in enumerate(sorted(files)):
 
@@ -159,13 +119,6 @@ def predict(files, model_path, output_dir, format, third=False, disambiguate=Fal
 
         # Get predictions in proper format
         output = note.write(labels)
-
-        # TODO: make a flag to enable or disable looking up concept ids.
-        if format == "semeval":
-
-            print "\nencoding concept ids"
-            if enabled["UMLS"] is not None and disambiguate is True:
-                output = cui_disambiguation.disambiguate(output, txt, model.get_cui_freq())
 
         # Output the concept predictions
         print '\n\nwriting to: ', out_path
