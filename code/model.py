@@ -1,3 +1,11 @@
+######################################################################
+#  CliNER - model.py                                                 #
+#                                                                    #
+#  Willie Boag                                                       #
+#                                                                    #
+#  Purpose: Define the model for clinical concept extraction.        #
+######################################################################
+
 from __future__ import with_statement
 
 from sklearn.feature_extraction  import DictVectorizer

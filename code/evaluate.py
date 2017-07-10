@@ -123,7 +123,6 @@ def main():
     eval_jar = os.path.join(eval_dir, 'i2b2va-eval.jar')
 
     cmd = 'java -jar %s -rcp %s -scp %s -ft con -ex all' % (eval_jar, gold_dir, pred_dir)
-    print cmd
     status,output = commands.getstatusoutput(cmd)
     print output
 
