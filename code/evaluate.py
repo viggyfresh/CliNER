@@ -6,12 +6,6 @@
 #  Purpose: Evaluate predictions of concept labels against gold.     #
 ######################################################################
 
-
-__author__ = 'Willie Boag'
-__date__   = 'Feb. 15, 2016'
-
-
-
 import os
 import sys
 import argparse
@@ -21,8 +15,6 @@ import shutil
 import commands
 
 import tools
-
-
 
 def main():
 
@@ -131,9 +123,9 @@ def main():
     eval_jar = os.path.join(eval_dir, 'i2b2va-eval.jar')
 
     cmd = 'java -jar %s -rcp %s -scp %s -ft con -ex all' % (eval_jar, gold_dir, pred_dir)
+    print cmd
     status,output = commands.getstatusoutput(cmd)
     print output
-
 
     # cleanup after yourself
     shutil.rmtree(tempdir_name)

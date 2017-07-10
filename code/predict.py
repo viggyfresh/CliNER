@@ -27,7 +27,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--txt",
-        dest = "TXT",
+        dest = "txt",
         help = ".txt files of discharge summaries",
     )
 
@@ -49,21 +49,29 @@ def main():
     args = parser.parse_args()
 
     # Error check: Ensure that file paths are specified
-    if not args.input:
+    if not args.txt:
         print >>sys.stderr, '\n\tError: Must provide text files\n'
+        parser.print_help(sys.stderr)
+        print >>sys.stderr,  ''
         exit(1)
     if not args.output:
         print >>sys.stderr, '\n\tError: Must provide output directory\n'
+        parser.print_help(sys.stderr)
+        print >>sys.stderr,  ''
         exit(1)
     if not args.model:
         print >>sys.stderr, '\n\tError: Must provide path to model\n'
+        parser.print_help(sys.stderr)
+        print >>sys.stderr,  ''
         exit(1)
     if not os.path.exists(args.model):
-        print >>sys.stderr, '\n\tError: Model does not exist: %s\n' % args.model
+        print >>sys.stderr, '\n\tError: ClinerModel does not exist: %s\n' % args.model
+        parser.print_help(sys.stderr)
+        print >>sys.stderr,  ''
         exit(1)
-
-    # Parse arguments
-    files = glob.glob(args.input)
+    
+    #Parse arguments
+    files = glob.glob(args.txt)
     helper.mkpath(args.output)
 
     if args.format:
@@ -89,7 +97,8 @@ def predict(files, model_path, output_dir, format):
 
 
     # Load model
-    model = Model.load(model_path)
+    with open(model_path, 'rb') as f:
+        model = pickle.load(f)
 
 
     # Tell user if not predicting
@@ -107,15 +116,12 @@ def predict(files, model_path, output_dir, format):
         extension = note.getExtension()
         fname = os.path.splitext(os.path.basename(txt))[0] + '.' + extension
         out_path = os.path.join(output_dir, fname)
-        #if os.path.exists(out_path):
-        #    print '\tWARNING: prediction file already exists (%s)' % out_path
-        #    continue
 
         if format == "semevaL":
             note.setFileName(os.path.split(txt)[-1])
 
         # Predict concept labels
-        labels = model.predict(note, third)
+        labels = model.predict(note)
 
         # Get predictions in proper format
         output = note.write(labels)

@@ -91,7 +91,7 @@ def main():
     # Collect training data file paths
     txt_files_map = helper.map_files(txt_files) 
     con_files_map = helper.map_files(con_files)
-
+    
     training_list = []
 
     for k in txt_files_map:
