@@ -22,6 +22,12 @@ import os.path
 
 from utilities_for_notes import lineno_and_tokspan
 
+
+labels = { 'O':0,
+           'B-problem':1, 'B-test':2, 'B-treatment':3,
+           'I-problem':4, 'I-test':5, 'I-treatment':6,
+         }
+
 # Master Class
 class Note:
 
@@ -153,6 +159,9 @@ class Note:
         if not self.data:
             self.data = self.derived_note.getTokenizedSentences()
         return self.data
+    
+    def getTokenLabels(self):
+        return self._labels
 
     def setFileName(self, fname):
         """

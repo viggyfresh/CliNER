@@ -70,13 +70,11 @@ class ClinerModel:
         """
 
         # Extract formatted data
-        tokenized_sentences, iob_labels =  first_pass_data_and_labels(notes)
-        chunks, indices    , con_labels = second_pass_data_and_labels(notes)
-
-        # Train classifiers for 1st pass and 2nd pass
-        self.__first_train(tokenized_sentences , iob_labels)
-        self.__second_train(chunks, indices    , con_labels)
-
+        tokenized_sentences = flatten([n.getTokenizedSentences() for n in notes])
+        labels = flatten([n.getTokenLabels() for n in notes])
+        
+        # Train classifiers
+        self.__first_train(tokenized_sentences, labels)
 
     def predict(self, note):
         """
@@ -165,9 +163,9 @@ class ClinerModel:
         self._first_nonprose_clf = nclf
 
 
-
+"""
     def __second_train(self, chunked_data, inds_list, con_labels):
-        """
+        ""
         ClinerModel::__second_train()
 
         Purpose: Train the first pass classifiers (for IOB chunking)
@@ -181,7 +179,7 @@ class ClinerModel:
                            - assertion: there are sum(len(inds_list)) labels
                               AKA each index from inds_list maps to a label
         @return          None
-        """
+        ""
 
         if globals_cliner.verbosity > 0: print 'second pass'
 
@@ -211,7 +209,7 @@ class ClinerModel:
         # Train the model
         self._second_clf = sci.train(vectorized_features,numeric_labels)
 
-
+"""
 
     def __first_predict(self, data):
 
