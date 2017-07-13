@@ -43,6 +43,12 @@ def main():
         help = "Path to the log file for training info",
         default = os.path.join(CLINER_DIR, 'models', 'train.log')
     )
+    parser.add_argument("--use-lstm",
+        dest = "use_lstm",
+        help = "Whether to use an LSTM model",
+        action = 'store_true',
+        default = False
+    )
     parser.add_argument("--format",
         dest = "format",
         help = "Data format ( i2b2 )"
@@ -99,12 +105,12 @@ def main():
             training_list.append((txt_files_map[k], con_files_map[k]))
 
     # Train the model
-    train(training_list, args.model, args.format, logfile=args.log)
+    train(training_list, args.model, args.format, args.use_lstm, logfile=args.log)
 
 
 
 
-def train(training_list, model_path, format, logfile=None):
+def train(training_list, model_path, format, use_lstm,  logfile=None):
 
     # Read the data into a Document object
     docs = []
@@ -121,7 +127,7 @@ def train(training_list, model_path, format, logfile=None):
         return 1
 
     # Create a Machine Learning model
-    model = ClinerModel()
+    model = ClinerModel(use_lstm)
 
     # Train the model using the Documents's data
     model.train(docs)
