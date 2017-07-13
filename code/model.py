@@ -76,7 +76,7 @@ class ClinerModel:
         tokenized_sentences = flatten([n.getTokenizedSentences() for n in notes])
         labels = flatten([n.getTokenLabels() for n in notes])
         
-        self.train_fit(tokenized_sents, labels, dev_split=0.1)
+        self.train_fit(tokenized_sentences, labels, dev_split=0.1)
 
     def train_fit(self,tok_sents, tags, val_sents=None, val_tgs=None, dev_split=None):
         """
@@ -379,65 +379,169 @@ class ClinerModel:
     ###               Lowest-level (interfaces to ML modules)                ###
     ############################################################################
 
-
-    def __generic_first_train(self, p_or_n, text_features, iob_labels):
-
+    def generic_train(p_or_n, tokenized_sents, iob_nested_labels, use_lstm,
+                  val_sents=None, val_labels=None, dev_split=None):
         '''
-        ClinerModel::__generic_first_train()
+        generic_train()
 
-        Purpose: Train that works for both prose and nonprose
+        Train a model that works for both prose and nonprose
 
-        @param p_or_n.        <string> either "prose" or "nonprose"
-        @param text_features. <list-of-lists> of feature dictionaries
-        @param iob_labels.    <list> of "I", "O", and "B" labels
+        @param p_or_n.             A string that indicates "prose", "nonprose", or "all"
+        @param tokenized_sents.    A list of sentences, where each sentence is tokenized
+                                 into words
+        @param iob_nested_labels.  Parallel to `tokenized_sents`, 7-way labels for 
+                                 concept spans
+        @param use_lstm            Bool indicating whether to train CRF or LSTM.
+        @param val_sents.          Validation data. Same format as tokenized_sents
+        @param val_labels.         Validation data. Same format as iob_nested_labels
+        @param dev_split.          A real number from 0 to 1
         '''
-
         # Must have data to train on
-        if len(text_features) == 0:
+        if len(tokenized_sents) == 0:
             raise Exception('Training must have %s training examples' % p_or_n)
 
-        # Vectorize IOB labels
-        Y_labels = [  IOB_labels[y]  for  y  in  iob_labels  ]
+        # if you should split the data into train/dev yourself 
+        if (not val_sents) and (dev_split > 0.0) and (len(tokenized_sents)>10):
 
-        # Save list structure to reconstruct after vectorization
-        offsets = save_list_structure(text_features)
+            p = int(dev_split*100)
+            print '\tCreating %d/%d train/dev split' % (100-p,p)
 
-        if globals_cliner.verbosity > 0: print '\tvectorizing features (pass one) ' + p_or_n
+            perm = range(len(tokenized_sents))
+            random.shuffle(perm)
 
-        #X = reconstruct_list(flatten(text_features), offsets)
-        #Y = reconstruct_list(        Y_labels      , offsets)
-        #for a,b in zip(X,Y):
-        #    for x,y in zip(a,b):
-        #        print y
-        #        #print filter(lambda t:t[0]=='word', x.keys())
-        #        print x.keys()
-        #        print
-        #    print '\n\n\n'
+            tokenized_sents   = [   tokenized_sents[i] for i in perm ]
+            iob_nested_labels = [ iob_nested_labels[i] for i in perm ]
 
-        # Vectorize features
-        dvect = DictVectorizer()
-        X_feats = dvect.fit_transform( flatten(text_features) )
+            ind = int(dev_split*len(tokenized_sents))
 
-        # CRF needs reconstructed lists
-        if self._crf_enabled:
-            X_feats  = reconstruct_list( list(X_feats) , offsets)
-            Y_labels = reconstruct_list(      Y_labels , offsets)
-            lib = crf
+            val_sents   = tokenized_sents[:ind ]
+            train_sents = tokenized_sents[ ind:]
+
+            val_labels   = iob_nested_labels[:ind ]
+            train_labels = iob_nested_labels[ ind:]
+
+            tokenized_sents   = train_sents
+            iob_nested_labels = train_labels
+
+
+        print '\tvectorizing words', p_or_n
+
+        #tokenized_sents   = train_sents[ :2]
+        #iob_nested_labels = train_labels[:2]
+
+            # count word frequencies to determine OOV
+            freq = defaultdict(int)
+            for sent in tokenized_sents:
+                for w in sent:
+                    freq[w] += 1
+
+        # determine OOV based on % of vocab or minimum word freq threshold
+        oov = set()
+        '''
+        if len(freq) < 100:
+            lo = len(freq)/20
+            oov = set([ w for w,f in sorted(freq.items(), key=lambda t:t[1]) ][:lo])
         else:
-            lib = sci
+            #lo = 2
+            #oov = set([ w for w,f in freq.items() if (f <= lo) ])
+            oov = set()
+        '''
 
-        if globals_cliner.verbosity > 0: print '\ttraining classifiers (pass one) ' + p_or_n
+        '''
+        val = None
+        for w,f in sorted(freq.items(), key=lambda t:t[1]):
+            if val != f:
+                val = f
+                print
+            print '%8d  %s' % (f,w)
+        exit()
+        '''
+        if use_lstm:
+            ########
+            # LSTM
+            ########
 
-        #for i,X in enumerate(X_feats):
-        #    for j,x in enumerate(X):
-        #        print x, '\t', Y_labels[i][j]
-        #    print
-        #exit()
+            # build vocabulary of words
+            vocab = {}
+            for sent in tokenized_sents:
+                for w in sent:
+                    if (w not in vocab) and (w not in oov):
+                        vocab[w] = len(vocab) + 1
+            vocab['oov'] = len(vocab) + 1
 
-        # Train classifier
-        clf  = lib.train(X_feats, Y_labels)
+            # vectorize tokenized sentences
+            X_seq_ids = []
+            for sent in tokenized_sents:
+                id_seq = [ (vocab[w] if w in vocab else vocab['oov']) for w in sent ]
+                X_seq_ids.append(id_seq)
 
-        return dvect,clf
+            # vectorize IOB labels
+            Y_labels = [ [tag2id[y] for y in y_seq] for y_seq in iob_nested_labels ]
+
+            # if there is specified validation data, then vectorize it
+            if val_sents:
+                # vectorize validation X
+                val_X = []
+                for sent in val_sents:
+                    id_seq = [ (vocab[w] if w in vocab else vocab['oov']) for w in sent ]
+                    val_X.append(id_seq)
+                # vectorize validation Y
+                val_Y = [ [tag2id[y] for y in y_seq] for y_seq in val_labels ]
+
+        else:
+            ########
+            # CRF 
+            ########
+
+            # vectorize tokenized sentences
+            '''
+            def make_feature(ind):
+                return {(ind,i):1 for i in range(10)}
+            text_features = []
+            for sent in tokenized_sents:
+                fseq = [make_feature(vocab[w] if w in vocab else vocab['oov']) for w in sent]
+                text_features.append(fseq)
+            '''
+            text_features = extract_features(tokenized_sents)
+
+            # Vectorize features
+            vocab = DictVectorizer()
+            flat_X_feats = vocab.fit_transform( flatten(text_features) )
+            X_feats = reconstruct_list(flat_X_feats, save_list_structure(text_features))
+
+            # vectorize IOB labels
+            Y_labels = [ [tag2id[y] for y in y_seq] for y_seq in iob_nested_labels ]
+
+            assert len(X_feats) == len(Y_labels)
+            for i in range(len(X_feats)):
+                assert X_feats[i].shape[0] == len(Y_labels[i])
+
+
+            # if there is specified validation data, then vectorize it
+            if val_sents:
+                # vectorize validation X
+                val_text_features = extract_features(val_sents)
+                flat_val_X_feats = vocab.transform( flatten(val_text_features) )
+                val_X = reconstruct_list(flat_val_X_feats,
+                                     save_list_structure(val_text_features))
+                # vectorize validation Y
+                val_Y = [ [tag2id[y] for y in y_seq] for y_seq in val_labels ]
+
+
+        print '\ttraining classifiers', p_or_n
+
+        #val_sents  = val_sents[ :5]
+        #val_labels = val_labels[:5]
+
+        if use_lstm:
+            #train using lstm
+            clf, dev_score  = keras_ml.train(X_seq_ids, Y_labels, tag2id, len(vocab),
+                                         val_X_ids=val_X, val_Y_ids=val_Y)
+        else:
+            # train using crf
+            clf, dev_score  = crf_ml.train(X_feats, Y_labels, val_X=val_X, val_Y=val_Y)
+
+        return vocab, clf, dev_score
 
 
 
