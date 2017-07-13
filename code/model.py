@@ -44,19 +44,22 @@ class ClinerModel:
         return model
 
 
-    def __init__(self, is_crf=True):
-        # Use python-crfsuite
-        self._crf_enabled = is_crf
+    def __init__(self, use_lstm):
 
-        # DictVectorizers
-        self._first_prose_vec    = None
-        self._first_nonprose_vec = None
-        self._second_vec         = None
+        """
+        ClinerModel::__init__()
 
-        # Classifiers
-        self._first_prose_clf    = None
-        self._first_nonprose_clf = None
-        self._second_clf         = None
+        Instantiate a ClinerModel object.
+
+        @param use_lstm. Bool indicating whether to train a CRF or LSTM.
+        """
+        self._use_lstm       = use_lstm
+        self._is_trained     = False
+        self._clf            = None
+        self._vocab          = None
+        self._training_files = None
+        self._log            = None
+
 
 
     def train(self, notes):
@@ -73,8 +76,30 @@ class ClinerModel:
         tokenized_sentences = flatten([n.getTokenizedSentences() for n in notes])
         labels = flatten([n.getTokenLabels() for n in notes])
         
-        # Train classifiers
-        self.__first_train(tokenized_sentences, labels)
+        self.train_fit(tokenized_sents, labels, dev_split=0.1)
+
+    def train_fit(self,tok_sents, tags, val_sents=None, val_tgs=None, dev_split=None):
+        """
+        ClinerModel::train_ft()
+
+        Purpose: Train clinical concept extraction model using annotated data.
+
+        @param tok_sents.   A list of sentences, where each sentence is tokenized into words.
+        @param tags.        Parallel to 'tokenized_sents', 7-way labels for concept spans.
+        @param val_sents.   Validation data. Same format as tokenized_sents
+        @param val_tags.    Validation data. Same format as iob_nested_labels
+        @param dev_split    A real number from 0 to 1
+        """
+
+        # train classifier
+        voc, clf, dev_score = generic_train('all', tok_sents, tags, self._use_lstm,
+                                            val_sents=val_sents, val_labels=val_tags,
+                                            dev_split=dev_split)
+        self._is_trained = True
+        self._vocab = voc
+        self._clf   = clf
+        self._score = dev_score
+
 
     def predict(self, note):
         """
