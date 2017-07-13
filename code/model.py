@@ -163,53 +163,6 @@ class ClinerModel:
         self._first_nonprose_clf = nclf
 
 
-"""
-    def __second_train(self, chunked_data, inds_list, con_labels):
-        ""
-        ClinerModel::__second_train()
-
-        Purpose: Train the first pass classifiers (for IOB chunking)
-
-        @param data      <list> of tokenized sentences after collapsing chunks
-        @param inds_list <list-of-lists> of indices
-                           - assertion: len(data) == len(inds_list)
-                           - one line of 'inds_list' contains a list of indices
-                               into the corresponding line for 'data'
-        @param con_labels <list> of concept label strings
-                           - assertion: there are sum(len(inds_list)) labels
-                              AKA each index from inds_list maps to a label
-        @return          None
-        ""
-
-        if globals_cliner.verbosity > 0: print 'second pass'
-
-
-        # Extract features
-        if globals_cliner.verbosity > 0:
-            print '\textracting  features (pass two)'
-
-        text_features = [ feat_obj.concept_features(s,inds) for s,inds in zip(chunked_data,inds_list) ]
-
-        flattened_text_features = flatten(text_features)
-
-
-        if globals_cliner.verbosity > 0:
-            print '\tvectorizing features (pass two)'
-
-        # Vectorize labels
-        numeric_labels = [  concept_labels[y]  for  y  in  con_labels  ]
-
-        # Vectorize features
-        self._second_vec = DictVectorizer()
-        vectorized_features = self._second_vec.fit_transform(flattened_text_features)
-
-        if globals_cliner.verbosity > 0:
-            print '\ttraining  classifier (pass two)'
-
-        # Train the model
-        self._second_clf = sci.train(vectorized_features,numeric_labels)
-
-"""
 
     def __first_predict(self, data):
 

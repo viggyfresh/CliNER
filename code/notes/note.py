@@ -55,6 +55,7 @@ class Note:
         self.concepts        = []
         self.iob_labels      = []
         self.text_chunks     = []
+        self.labels          = []
 
         self.txtPath = None
         self.conPath = None
@@ -161,7 +162,7 @@ class Note:
         return self.data
     
     def getTokenLabels(self):
-        return self._labels
+        return self.labels
 
     def setFileName(self, fname):
         """
