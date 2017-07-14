@@ -459,8 +459,6 @@ class ClinerModel:
 
             # vectorize IOB labels
             Y_labels = [ [tag2id[y] for y in y_seq] for y_seq in iob_nested_labels ]
-            print Y_labels
-            exit()            
 
             assert len(X_feats) == len(Y_labels)
             for i in range(len(X_feats)):
@@ -476,7 +474,6 @@ class ClinerModel:
                                      save_list_structure(val_text_features))
                 # vectorize validation Y
                 val_Y = [ [tag2id[y] for y in y_seq] for y_seq in val_labels ]
-
 
         print '\ttraining classifiers', p_or_n
 

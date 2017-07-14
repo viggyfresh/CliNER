@@ -179,7 +179,7 @@ def predict(clf, X):
     # Remove the temp file
     os.close(os_handle)
     os.remove(tmp_file)
-
+    
     # Tag the sequence
     retVal = []
     Y = []
@@ -187,7 +187,6 @@ def predict(clf, X):
         yseq = [ int(n) for n in tagger.tag(xseq) ]
         retVal += list(yseq)
         Y.append(list(yseq))
-
     # Sanity Check detection: feature & label predictions
     #with open('a','w') as f:
     #    for x,y in zip(xseq,Y):
@@ -195,4 +194,4 @@ def predict(clf, X):
     #        print >>f, y, '\t', x[:-2]
     #    print >>f
 
-    return retVal
+    return Y

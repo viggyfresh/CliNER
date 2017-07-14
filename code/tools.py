@@ -225,9 +225,8 @@ def compute_performance_stats(label, pred, ref):
     @param pred.   A list of list of predicted labels.
     @param pred.   A list of list of true      labels.
     '''
-    
-    num_tags = max(set(sum( ref,[]),[]) | set(sum(pred,[]))) +1
 
+    num_tags = max(set(sum( ref,[])) | set(sum(pred,[]))) +1
     # confusion matrix
     confusion = np.zeros( (num_tags,num_tags) )
     for tags,yseq in zip(pred,ref):
