@@ -12,6 +12,9 @@ from sklearn.feature_extraction  import DictVectorizer
 import os
 import random
 import feature_extraction.features as feat_obj
+import io
+from time import localtime, strftime
+from collections import defaultdict
 
 from feature_extraction.utilities import load_pickled_obj, is_prose_sentence
 from feature_extraction.read_config import enabled_modules
@@ -21,7 +24,6 @@ from machine_learning import crf
 from notes.documents import labels as tag2id, id2tag
 from tools      import flatten, save_list_structure, reconstruct_list
 
-from collections import defaultdict
 
 # Stores the verbosity
 import globals_cliner
@@ -40,6 +42,91 @@ class ClinerModel:
         model.filename = filename
 
         return model
+
+
+    def log(self, out, model_file=None):
+        '''
+        ClinerMdoel::log()
+        Log training information of model.
+        @param out.         Either a filename or file channel to output the log string.
+        @param model_file.  A path to optionally identify where the model was saved.
+        @return None
+        '''
+        if not self._log:
+            log = self.__log_str(model_file)
+        else:
+            log = self._log
+
+        # depending on whether it is already opened as a channel
+        if isinstance(out,file):
+            print >>out, log
+        else:
+            with open(out, 'a') as f:
+                print >>f, log
+
+
+    def __log_str(self, model_file=None):
+        '''
+        ClinerModel::__log_str()
+        Build a string of information about training for the model's log file.
+        @param model_file.  A path to optionally identify where the model was saved.
+        @return  A string of the model's training information
+        '''
+        assert self._is_trained, 'ClinerModel not trained'
+        with io.StringIO() as f:
+            f.write(u'\n')
+            f.write(unicode('-'*40))
+            f.write(u'\n\n')
+            if model_file:
+                f.write(unicode('model    : %s\n' % os.path.abspath(model_file)))
+                f.write(u'\n')
+
+            if self._use_lstm:
+                f.write(u'modeltype: LSTM\n')
+            else:
+                f.write(u'modeltype: CRF\n')
+
+            if 'hyperparams' in self._score:
+                for name,value in self._score['hyperparams'].items():
+                    f.write(u'\t%-10s: %s\n' % (name,value))
+            f.write(u'\n')
+
+            f.write(unicode('training began: %s\n' % self._time_train_begin))
+            f.write(unicode('training ended: %s\n' % self._time_train_end))
+            f.write(u'\n')
+
+            f.write(u'scores\n')
+            print_vec(f, 'train precision', self._score['train']['precision'])
+            print_vec(f, 'train recall   ', self._score['train']['recall'   ])
+            print_vec(f, 'train f1       ', self._score['train']['f1'       ])
+            f.write(self._score['train']['conf'])
+
+            if 'dev' in self._score:
+                print_vec(f, u'dev precision   ', self._score['dev']['precision'])
+                print_vec(f, u'dev recall      ', self._score['dev']['recall'   ])
+                print_vec(f, u'dev f1          ', self._score['dev']['f1'       ])
+                f.write(self._score['dev']['conf'])
+
+            if 'history' in self._score:
+                for label,vec in self._score['history'].items():
+                    print_vec(f, '%-16s'%label, vec)
+                f.write(u'\n')
+
+            if self._training_files:
+                f.write(u'\n')
+                f.write(u'Training Files\n')
+                if len(self._training_files) < 200:
+                    print_files(f, self._training_files)
+                else:
+                    f.write(unicode('\t%d files\n'%len(self._training_files)))
+                f.write(u'\n')
+
+            f.write(u'-'*40)
+            f.write(u'\n\n')
+
+            # get output as full string
+            contents = f.getvalue()
+        return contents
 
 
     def __init__(self, use_lstm):
@@ -88,6 +175,8 @@ class ClinerModel:
         @param val_tags.    Validation data. Same format as iob_nested_labels
         @param dev_split    A real number from 0 to 1
         """
+        # metadata
+        self._time_train_begin = strftime("%Y-%m-%d %H:%M:%S", localtime())
 
         # train classifier
         voc, clf, dev_score = self.generic_train('all', tok_sents, tags, self._use_lstm, 
@@ -97,6 +186,9 @@ class ClinerModel:
         self._vocab = voc
         self._clf   = clf
         self._score = dev_score
+
+        # metadata
+        self._time_train_end = strftime("%Y-%m-%d %H:%M:%S", localtime())
 
 
     def predict(self, note):
@@ -706,3 +798,21 @@ def concat(a,b):
     return a+b
 
 
+def print_vec(f, label, vec):
+    '''
+    print_vec()
+    Pretty formatting for displaying a vector of numbers in a log.
+    @param f.           An open file stream to write to.
+    @param label.  A description of the numbers (e.g. "recall").
+    @param vec.    A numpy array of the numbers to display.
+    '''
+    COLUMNS = 7
+    start = 0
+    f.write(unicode('\t%-10s: ' % label))
+    if type(vec) != type([]):
+        vec = vec.tolist()
+    for row in range(len(vec)/COLUMNS):
+        for featname in vec[start:start+COLUMNS]:
+            f.write(unicode('%7.3f' % featname))
+        f.write(u'\n')
+        start += COLUMNS

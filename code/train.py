@@ -134,8 +134,8 @@ def train(training_list, model_path, format, use_lstm,  logfile=None):
     print '\nserializing model to %s\n' % model_path
     with open(model_path, "wb") as m_file:
         pickle.dump(model, m_file)
-    #model.log(logfile   , model_file=model_path)
-    #model.log(sys.stdout, model_file=model_path)
+    model.log(logfile   , model_file=model_path)
+    model.log(sys.stdout, model_file=model_path)
     
 
 if __name__ == '__main__':
