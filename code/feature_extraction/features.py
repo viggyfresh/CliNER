@@ -1,5 +1,5 @@
 ######################################################################
-#  CliCon - clicon_features.py                                       #
+#  CliCon - features.py                                              #
 #                                                                    #
 #  Willie Boag                                      wboag@cs.uml.edu #
 #                                                                    #
@@ -7,94 +7,241 @@
 ######################################################################
 
 
-__author__ = 'Willie Boag'
-__date__   = 'Jan. 27, 2014'
-
-import time
-
-from wordshape import getWordShapes
-from utilities import is_prose_sentence
-
-import sentence_features as feat_sent
+# What modules are available
+from utilities import load_pos_tagger
+from read_config import enabled_modules
+import word_features as feat_word
 
 
 
-# display enabled modules to user
-feat_sent.display_enabled_modules()
+################################################
+# Build a few expensive one-time objects
+
+
+# what to build requires knowing what tools are enabled
+enabled = enabled_modules()
+
+
+# Import feature modules
+feat_genia=None
+if enabled['GENIA']:
+    from genia_dir.genia_features import GeniaFeatures
+
+
+# Only create UMLS cache if module is available
+if enabled['UMLS']:
+    from umls_dir import interface_umls
+    from umls_dir import interpret_umls
+    import umls_dir.umls_features as feat_umls
+    from umls_dir.umls_cache import UmlsCache
+    umls_cache = UmlsCache()
+
+
+# POS tagger
+nltk_tagger = load_pos_tagger()
 
 
 
-def IOB_prose_features(nested_prose_data):
+################################################
+
+
+# which features are enabled
+enabled_IOB_prose_sentence_features = []
+enabled_IOB_prose_sentence_features.append('unigram_context')
+enabled_IOB_prose_sentence_features.append('pos')
+enabled_IOB_prose_sentence_features.append('pos_context')
+enabled_IOB_prose_sentence_features.append('prev')
+enabled_IOB_prose_sentence_features.append('prev2')
+enabled_IOB_prose_sentence_features.append('next')
+enabled_IOB_prose_sentence_features.append('next2')
+enabled_IOB_prose_sentence_features.append('GENIA')
+enabled_IOB_prose_sentence_features.append('UMLS')
+
+
+
+def extract_features(tok_sents):
     """
-    IOB_prose_features()
-
+    extract_features()
     @param data      A list of split sentences (1 sent = 1 line from file)
     @param Y         A list of list of IOB (1:1 mapping with data)
     @return          tuple: list of IOB_prose_features, list of IOB
-
     """
     # Genia preprocessing
-    feat_sent.sentence_features_preprocess(nested_prose_data)
+    sentence_features_preprocess(tok_sents)
 
+    # iterate through all data & extract features (sentence-by-sentence)
     prose_feats   = []
-    for sentence in nested_prose_data:
-       prose_feats.append(feat_sent.IOB_prose_features(sentence))
+    for sentence in tok_sents:
+       prose_feats.append(extract_features_sentence(sentence))
     return prose_feats
 
 
-def IOB_nonprose_features(nonprose_data):
+
+def sentence_features_preprocess(data):
+    global feat_genia
+    tagger = enabled['GENIA']
+    # Only run GENIA tagger if module is available
+    if tagger:
+        feat_genia = GeniaFeatures(tagger,data)
+
+
+
+def extract_features_sentence(sentence):
     """
-    IOB_nonprose_features()
-
-    @param data      A list of split sentences (1 sent = 1 line from file)
-    @param Y         A list of list of IOB (1:1 mapping with data)
-    @return          tuple: list of IOB_prose_features, list of IOB
-
+    extract_features_sentence
+    Compute a list of dict-based feature representation for a list of tokens.
+    @param sentence. A list of tokens.
+    @return          A list of feature dictionaries.
     """
-    nonprose_feats = []
-    for sentence in nonprose_data:
-       nonprose_feats.append(feat_sent.IOB_nonprose_features(sentence))
-    return nonprose_feats
-
-
-def concept_features(sentence, chunk_inds):
-    """
-    concept_features()
-
-    @param sentence.   a list of chunks
-    @param chunk_inds. a list of important indices of the sentence
-    @return            a list of dictionaries of features
-
-    >>> concept_features(['this', 'is', 'an', 'important', 'test'], [3, 4]) is not None
-    True
-    """
-    # FIXME - move all of this work to SentenceFeatures object
-
-    '''
-    # VERY basic feature set for sanity check tests during development
     features_list = []
-    for i,ind in enumerate(chunk_inds):
-        features = {('phrase',sentence[ind]) : 1}
-        features_list.append(features)
-    return features_list
+
+    # Get a feature set for each word in the sentence
+    for i,word in enumerate(sentence):
+        features_list.append(feat_word.IOB_prose_features(sentence[i]))
+
+    # Feature: Bag of Words unigram conext (window=3)
+    if 'unigram_context' in enabled_IOB_prose_sentence_features:
+        window = 3
+        n = len(sentence)
+
+        # Previous unigrams
+        for i in range(n):
+            end = min(i, window)
+            unigrams = sentence[i-end:i]
+            for j,u in enumerate(unigrams):
+                features_list[i][('prev_unigrams-%d'%j,u)] = 1
+
+        # Next     unigrams
+        for i in range(n):
+            end = min(i + window, n-1)
+            unigrams = sentence[i+1:end+1]
+            for j,u in enumerate(unigrams):
+                features_list[i][('next_unigrams-%d'%j,u)] = 1
+
+    # Only POS tag once
+    if 'pos' in enabled_IOB_prose_sentence_features:
+        pos_tagged = nltk_tagger.tag(sentence)
+
+    # Allow for particular features to be enabled
+    for feature in enabled_IOB_prose_sentence_features:
+
+        # Feature: Part of Speech
+        if feature == 'pos':
+            for (i,(_,pos)) in enumerate(pos_tagged):
+                features_list[i].update( { ('pos',pos) : 1} )
+
+
+        # Feature: POS context
+        if 'pos_context' in enabled_IOB_prose_sentence_features:
+            window = 3
+            n = len(sentence)
+
+            # Previous POS
+            for i in range(n):
+                end = min(i, window)
+                for j,p in enumerate(pos_tagged[i-end:i]):
+                    pos = p[1]
+                    features_list[i][('prev_pos_context-%d'%j,pos)] = 1
+
+            # Next POS
+            for i in range(n):
+                end = min(i + window, n-1)
+                for j,p in enumerate(pos_tagged[i+1:i+end+1]):
+                    pos = p[1]
+                    features_list[i][('prev_pos_context-%d'%j,pos)] = 1
+
+
+        # GENIA features
+        if (feature == 'GENIA') and enabled['GENIA']:
+
+            # Get GENIA features
+            genia_feat_list = feat_genia.features(sentence)
+
+            '''
+            print '\t', sentence
+            print '\n\n'
+            for gf in genia_feat_list:
+                print '\t', gf
+                print
+            print '\n\n'
+            '''
+
+            for i,feat_dict in enumerate(genia_feat_list):
+                features_list[i].update(feat_dict)
+
+
+        # Feature: UMLS Word Features (only use prose ones)
+        if (feature == "UMLS") and enabled['UMLS']:
+            umls_features = feat_umls.IOB_prose_features(sentence)
+            for i in range(len(sentence)):
+                features_list[i].update( umls_features[i] )
+
+    #######
+    # TODO: This section is ugly... factorize it.
+    #######
+
+    # Used for 'prev' and 'next' features
+    ngram_features = [{} for i in range(len(features_list))]
+    if "prev" in enabled_IOB_prose_sentence_features:
+        prev = lambda f: {("prev_"+k[0], k[1]): v for k,v in f.items()}
+        prev_list = map(prev, features_list)
+        for i in range(len(features_list)):
+            if i == 0:
+                ngram_features[i][("prev", "*")] = 1
+            else:
+                ngram_features[i].update(prev_list[i-1])
+
+    if "prev2" in enabled_IOB_prose_sentence_features:
+        prev2 = lambda f: {("prev2_"+k[0], k[1]): v/2.0 for k,v in f.items()}
+        prev_list = map(prev2, features_list)
+        for i in range(len(features_list)):
+            if i == 0:
+                ngram_features[i][("prev2", "*")] = 1
+            elif i == 1:
+                ngram_features[i][("prev2", "*")] = 1
+            else:
+                ngram_features[i].update(prev_list[i-2])
+
+    if "next" in enabled_IOB_prose_sentence_features:
+        next = lambda f: {("next_"+k[0], k[1]): v for k,v in f.items()}
+        next_list = map(next, features_list)
+        for i in range(len(features_list)):
+            if i < len(features_list) - 1:
+                ngram_features[i].update(next_list[i+1])
+            else:
+                ngram_features[i][("next", "*")] = 1
+
+    if "next2" in enabled_IOB_prose_sentence_features:
+        next2 = lambda f: {("next2_"+k[0], k[1]): v/2.0 for k,v in f.items()}
+        next_list = map(next2, features_list)
+        for i in range(len(features_list)):
+            if i < len(features_list) - 2:
+                ngram_features[i].update(next_list[i+2])
+            elif i == len(features_list) - 2:
+                ngram_features[i][("next2", "**")] = 1
+            else:
+                ngram_features[i][("next2", "*")] = 1
+
+    merged = lambda d1, d2: dict(d1.items() + d2.items())
+    features_list = [merged(features_list[i], ngram_features[i])
+        for i in range(len(features_list))]
+
+    '''
+    for f in features_list:
+        print sorted(f.items())
+        print
+    print '\n\n\n'
     '''
 
-    # Create a list of feature sets (one per chunk)
-    features_list = feat_sent.concept_features_for_sentence(sentence,chunk_inds)
     return features_list
 
 
-def extract_third_pass_features(chunks, inds, bow=None):
 
-    unvectorized_X = []
-
-    for lineno,indices in enumerate(inds):
-
-        features = feat_sent.third_pass_features(chunks[lineno],indices, bow_model=bow)
-
-        unvectorized_X += features
-
-    return unvectorized_X
-
-
-
+def display_enabled_modules():
+    print
+    for module,status in enabled.items():
+        if status:
+            print '\t', module, '\t', ' ENABLED'
+        else:
+            print '\t', module, '\t', 'DISABLED'
+    print

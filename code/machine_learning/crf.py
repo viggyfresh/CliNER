@@ -12,9 +12,9 @@ import os
 import tempfile
 import pycrfsuite
 
-count = 0
 
-tmp_dir = '/tmp'
+from tools import compute_performance_stats
+from feature_extraction.read_config import enabled_modules
 
 def format_features(rows, labels=None):
 
@@ -97,9 +97,17 @@ def pycrf_instances(fi, labeled):
         if labeled:
             yseq.append(fields[0])
 
-
-
-def train(X, Y):
+def train(X, Y, val_X=None, val_Y=None):
+    '''
+    train()
+    Train a Conditional Random Field for sequence tagging.
+    
+    @param X.     List of sparse-matrix sequences. Each sequence is one sentence.
+    @param Y.     List of sequence tags. Each sequence is the sentence's per-token tags.
+    @param val_X. More X data, but a heldout dev set.
+    @param val_Y. More Y data, but a heldout dev set.
+    @return A tuple of encoded parameter weights and hyperparameters for predicting.
+    '''
 
     # Sanity Check detection: features & label
     #with open('a','w') as f:
@@ -117,10 +125,10 @@ def train(X, Y):
         trainer.append(xseq, yseq)
 
     # Train the model
-    os_handle,tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="crf_temp")
+    os_handle,tmp_file = tempfile.mkstemp(dir='/tmp', suffix="crf_temp")
     trainer.train(tmp_file)
 
-    # Read the trained model into a string
+    # Read the trained model into a string (so it can be pickled)
     model = ''
     with open(tmp_file, 'r') as f:
         model = f.read()
@@ -129,9 +137,29 @@ def train(X, Y):
     # Remove the temporary file
     os.remove(tmp_file)
 
-    return model
+    ######################################################################
 
+    # information about fitting the model
+    scores = {}
 
+    # how well does the model fir the training data?
+    train_pred = predict(model,     X)
+    train_stats = compute_performance_stats('train', train_pred, Y)
+    scores['train'] = train_stats
+
+    if val_X:
+        val_pred  = predict(model, val_X)
+        val_stats = compute_performance_stats('dev', val_pred, val_Y)
+        scores['dev'] = val_stats
+
+    # keep track of which external modules were used for building this model!
+    scores['hyperparams'] = {}
+    enabled_mods = enabled_modules()
+    for module,enabled in enabled_mods.items():
+        e = bool(enabled)
+        scores['hyperparams'][module] = e
+
+    return model, scores
 
 
 def predict(clf, X):
@@ -140,7 +168,7 @@ def predict(clf, X):
     feats = format_features(X)
 
     # Dump the model into a temp file
-    os_handle,tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="crf_temp")
+    os_handle,tmp_file = tempfile.mkstemp(dir='/tmp', suffix="crf_temp")
     with open(tmp_file, 'wb') as f:
         f.write(clf)
 

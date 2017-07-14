@@ -17,7 +17,7 @@ import sys
 import helper
 from sets import Set
 from model import ClinerModel
-from notes.note import Note
+from notes.documents import Document
 
 # base directory
 CLINER_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -87,9 +87,9 @@ def main():
         format = args.format
 
     # Must specify output format
-    if format not in Note.supportedFormats():
+    if args.format not in ['i2b2']:
         print >>sys.stderr, '\n\tError: Must specify output format'
-        print >>sys.stderr,   '\tAvailable formats: ', ' | '.join(Note.supportedFormats())
+        print >>sys.stderr,   '\tAvailable formats: i2b2'
         print >>sys.stderr, ''
         exit(1)
 
@@ -115,9 +115,7 @@ def train(training_list, model_path, format, use_lstm,  logfile=None):
     # Read the data into a Document object
     docs = []
     for txt, con in training_list:
-        doc_tmp = Note(format)
-        doc_tmp.read(txt,con)
-
+        doc_tmp = Document(txt,con)
         docs.append(doc_tmp)
 
 

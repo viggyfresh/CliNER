@@ -10,7 +10,7 @@ from __future__ import with_statement
 
 from sklearn.feature_extraction  import DictVectorizer
 import os
-
+import random
 import feature_extraction.features as feat_obj
 
 from feature_extraction.utilities import load_pickled_obj, is_prose_sentence
@@ -18,9 +18,7 @@ from feature_extraction.read_config import enabled_modules
 
 from machine_learning import sci
 from machine_learning import crf
-
-from notes.note import concept_labels, reverse_concept_labels
-from notes.note import     IOB_labels,     reverse_IOB_labels
+from notes.documents import labels as tag2id, id2tag
 from tools      import flatten, save_list_structure, reconstruct_list
 
 from collections import defaultdict
@@ -28,7 +26,7 @@ from collections import defaultdict
 # Stores the verbosity
 import globals_cliner
 import numpy as np
-
+from feature_extraction.features import extract_features
 
 CLINER_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -74,13 +72,13 @@ class ClinerModel:
 
         # Extract formatted data
         tokenized_sentences = flatten([n.getTokenizedSentences() for n in notes])
-        labels = flatten([n.getTokenLabels() for n in notes])
-        
+        labels              = flatten([n.getTokenLabels() for n in notes])
+         
         self.train_fit(tokenized_sentences, labels, dev_split=0.1)
 
-    def train_fit(self,tok_sents, tags, val_sents=None, val_tgs=None, dev_split=None):
+    def train_fit(self,tok_sents, tags, val_sents=None, val_tags=None, dev_split=None):
         """
-        ClinerModel::train_ft()
+        ClinerModel::train_fit()
 
         Purpose: Train clinical concept extraction model using annotated data.
 
@@ -92,8 +90,8 @@ class ClinerModel:
         """
 
         # train classifier
-        voc, clf, dev_score = generic_train('all', tok_sents, tags, self._use_lstm,
-                                            val_sents=val_sents, val_labels=val_tags,
+        voc, clf, dev_score = self.generic_train('all', tok_sents, tags, self._use_lstm, 
+                                            val_sents=val_sents, val_labels=val_tags, 
                                             dev_split=dev_split)
         self._is_trained = True
         self._vocab = voc
@@ -139,56 +137,7 @@ class ClinerModel:
     #########################################################################
     ##           Mid-level reformats data and sends to lower level         ##
     #########################################################################
-
-    def __first_train(self, tokenized_sentences, Y):
-
-        """
-        ClinerModel::__first_train()
-
-        Purpose: Train the first pass classifiers (for IOB chunking)
-
-        @param tokenized_sentences. <list> of tokenized sentences
-        @param Y.                   <list-of-lists> of IOB labels for words
-
-        @return          None
-        """
-
-        if globals_cliner.verbosity > 0: print 'first pass'
-        if globals_cliner.verbosity > 0: print '\textracting  features (pass one)'
-
-        # Seperate into prose v nonprose
-        nested_prose_data   ,    nested_prose_Y = zip(*filter(lambda line_iob_tup:     is_prose_sentence(line_iob_tup[0]), zip(tokenized_sentences,Y) ))
-        nested_nonprose_data, nested_nonprose_Y = zip(*filter(lambda line_iob_tup: not is_prose_sentence(line_iob_tup[0]), zip(tokenized_sentences,Y) ))
-
-
-        #extract features
-        nested_prose_feats    = feat_obj.IOB_prose_features(      nested_prose_data)
-        nested_nonprose_feats = feat_obj.IOB_nonprose_features(nested_nonprose_data)
-
-        # Flatten lists (because classifier will expect flat)
-        prose_Y        = flatten(nested_prose_Y       )
-        nonprose_Y     = flatten(nested_nonprose_Y    )
-
-        # rename because code uses it
-        pchunks  =    prose_Y
-        nchunks  = nonprose_Y
-        prose    =    nested_prose_feats
-        nonprose = nested_nonprose_feats
-
-        # Train classifiers for prose and nonprose
-        pvec, pclf = self.__generic_first_train(   'prose',    prose, pchunks)
-        nvec, nclf = self.__generic_first_train('nonprose', nonprose, nchunks)
-
-        # Save vectorizers
-        self._first_prose_vec    = pvec
-        self._first_nonprose_vec = nvec
-
-        # Save classifiers
-        self._first_prose_clf    = pclf
-        self._first_nonprose_clf = nclf
-
-
-
+    
     def __first_predict(self, data):
 
         """
@@ -379,8 +328,7 @@ class ClinerModel:
     ###               Lowest-level (interfaces to ML modules)                ###
     ############################################################################
 
-    def generic_train(p_or_n, tokenized_sents, iob_nested_labels, use_lstm,
-                  val_sents=None, val_labels=None, dev_split=None):
+    def generic_train(self, p_or_n, tokenized_sents, iob_nested_labels, use_lstm, val_sents=None,                      val_labels=None, dev_split=None):
         '''
         generic_train()
 
@@ -408,7 +356,7 @@ class ClinerModel:
 
             perm = range(len(tokenized_sents))
             random.shuffle(perm)
-
+            
             tokenized_sents   = [   tokenized_sents[i] for i in perm ]
             iob_nested_labels = [ iob_nested_labels[i] for i in perm ]
 
@@ -430,10 +378,10 @@ class ClinerModel:
         #iob_nested_labels = train_labels[:2]
 
             # count word frequencies to determine OOV
-            freq = defaultdict(int)
-            for sent in tokenized_sents:
-                for w in sent:
-                    freq[w] += 1
+        freq = defaultdict(int)
+        for sent in tokenized_sents:
+            for w in sent:
+                freq[w] += 1
 
         # determine OOV based on % of vocab or minimum word freq threshold
         oov = set()
@@ -511,6 +459,8 @@ class ClinerModel:
 
             # vectorize IOB labels
             Y_labels = [ [tag2id[y] for y in y_seq] for y_seq in iob_nested_labels ]
+            print Y_labels
+            exit()            
 
             assert len(X_feats) == len(Y_labels)
             for i in range(len(X_feats)):
@@ -539,7 +489,7 @@ class ClinerModel:
                                          val_X_ids=val_X, val_Y_ids=val_Y)
         else:
             # train using crf
-            clf, dev_score  = crf_ml.train(X_feats, Y_labels, val_X=val_X, val_Y=val_Y)
+            clf, dev_score  = crf.train(X_feats, Y_labels, val_X=val_X, val_Y=val_Y)
 
         return vocab, clf, dev_score
 
