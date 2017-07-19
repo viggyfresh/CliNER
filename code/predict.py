@@ -20,7 +20,7 @@ import cPickle as pickle
 import copy
 
 from model import ClinerModel
-from notes.note import Note
+from notes.documents import Document
 
 def main():
 
@@ -43,7 +43,7 @@ def main():
 
     parser.add_argument("--format",
         dest = "format",
-        help = "Data format ( " + ' | '.join(Note.supportedFormats()) + " )",
+        help = "Data format (i2b2)",
     )
 
     args = parser.parse_args()
@@ -89,9 +89,9 @@ def main():
 def predict(files, model_path, output_dir, format):
 
     # Must specify output format
-    if format not in Note.supportedFormats():
+    if format not in ['i2b2']:
         print >>sys.stderr, '\n\tError: Must specify output format'
-        print >>sys.stderr,   '\tAvailable formats: ', ' | '.join(Note.supportedFormats())
+        print >>sys.stderr,   '\tAvailable formats: i2b2 '
         print >>sys.stderr, ''
         exit(1)
 
@@ -109,29 +109,37 @@ def predict(files, model_path, output_dir, format):
     n = len(files)
     for i,txt in enumerate(sorted(files)):
 
-        note = Note(format)
-        note.read(txt)
+        note = Document(txt)
 
         # Output file
-        extension = note.getExtension()
-        fname = os.path.splitext(os.path.basename(txt))[0] + '.' + extension
+        
+        fname = os.path.splitext(os.path.basename(txt))[0] + '.' + 'con'
         out_path = os.path.join(output_dir, fname)
 
-        if format == "semevaL":
-            note.setFileName(os.path.split(txt)[-1])
+        #'''
+        if os.path.exists(out_path):
+            #print '\tWARNING: prediction file already exists (%s)' % out_path
+            continue
+        #'''
+
+
+        print '-' * 30
+        print '\n\t%d of %d' % (i+1,n)
+        print '\t', txt, '\n'
+
 
         # Predict concept labels
-        labels = model.predict(note)
+        labels = model.predict_classes_from_document(note)
 
         # Get predictions in proper format
         output = note.write(labels)
+
 
         # Output the concept predictions
         print '\n\nwriting to: ', out_path
         with open(out_path, 'w') as f:
             print >>f, output
         print
-
 
 if __name__ == '__main__':
     main()
