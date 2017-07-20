@@ -30,19 +30,8 @@ import globals_cliner
 import numpy as np
 from feature_extraction.features import extract_features
 
-CLINER_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
 
 class ClinerModel:
-
-    @staticmethod
-    def load(filename='awesome.model'):
-        model = load_pickled_obj(filename)
-        model.filename = filename
-
-        return model
-
 
     def log(self, out, model_file=None):
         '''
@@ -162,6 +151,9 @@ class ClinerModel:
         labels              = flatten([n.getTokenLabels() for n in notes])
          
         self.train_fit(tokenized_sentences, labels, dev_split=0.1)
+        
+        self._training_files = [ n.getName() for n in notes ]
+
 
     def train_fit(self,tok_sents, tags, val_sents=None, val_tags=None, dev_split=None):
         """
@@ -217,22 +209,20 @@ class ClinerModel:
         @return                  List of predictions
         """
         # Predict labels for prose
-        num_pred = generic_predict('all'                    ,
-                                   tokenized_sents          ,
-                                   vocab    = self._vocab   ,
-                                   clf      = self._clf     ,
-                                   use_lstm = self._use_lstm)
+        num_pred = self.generic_predict('all'                     ,
+                                    tokenized_sents          ,
+                                    vocab    = self._vocab   ,
+                                    clf      = self._clf     ,
+                                    use_lstm = self._use_lstm)
         iob_pred = [ [id2tag[p] for p in seq] for seq in num_pred ]
 
         return iob_pred
-
 
     ############################################################################
     ###               Lowest-level (interfaces to ML modules)                ###
     ############################################################################
 
-def generic_train(p_or_n, tokenized_sents, iob_nested_labels, use_lstm,
-	              val_sents=None, val_labels=None, dev_split=None):
+    def generic_train(self, p_or_n, tokenized_sents, iob_nested_labels, use_lstm, val_sents=None, val_labels=None, dev_split=None):
 	'''
 	generic_train()
 
@@ -399,7 +389,7 @@ def generic_train(p_or_n, tokenized_sents, iob_nested_labels, use_lstm,
 
 
 
-def generic_predict(p_or_n, tokenized_sents, vocab, clf, use_lstm):
+    def generic_predict(self, p_or_n, tokenized_sents, vocab, clf, use_lstm):
 	'''
 	generic_predict()
 
