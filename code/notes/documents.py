@@ -1,7 +1,11 @@
+######################################################################
+#  CliNER - documents.py                                             #
+#                                                                    #
+#  Willie Boag                                      wboag@cs.uml.edu #
+#                                                                    #
+#  Purpose: Build model for given training data.                     #
+######################################################################
 
-
-__author__ = 'Willie Boag'
-__date__   = 'Nov. 6, 2014'
 
 
 import string
