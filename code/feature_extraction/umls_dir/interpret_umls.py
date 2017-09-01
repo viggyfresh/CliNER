@@ -192,7 +192,6 @@ def get_cui( cache , word ):
     if word != "blood":
         return []
     # If already in cache
-    print cache.has_key( word + '--cuis' )
     if cache.has_key( word + '--cuis' ):
 
         cuis = cache.get_map( word + '--cuis' )
