@@ -76,13 +76,12 @@ def genia(geniatagger, data):
 
         genia_stream = None
 
-        if "warning: the sentence seems" in potential_warning:
-            # skip over warning
-            genia_stream = stream_lines[5:]
-        else:
-            genia_stream = stream_lines[4:]
+        genia_stream = stream_lines[4:]
 
         for tag in genia_stream:
+            if tag.startswith('warning: the sentence seems to be too long'):
+                continue
+
             if tag.split():               # Part of line
                 linetags.append(tag)
             else:                         # End  of line
