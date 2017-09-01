@@ -172,7 +172,7 @@ def extract_features_sentence(sentence):
 
         # Feature: UMLS Word Features (only use prose ones)
         if (feature == "UMLS") and enabled['UMLS']:
-            umls_features = feat_umls.IOB_prose_features(sentence)
+            umls_features = feat_umls.extract_umls_features(sentence)
             for i in range(len(sentence)):
                 features_list[i].update( umls_features[i] )
 
