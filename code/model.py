@@ -262,7 +262,6 @@ def generic_train(p_or_n, tokenized_sents, iob_nested_labels, use_lstm, val_sent
         print '\tCreating %d/%d train/dev split' % (100-p,p)
 
         perm = range(len(tokenized_sents))
-        random.seed(404)
         random.shuffle(perm)
 
         tokenized_sents   = [   tokenized_sents[i] for i in perm ]
