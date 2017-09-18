@@ -32,10 +32,7 @@ def main():
         dest = "format",
         help = "Data format ( con ) "
     )
-    parser.add_argument("--output",
-        dest = "output",
-        help = "Write the evaluation to a file rather than STDOUT",
-    )
+    
     args = parser.parse_args()
 
 
