@@ -4,7 +4,9 @@ CliNER
 
 Clinical Named Entity Recognition system (CliNER) is an open-source natural language processing system for named entity recognition in clinical text of electronic health records.  CliNER system is designed to follow best practices in clinical concept extraction, as established in i2b2 2010 shared task.
 
-CliNER is implemented as a two-pass machine learning system for named entity recognition, currently using a Conditional Random Fields (CRF) classifier to establish concept boundaries and a Support Vector Machine (SVM) classifier to establish the type of concept.
+CliNER is implemented as a sequence classification task, where every token is predicted IOB-style as either: Problem, Test, Treatment, or None. Coomand line flags let you specify two different sequence classification algorithms:
+    1. CRF (default) - with linguistic and domain-specific features
+    2. LSTM
 
 Please note that for optimal performance, CliNER requires the users to obtain a Unified Medical Language System (UMLS) license, since UMLS Metathesaurus is used as one of the knowledge sources for the above classifiers.
 
@@ -13,85 +15,43 @@ Please note that for optimal performance, CliNER requires the users to obtain a 
 * Documentation: http://cliner.readthedocs.org.
 
 
+
 Installation
 --------
 
-**Cloning the CliNER git repository:**
-
-    git clone https://github.com/text-machine-lab/CliNER.git
-
-
-**Package Dependencies**
-
-Ensure the following packages are installed on your system.
-
-::
-
-    python-pip
-    python-virtualenv
-    python-dev
-    g++
-    make
-    gfortran
-    libopenblas-dev
-    liblapack-dev
-
-For instance, if you do not have gfortran, you can install it  on a Debian-flavored Linux using
-
-    sudo apt-get install gfortran
-
-
-
-**Using an installation script**
-
-Linux users can use an installation script to install this project. Note that it cannot get tools and data that require special use agreements (namely, i2b2 data and the UMLS tables), which have to be obtained separately.
-
-To invoke the script, ensure you are in a bash terminal (zsh will not work).
-
-::
-
-    user@your-machine:~$ cd CliNER
-    user@your-machine:~/CliNER$ source install.sh
-
-
-This script is runs just a few simple steps
-
-    1. set the CLINER_DIR environment variable
-    2. install python dependencies (via pip)
-    3. build the `cliner` command
-    4. Download the optional GENIA tagger and update config.txt
-
-
-**Step-by-step**
-
-    1. **CLINER_DIR** - set the CLINER_DIR env variable to refer to the project base
-
-        export CLINER_DIR=$(pwd)
-
-    2. **Python Dependencies** - install dependencies via pip
 
         pip install -r requirements.txt
 
-        python -m nltk.downloader maxent_treebank_pos_tagger wordnet punkt
+        wget http://text-machine.cs.uml.edu/cliner/samples/doc_1.txt
 
-    3. **Build cliner** - build the script for running cliner
+        wget http://text-machine.cs.uml.edu/cliner/models/silver.model;  mv silver.model models/silver.model
 
-        python setup.py install
+        cliner predict --txt doc_1.txt --out data/predictions --model models/silver.model  --format i2b2
 
-    4. **GENIA** - this is optional. See OPTIONAL section of readme for more
+
+
+Optional
+--------
+
+There are a few external resources that are not packaged with CliNER but can improve prediction performance for feature extraction with the CRF.
+
+    GENIA
+
+        The GENIA tagger identifies named entities in biomedical text.
+
+        > wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.2.tar.gz
+        > tar xzvf geniatagger-3.0.2.tar.gz
+        > cd geniatagger-3.0.2
+        > make
+
+        Edit config.txt so that GENIA references the geniatagger executable just built. (e.g. "GENIA   /someuser/CliNER/geniatagger-3.0.2/geniatagger")
+
+    UMLS
+
+        > TODO
 
 
 Please email wboag@cs.uml.edu with your installation issues/questions.
-
-
-**Diagnostic Script**
-
-We know that software installation can be a major hassle. We hate it too. That's why why made the 'install' directory. This directory contains diagnostic tools to determine what is causing the system installation to fail. We hope you'll never have to use it. To run the full suite of checks, do:
-
-    python install/diagnose.py
-
-Good luck!
-
 
 
 **OPTIONAL**
@@ -159,9 +119,6 @@ Although i2b2 licensing prevents us from releasing our cliner models trained on 
 This silver MIMIC model can be found at https://github.com/text-machine-lab/CliNER/blob/master/models/mimic-silver.cliner.tgz
 
 
-
-
-
 Additional Resources
 --------
 
@@ -175,8 +132,6 @@ These are resources that require login credentials to access secure data, so we 
     https://www.i2b2.org/NLP/DataSets/AgreementAR.php
 
     to register and sign the DUA. Then you will be able to request the data through them.
-
-
 
 
 (2) UMLS tables
@@ -282,30 +237,37 @@ This allows us to evaluate how well CliNER does by comparing it against a gold s
 Evaluate how well the system predictions did for given discharge summaries. The prediction and reference driectories are provided with the --predictions and --gold flags, respectively. Both sets of data must be in the same format, and that format must be specified - in this case, they are both i2b2. This means that both the examples and data/test_predictions directories contain the file pretend.con.
 
 
-(6) Re-formatting (NOT WORKING)
-
-    cliner format examples/pretend.txt --annotations data/test_predictions/pretend.con --format xml
-
-WARNING! This functionality is not up-to-date. If you try to run the format command, it will likely just crash and give you an ugly error message. It's on our TODO list, we promise! In theory, this example would produce the xml-annotations that correspond to the concepts described in pretend.con.
 
 
-
-(7) Run unit tests
-
-SORRY! [this section is under construction, unfortunately]
-
-
-
-
-Deploying with Vagrant
+Notes
 --------
 
-With Vagrant and a type-2 hypervisor (such as the free VirtualBox) installed on
-the system, running "vagrant up" will deploy a virtual machine and painlessly
-install/build CliNER.
+The cliner pipeline assumes that the clinical text has been preprocessed to be tokenized, as in accordance with the i2b2 format. I have included a simple tokenization script (see: `tools/tok.py`) that you can use or modify as you wish.
 
-The access ip is listed during deployment (usually 127.0.0.1:2222).
-The username/password is vagrant/vagrant.
+The silver model does come with some degradation of performance. Given that the alternative is no model, I think this is okay, but be aware that if you have the i2b2 training data, then you can build a model that performs even better on the i2b2 test data.
 
 
+Original Model (trained on i2b2-train data with UMLS + GENIA feats)
 
+    TESTING 1.1 -  Exact span for all concepts together
+                         TP    FN    FP   Recall Precision F1
+    Class Exact Span -> 23358 4904  7696  0.826  0.752     0.788
+
+    TESTING 1.2 -  Exact span for separate concept classes
+                                                      TP    FN    FP   Recall   Precision  F1
+    Exact Span With Matching Class for Problem   ->  9478  2291  3077  0.805    0.755      0.779
+    Exact Span With Matching Class for Treatment ->  6881  1402  2398  0.831    0.742      0.784
+    Exact Span With Matching Class for Test      ->  6999  1211  2221  0.852    0.759      0.803
+
+
+Silver Model (trained on mimic data that was annotated by Original Model)
+
+    TESTING 1.1 -  Exact span for all concepts together
+                         TP    FN    FP    Recall Precision F1
+    Class Exact Span -> 20771 5504  10283  0.791  0.669     0.725
+
+    TESTING 1.2 -  Exact span for separate concept classes
+                                                     TP    FN    FP   Recall  Precision  F1
+    Exact Span With Matching Class for Problem   -> 8735  2875  3820  0.752   0.696      0.7229464100972481
+    Exact Span With Matching Class for Treatment -> 5961  1278  3318  0.823   0.642      0.721758082092263
+    Exact Span With Matching Class for Test      -> 6075  1351  3145  0.818   0.659      0.7299050823020545
