@@ -76,6 +76,10 @@ def main():
         print >>sys.stderr, '\n\tError: Model dir does not exist: %s' % modeldir
         print >>sys.stderr,  ''
         exit(1)
+    if args.use_lstm:
+	print >>sys.stderr, '\n\t --use-lstm not supported yet'
+	print >>sys.stderr, ''
+	exit(1)
 
     # A list of txt and concept file paths
     txt_files = glob.glob(args.txt)
