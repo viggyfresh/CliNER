@@ -48,7 +48,6 @@ def main():
         print >>sys.stderr,  ''
         exit(1)
 
-
     if args.format:
         format = args.format
     else:
@@ -56,13 +55,6 @@ def main():
         parser.print_help(sys.stderr)
         print >>sys.stderr,  ''
         exit(1)
-
-
-    # Is output destination specified?
-    if args.output:
-        args.output = open(args.output, "w")
-    else:
-        args.output = sys.stdout
 
 
     # Must specify output format
