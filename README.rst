@@ -12,9 +12,7 @@ Please note that for optimal performance, CliNER requires the users to obtain a 
 
 
 * Free software: Apache v2.0 license
-* Documentation: http://cliner.readthedocs.org.
-
-
+* See the CliNER Wiki page for additional resources:
 
 Installation
 --------
@@ -29,87 +27,12 @@ Installation
         > cliner predict --txt examples/ex_doc.txt --out data/predictions --model models/silver.model  --format i2b2
 
 
-
-Optional Resources
---------
-
-There are a few external resources that are not packaged with CliNER but can improve prediction performance for feature extraction with the CRF.
-
-    GENIA
-
-        **Why would I want this?** The GENIA tagger is a tool similar to CliNER but designed for Biomedical text. Depending on the domain of your data, this tool's pretrained model may or may not be able to improve performance for CliNER as it detects concepts.
-        
-
-        **reference** http://www.nactem.ac.uk/tsujii/GENIA/tagger/
-
-        The GENIA tagger identifies named entities in biomedical text.
-        
-        > wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.2.tar.gz
-        
-        > tar xzvf geniatagger-3.0.2.tar.gz
-        
-        > cd geniatagger-3.0.2
-        
-        > make
-        
-        
-        **Edit config.txt so that GENIA references the geniatagger executable just built. (e.g. "GENIA   /someuser/CliNER/geniatagger-3.0.2/geniatagger")**
-
-    UMLS
-    
-        **Why would I want this?** The UMLS, or Unified Medical Language System, is a very comprehensive database of various medical terms and concepts. Access to it would allow CliNER to leverage domain-specific knowledge.
-
-        SORRY! This resource is contains potentially sensitive clinical data, and requires a confidentiality agreement. We can't do that part for you. Please see "Additional Resources" portion of this readme for instructions on how to obtain the UMLS tables.
-        
-        In order to use the UMLS tables, you must request a license. 
-        See: http://www.nlm.nih.gov/databases/umls.html
-
-        How to obtain UMLS tables:
-        
-        - Download all the files from: https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html
-        - Unzip mmsys.zip into a folder and put all other files downloaded into that folder.
-        - Execute run_linux.sh and select 'Install UMLS' on gui.
-        - Choose a destination for umls directory, hit 'Ok' and then 'Create New Config'.
-        - Accept the agreement.
-        - Select 'Only Active UMLS Sources' as your default subset.
-        - Select 'Done' at the top right of gui pane and then select 'Begin Subset'.
-        - This process may take a while, the directory '<Destination_Directory_Path>/<UMLS VERSION>/META' should contain the necessary files needed.
-        
-        You will need to get following tables: **LRARBR, MRREL.RRF, MRCONSO.RRF, MRSTY.RRF**
-        
-        **Put these tables in the $CLINER_DIR/umls_tables directory.**
-
-        In order to tell CliNER that the tables are there, you must edit the file "$CLINER_DIR/config.txt" and change the line saying "UMLS  None" to "UMLS <path to dir containing tables>".
-
-        **The database will be built from the tables when CliNER is run for the first time.**
-      
-        *reference https://www.nlm.nih.gov/research/umls/quickstart.html*
-
-Please email wboag@cs.uml.edu with your installation issues/questions.
-
-
 Out-of-the-Box Model
 --------
 
 Although i2b2 licensing prevents us from releasing our cliner models trained on i2b2 data, we generated some comprable models from automatically-annotated MIMIC II text.
 
 This silver MIMIC model can be found at http://text-machine.cs.uml.edu/cliner/models/silver.model
-
-
-Additional Resources
---------
-
-These are resources that require login credentials to access secure data, so we can't provide you with them directly.
-
-
-i2b2 2010 shared task data
-
-    The Data Use and Confidentiality Agreement (DUA) with i2b2 forbids us from redistributing the i2b2 data. In order to gain access to the data, you must go to:
-
-    https://www.i2b2.org/NLP/DataSets/AgreementAR.php
-
-    to register and sign the DUA. Then you will be able to request the data through them.
-
 
 
 Example Data
@@ -163,44 +86,3 @@ This allows us to evaluate how well CliNER does by comparing it against a gold s
     cliner evaluate --txt examples/ex_doc.txt --gold examples --predictions data/test_predictions/ --format i2b2
 
 Evaluate how well the system predictions did for given discharge summaries. The prediction and reference directories are provided with the --predictions and --gold flags, respectively. Both sets of data must be in the same format, and that format must be specified - in this case, they are both i2b2. This means that both the examples and data/test_predictions directories contain the file pretend.con.
-
-
-Sample Result
---------
-
-The cliner pipeline assumes that the clinical text has been preprocessed to be tokenized, as in accordance with the i2b2 format. We have included a simple tokenization script (see: `tools/tok.py`) that you can use or modify as you wish.
-
-The silver model does come with some degradation of performance. Given that the alternative is no model, I think this is okay, but be aware that if you have the i2b2 training data, then you can build a model that performs even better on the i2b2 test data.
-
-
-**Original Model (trained on i2b2-train data with UMLS + GENIA feats)**
-    
-TESTING 1.1 - Exact span for all concepts together
-|                  | TP    | FN   |  FP  |  Recall | Precision | F1    |
-| ---------------- | ----- | ---- | ---- |  ------ | --------- | ----- |
-| Class Exact Span | 23358 | 4904 | 7696 |  0.826  |  0.752    | 0.788 |
-
-TESTING 1.2 -  Exact span for separate concept classes
-|                  | TP    | FN   |  FP  |  Recall | Precision | F1    |
-| ---------------- | ----- | ---- | ---- |  ------ | --------- | ----- |
-| Exact Span With Matching Class for Problem   |  9478 | 2291 | 3077 | 0.805 |   0.755  |    0.779 |
-| Exact Span With Matching Class for Treatment |  6881 | 1402 | 2398 | 0.831 |   0.742  |    0.784 |
-| Exact Span With Matching Class for Test      |  6999 | 1211 | 2221 | 0.852 |   0.759  |    0.803 |
-
-
-**Silver Model (trained on mimic data that was annotated by Original Model)**
-
-TESTING 1.1 -  Exact span for all concepts together
-|                  | TP    | FN   |  FP   |  Recall | Precision | F1    |
-| ---------------- | ----- | ---- | ----  |  ------ | --------- | ----- |
-| Class Exact Span | 20771 | 5504 | 10283 |  0.791  | 0.669     | 0.725 |
-
-
-TESTING 1.2 -  Exact span for separate concept classes
-|                  | TP    | FN   |  FP  |  Recall | Precision | F1    |
-| ---------------- | ----- | ---- | ---- |  ------ | --------- | ----- |
-| Exact Span With Matching Class for Problem   | 8735 | 2875 | 3820 | 0.752 |  0.696 |    0.7229464100972481 |
-| Exact Span With Matching Class for Treatment | 5961 | 1278 | 3318 | 0.823 |  0.642 |    0.721758082092263  |
-| Exact Span With Matching Class for Test      | 6075 | 1351 | 3145 | 0.818 |  0.659 |    0.7299050823020545 | 
-    
-
