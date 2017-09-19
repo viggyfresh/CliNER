@@ -14,7 +14,7 @@ import argparse
 import cPickle as pickle
 import sys
 
-import helper
+import tools
 from sets import Set
 from model import ClinerModel
 from notes.documents import Document
@@ -99,8 +99,8 @@ def main():
 
 
     # Collect training data file paths
-    txt_files_map = helper.map_files(txt_files) 
-    con_files_map = helper.map_files(con_files)
+    txt_files_map = tools.map_files(txt_files) 
+    con_files_map = tools.map_files(con_files)
     
     training_list = []
 

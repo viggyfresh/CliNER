@@ -67,7 +67,6 @@ class Document:
         """
         Purpose: Return the given concept label predictions in i2b2 format
 
-        @param  tokenized_sents. <list-of-lists> of tokenized sentences
         @param  pred_labels.     <list-of-lists> of predicted_labels
         @return                  <string> of i2b2-concept-file-formatted data
         """
@@ -155,7 +154,7 @@ def read_i2b2(txt, con):
         for sentence in sentences:
             sent = clean_text(sentence.rstrip())
 
-            # lowercase (like word2vec preprocessing)
+            # lowercase 
             sent = sent.lower()
 
             toks = word_tokenize(sent)

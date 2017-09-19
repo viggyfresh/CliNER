@@ -20,7 +20,6 @@ from collections import defaultdict
 from feature_extraction.utilities import load_pickled_obj, is_prose_sentence
 from feature_extraction.read_config import enabled_modules
 
-from machine_learning import sci
 from machine_learning import crf
 from notes.documents import labels as tag2id, id2tag
 from tools      import flatten, save_list_structure, reconstruct_list
@@ -38,7 +37,7 @@ class ClinerModel:
 
     def log(self, out, model_file=None):
         '''
-        ClinerMdoel::log()
+        ClinerModel::log()
         Log training information of model.
         @param out.         Either a filename or file channel to output the log string.
         @param model_file.  A path to optionally identify where the model was saved.

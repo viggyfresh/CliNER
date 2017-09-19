@@ -11,7 +11,7 @@ import os
 import sys
 import glob
 import argparse
-import helper
+import tools
 import re
 import string
 import time
@@ -72,7 +72,7 @@ def main():
     
     #Parse arguments
     files = glob.glob(args.txt)
-    helper.mkpath(args.output)
+    tools.mkpath(args.output)
 
     if args.format:
         format = args.format

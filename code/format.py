@@ -12,7 +12,6 @@ import sys
 import os
 import glob
 
-import helper
 from notes.note import Note
 
 import tempfile
