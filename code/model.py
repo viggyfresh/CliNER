@@ -28,7 +28,7 @@ import re
 
 
 # Stores the verbosity
-import globals_cliner
+
 import numpy as np
 from feature_extraction.features import extract_features
 
@@ -370,89 +370,6 @@ def generic_train(p_or_n, tokenized_sents, iob_nested_labels, use_lstm, val_sent
                         feature_type = 'NEXT*'
                     enabled_features.add(feature_type)
         enabled_features = sorted(enabled_features)
-        
-        #new_text_feats = []
-
-        for y in text_features:
-           
-            ###
-            #print "type(y):     ", type(y)
-            #print "type(y[0]):     ", type(y[0])
-            #type(y):      <type 'list'>
-            #type(y[0]):   <type 'dict'>
-            ###
-                     
-            #new_y = []
-            for d in y:
-                
-                ###
-                #print "type(d):     ", type(d)
-                #type(d):      <type 'dict'>
-                ###
-                
-                # dict_items = d.items()
-                # type(dict_items):  <type 'list'>
-            
-                #new_dict = {}
-                
-                #print
-                #print "d: ", d
-                #print 
-                
-                for k in d:                   
-                    #print k
-                    #print "type(k): ", type(k)
-                    #print "type(v): ", type(v)
-                    #type(k):  <type 'tuple'>
-                    #type(v):  <type 'float'>
-                    #print d[k]
-                    
-                    #Official CliNER
-                    #new_dict[k] = d[k]
-                    
-                    """
-                    #disabling prev, next
-                    if k[0].startswith('prev', 0, 4) and not k[0].startswith('prev2', 0, 5):
-                        new_k = k[0].replace("prev", "prev2", 1), k[1]
-                        new_dict[new_k] = d[k]
-                        
-                    elif k[0].startswith('next', 0, 4) and not k[0].startswith('next2', 0, 5):
-                        new_k = k[0].replace("next", "next2", 1), k[1]
-                        new_dict[new_k] = d[k]
-
-                    else:
-                        new_dict[k] = d[k]
-                    """
-                        
-                    """
-                    # replacing prev2, next2
-                    if k[0].startswith('prev2'):
-                        new_k = k[0].replace("prev2", "prev", 1), k[1] 
-                        new_dict[new_k] = d[k]
-                        
-                    elif k[0].startswith('next2'):
-                        new_k = k[0].replace("next2", "next", 1), k[1]
-                        new_dict[new_k] = d[k]
-
-                    else:
-                        new_dict[k] = d[k]
-                    """
-
-                #new_y.append(new_dict)                   
-                
-            #new_text_feats.append(new_y)                  
-                  
-        """
-        for y in new_text_feats:
-        
-            keys = set().union(*(d.keys() for d in y))
-            
-           # print "type(keys):  ", type(keys)                
-            
-            for k in keys:
-                if k[0] not in new_seen_keys:
-                    new_seen_keys.add(k[0])
-         """
 
         
         # Vectorize features
