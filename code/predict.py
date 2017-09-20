@@ -30,17 +30,14 @@ def main():
         dest = "txt",
         help = ".txt files of discharge summaries",
     )
-
     parser.add_argument("--out",
         dest = "output",
         help = "The directory to write the output",
     )
-
     parser.add_argument("--model",
         dest = "model",
         help = "The model to use for prediction",
     )
-
     parser.add_argument("--format",
         dest = "format",
         help = "Data format (i2b2)",

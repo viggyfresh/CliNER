@@ -12,19 +12,15 @@ from sklearn.feature_extraction  import DictVectorizer
 import os
 import random
 import math
-import feature_extraction.features as feat_obj
 import io
-from time import localtime, strftime
+
+from time        import localtime, strftime
 from collections import defaultdict
 
-from feature_extraction.utilities import load_pickled_obj, is_prose_sentence
-from feature_extraction.read_config import enabled_modules
+from machine_learning   import crf
+from notes.documents    import labels as tag2id, id2tag
+from tools              import flatten, save_list_structure, reconstruct_list
 
-from machine_learning import crf
-from notes.documents import labels as tag2id, id2tag
-from tools      import flatten, save_list_structure, reconstruct_list
-
-import re
 
 
 # Stores the verbosity
@@ -178,10 +174,14 @@ class ClinerModel:
         self._time_train_begin = strftime("%Y-%m-%d %H:%M:%S", localtime())
 
         # train classifier
-        voc, clf, dev_score, enabled_features = generic_train('all', tok_sents, tags, self._use_lstm,
-                                                                val_sents=val_sents, 
-                                                                val_labels=val_tags,
-                                                                dev_split=dev_split)
+        voc, clf, dev_score, enabled_features = generic_train('all', 
+                                                              tok_sents             ,
+                                                              tags                  ,
+                                                              self._use_lstm        ,
+                                                              val_sents=val_sents   , 
+                                                              val_labels=val_tags   ,
+                                                              dev_split=dev_split   )
+        
         self._is_trained = True
         self._vocab = voc
         self._clf   = clf
@@ -223,6 +223,7 @@ class ClinerModel:
                                     vocab    = self._vocab   ,
                                     clf      = self._clf     ,
                                     use_lstm = self._use_lstm)
+        
         iob_pred = [ [id2tag[p] for p in seq] for seq in num_pred ]
 
         return iob_pred
