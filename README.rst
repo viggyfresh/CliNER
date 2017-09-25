@@ -12,7 +12,9 @@ Please note that for optimal performance, CliNER requires the users to obtain a 
 
 
 * Free software: Apache v2.0 license
-* See the CliNER Wiki page for additional resources:
+* See the CliNER Wiki page for additional resources. 
+  
+  https://github.com/text-machine-lab/CliNER/wiki
 
 Installation
 --------
