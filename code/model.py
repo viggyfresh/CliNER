@@ -317,6 +317,10 @@ def generic_train(p_or_n, tokenized_sents, iob_nested_labels, use_lstm, val_sent
         # LSTM
         ########
 
+        print tokenized_sents
+        print iob_nested_labels
+        exit()
+
         # build vocabulary of words
         vocab = {}
         for sent in tokenized_sents:
