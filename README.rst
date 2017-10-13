@@ -87,4 +87,4 @@ This allows us to evaluate how well CliNER does by comparing it against a gold s
 
     cliner evaluate --txt data/examples/ex_doc.txt --gold examples --predictions data/test_predictions/ --format i2b2
 
-Evaluate how well the system predictions did for given discharge summaries. The prediction and reference directories are provided with the --predictions and --gold flags, respectively. Both sets of data must be in the same format, and that format must be specified - in this case, they are both i2b2. This means that both the examples and data/test_predictions directories contain the file pretend.con.
+Evaluate how well the system predictions did. Both sets of data must be in the same format, and that format must be specified. This means that both the examples and data/test_predictions directories contain the file pretend.con.

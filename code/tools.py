@@ -11,7 +11,7 @@ import os
 import errno
 import string
 import re
-import cPickle as pickle
+import pickle
 import numpy as np
 
 
@@ -48,14 +48,11 @@ def clean_text(text):
 
 
 def normalize_tokens(toks):
-
-    # normalize dosages (icluding 8mg -> mg)
-
+    # todo: normalize dosages (icluding 8mg -> mg)
     # replace number tokens
     def num_normalize(w):
         return '__num__' if re.search('\d', w) else w
-    toks = map(num_normalize, toks)
-
+    toks = list(map(num_normalize, toks))
     return toks
 
 
@@ -248,7 +245,7 @@ def compute_performance_stats(label, pred, ref):
         conf_str += '\n'
     conf_str += '(pred)\n'
     conf_str += '\n\n'
-    conf_str = unicode(conf_str)
+    conf_str = conf_str
     #print conf_str
 
     precision = np.zeros(num_tags)

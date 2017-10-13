@@ -130,7 +130,7 @@ def train(X, Y, val_X=None, val_Y=None):
 
     # Read the trained model into a string (so it can be pickled)
     model = ''
-    with open(tmp_file, 'r') as f:
+    with open(tmp_file, 'rb') as f:
         model = f.read()
     os.close(os_handle)
 
