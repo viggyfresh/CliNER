@@ -41,6 +41,14 @@ def main():
         dest = "val_con",
         help = "The files that contain the labels for the validation examples",
     )
+    parser.add_argument("--test-txt",
+        dest = "test_txt",
+        help = "The files that contain the test examples",
+    )
+    parser.add_argument("--test-annotations",
+        dest = "test_con",
+        help = "The files that contain the labels for the test examples",
+    )
     parser.add_argument("--model",
         dest = "model",
         help = "Path to the model that should be generated",
@@ -109,7 +117,7 @@ def main():
         if k in train_con_files_map:
             training_list.append((train_txt_files_map[k], train_con_files_map[k]))
 
-    # IF validation data was specified
+    # If validation data was specified
     if args.val_txt and args.val_con:
         val_txt_files = glob.glob(args.val_txt)
         val_con_files = glob.glob(args.val_con)
@@ -124,13 +132,28 @@ def main():
     else:
         val_list=[]
 
+    # If test data was specified
+    if args.test_txt and args.test_con:
+        test_txt_files = glob.glob(args.test_txt)
+        test_con_files = glob.glob(args.test_con)
+
+        test_txt_files_map = tools.map_files(test_txt_files)
+        test_con_files_map = tools.map_files(test_con_files)
+
+        test_list = []
+        for k in test_txt_files_map:
+            if k in test_con_files_map:
+                test_list.append((test_txt_files_map[k], test_con_files_map[k]))
+    else:
+        test_list=[]
+
     # Train the model
-    train(training_list, args.model, args.format, args.use_lstm, logfile=args.log, val_list=val_list)
+    train(training_list, args.model, args.format, args.use_lstm, logfile=args.log, val=val_list, test=test_list)
 
 
 
 
-def train(training_list, model_path, format, use_lstm, logfile=None, val_list=[]):
+def train(training_list, model_path, format, use_lstm, logfile=None, val=[], test=[]):
 
     # Read the data into a Document object
     train_docs = []
@@ -139,10 +162,14 @@ def train(training_list, model_path, format, use_lstm, logfile=None, val_list=[]
         train_docs.append(doc_tmp)
 
     val_docs = []
-    for txt, con in val_list:
+    for txt, con in val:
         doc_tmp = Document(txt,con)
         val_docs.append(doc_tmp)
 
+    test_docs = []
+    for txt, con in test:
+        doc_tmp = Document(txt,con)
+        test_docs.append(doc_tmp)
 
     # file names
     if not train_docs:
@@ -153,7 +180,7 @@ def train(training_list, model_path, format, use_lstm, logfile=None, val_list=[]
     model = ClinerModel(use_lstm)
 
     # Train the model using the Documents's data
-    model.train(train_docs, val=val_docs)
+    model.train(train_docs, val=val_docs, test=test_docs)
 
     # Pickle dump
     print('\nserializing model to %s\n' % model_path)

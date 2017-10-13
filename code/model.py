@@ -104,6 +104,12 @@ class ClinerModel:
                 print_vec(f, u'dev f1          ', self._score['dev']['f1'       ])
                 write(f, self._score['dev']['conf'])
 
+            if 'test' in self._score:
+                print_vec(f, u'test precision   ', self._score['test']['precision'])
+                print_vec(f, u'test recall      ', self._score['test']['recall'   ])
+                print_vec(f, u'test f1          ', self._score['test']['f1'       ])
+                write(f, self._score['test']['conf'])
+
             if 'history' in self._score:
                 for label,vec in self._score['history'].items():
                     print_vec(f, '%-16s'%label, vec)
@@ -145,7 +151,7 @@ class ClinerModel:
 
 
 
-    def train(self, train_notes, val=[]):
+    def train(self, train_notes, val=[], test=[]):
         """
         ClinerModel::train()
 
@@ -159,19 +165,28 @@ class ClinerModel:
         train_sents  = flatten([n.getTokenizedSentences() for n in train_notes])
         train_labels = flatten([n.getTokenLabels()        for n in train_notes])
 
+        if test:
+            test_sents  = flatten([n.getTokenizedSentences() for n in test])
+            test_labels = flatten([n.getTokenLabels()        for n in test])
+        else:
+            test_sents  = []
+            test_labels = []
+
         if val:
             val_sents  = flatten([n.getTokenizedSentences() for n in val])
             val_labels = flatten([n.getTokenLabels()        for n in val])
 
-            self.train_fit(train_sents, train_labels, val_sents, val_labels)
+            self.train_fit(train_sents, train_labels, val_sents, val_labels, 
+                           test_sents=test_sents, test_labels=test_labels)
         else:
-            self.train_fit(train_sents, train_labels, dev_split=0.1)
+            self.train_fit(train_sents, train_labels, dev_split=0.1,
+                           test_sents=test_sents, test_labels=test_labels)
 
         self._train_files = [ n.getName() for n in train_notes+val ]
 
 
-    def train_fit(self, train_sents, train_labels, val_sents=None, val_labels=None, 
-                  dev_split=None):
+    def train_fit(self, train_sents, train_labels, val_sents=None, val_labels=None,
+                  test_sents=None, test_labels=None, dev_split=None):
         """
         ClinerModel::train_fit()
 
@@ -188,12 +203,14 @@ class ClinerModel:
 
         # train classifier
         voc, clf, dev_score, enabled_features = generic_train('all', 
-                                                              train_sents           ,
-                                                              train_labels          ,
-                                                              self._use_lstm        ,
-                                                              val_sents=val_sents   , 
-                                                              val_labels=val_labels ,
-                                                              dev_split=dev_split   )
+                                                              train_sents             ,
+                                                              train_labels            ,
+                                                              self._use_lstm          ,
+                                                              val_sents=val_sents     ,
+                                                              val_labels=val_labels   ,
+                                                              test_sents=test_sents   ,
+                                                              test_labels=test_labels ,
+                                                              dev_split=dev_split     )
         
         self._is_trained = True
         self._vocab = voc
@@ -247,7 +264,7 @@ class ClinerModel:
 ###               Lowest-level (interfaces to ML modules)                ###
 ############################################################################
 
-def generic_train(p_or_n, train_sents, train_labels, use_lstm, val_sents=None, val_labels=None, dev_split=None):
+def generic_train(p_or_n, train_sents, train_labels, use_lstm, val_sents=None, val_labels=None, test_sents=[], test_labels=[], dev_split=None):
 
     '''
     generic_train()
@@ -349,19 +366,28 @@ def generic_train(p_or_n, train_sents, train_labels, use_lstm, val_sents=None, v
             # vectorize validation Y
             val_Y = [ [tag2id[y] for y in y_seq] for y_seq in val_labels ]
 
+        # if there is specified test data, then vectorize it
+        if test_sents:
+            # vectorize test X
+            test_text_features = extract_features(test_sents)
+            flat_test_X_feats = vocab.transform( flatten(test_text_features) )
+            test_X = reconstruct_list(flat_test_X_feats,
+                                     save_list_structure(test_text_features))
+            # vectorize test Y
+            test_Y = [ [tag2id[y] for y in y_seq] for y_seq in test_labels ]
+
 
     sys.stdout.write('\ttraining classifiers %s\n' % p_or_n)
-
-    #val_sents  = val_sents[ :5]
-    #val_labels = val_labels[:5]
 
     if use_lstm:
         # train using lstm
         clf, dev_score  = keras_ml.train(X_seq_ids, Y_labels, tag2id, len(vocab),
-                                         val_X_ids=val_X, val_Y_ids=val_Y)
+                                         val_X_ids=val_X, val_Y_ids=val_Y,
+                                         test_X_ids=test_X, test_Y_ids=test_Y)
     else:
         # train using crf
-        clf, dev_score  = crf.train(X_feats, Y_labels, val_X=val_X, val_Y=val_Y)
+        clf, dev_score  = crf.train(X_feats, Y_labels, val_X=val_X, val_Y=val_Y,
+                                   test_X=test_X, test_Y=test_Y)
 
     return vocab, clf, dev_score, enabled_features
 
