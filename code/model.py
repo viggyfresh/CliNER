@@ -475,7 +475,7 @@ def generic_train(p_or_n, train_sents, train_labels, use_lstm, val_sents=None, v
 
         
         
-        while epoch_number<2: 
+        while epoch_number<90: 
             average_loss_per_phrase=0
             accuracy_per_phase=0
             step = 0
