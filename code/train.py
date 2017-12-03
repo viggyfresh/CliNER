@@ -62,7 +62,7 @@ def main():
         dest = "use_lstm",
         help = "Whether to use an LSTM model",
         action = 'store_true',
-        default = False
+        default = True 
     )
     parser.add_argument("--format",
         dest = "format",
@@ -186,8 +186,9 @@ def train(training_list, model_path, format, use_lstm, logfile=None, val=[], tes
     print('\nserializing model to %s\n' % model_path)
     with open(model_path, "wb") as m_file:
         pickle.dump(model, m_file)
-    model.log(logfile   , model_file=model_path)
-    model.log(sys.stdout, model_file=model_path)
+        
+   # model.log(logfile   , model_file=model_path)
+    #model.log(sys.stdout, model_file=model_path)
     
 
 if __name__ == '__main__':
