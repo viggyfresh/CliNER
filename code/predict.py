@@ -16,7 +16,6 @@ import pickle
 import helper_dataset as hd
 import DatasetCliner_experimental as Exp
 import entity_lstm as entity_model
-
 import tools
 from model import ClinerModel, write
 from notes.documents import Document
@@ -99,7 +98,8 @@ def predict(files, model_path, output_dir, format,use_lstm=True):
     # Load model
     #if use_lstm==False: 
     with open(model_path, 'rb') as f:
-        model = pickle.load(f)
+    	model = pickle.load(f,encoding = 'latin1')
+       
         
     if use_lstm==True:
         #model._pretrained_dataset=None
@@ -116,7 +116,7 @@ def predict(files, model_path, output_dir, format,use_lstm=True):
            note=Document(txt)
            tokenized_sents  = note.getTokenizedSentences()
            updating_notes+=tokenized_sents
-        #print (updating_notes)
+        print (updating_notes)
         
         
         fictional_labels= copy.deepcopy(tokenized_sents)
@@ -137,18 +137,19 @@ def predict(files, model_path, output_dir, format,use_lstm=True):
         parameters['Feature_vector_length']=dataset.feature_vector_size
         parameters['use_features_before_final_lstm']=False       
         dataset.update_dataset("", ['deploy'],Datasets_tokens,Datasets_labels)
+        
+        
+        model._pretrained_dataset=dataset
+        
+        model_LSTM=entity_model.EntityLSTM(dataset,parameters)
+        model._current_model=model_LSTM
+        ._current_model
+        
         '''
-        
-       # model._pretrained_dataset=dataset
-        
-       # model_LSTM=entity_model.EntityLSTM(dataset,parameters)
-       # model._current_model=model_LSTM
-        #._current_model
-        
         
         print ("END TEST")
         #exit()
-       # model.parameters=None
+        #model.parameters=None
 
     # Tell user if not predicting
     if not files:
