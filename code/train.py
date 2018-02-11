@@ -62,7 +62,7 @@ def main():
         dest = "use_lstm",
         help = "Whether to use an LSTM model",
         action = 'store_true',
-        default = True 
+        default = False
     )
     parser.add_argument("--format",
         dest = "format",
@@ -75,19 +75,23 @@ def main():
 
     # Error check: Ensure that file paths are specified
     if not args.txt:
+        parser.print_help(sys.stderr)
         sys.stderr.write('\n\tError: Must provide text files\n')
         sys.stderr.write('\n')
         exit(1)
     if not args.con:
+        parser.print_help(sys.stderr)
         sys.stderr.write('\n\tError: Must provide annotations for text files\n')
         sys.stderr.write('\n')
         exit(1)
     if not args.model:
+        parser.print_help(sys.stderr)
         sys.stderr.write('\n\tError: Must provide valid path to store model\n')
         sys.stderr.write('\n')
         exit(1)
     modeldir = os.path.dirname(args.model)
     if (not os.path.exists(modeldir)) and (modeldir != ''):
+        parser.print_help(sys.stderr)
         sys.stderr.write('\n\tError: Model dir does not exist: %s\n' % modeldir)
         sys.stderr.write('\n')
         exit(1)
@@ -187,9 +191,10 @@ def train(training_list, model_path, format, use_lstm, logfile=None, val=[], tes
     with open(model_path, "wb") as m_file:
         pickle.dump(model, m_file)
         
-   # model.log(logfile   , model_file=model_path)
-    #model.log(sys.stdout, model_file=model_path)
+    model.log(logfile   , model_file=model_path)
+    model.log(sys.stdout, model_file=model_path)
     
+
 
 if __name__ == '__main__':
     main()
