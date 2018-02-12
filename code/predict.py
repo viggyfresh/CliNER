@@ -169,7 +169,7 @@ def predict(files, model_path, output_dir, format, use_lstm=True):
             #continue
         #'''
 
-        sys.stdout.write('%s\n' % '-' * 30)
+        sys.stdout.write('%s\n' % ('-' * 30))
         sys.stdout.write('\n\t%d of %d\n' % (i+1,n))
         sys.stdout.write('\t%s\n\n' % txt)
 
