@@ -20,13 +20,13 @@ Installation
 --------
 
 
-        > pip install -r requirements.txt
+        $ pip install -r requirements.txt
         
-        > wget http://text-machine.cs.uml.edu/cliner/models/silver.crf
+        $ wget http://text-machine.cs.uml.edu/cliner/models/silver.crf
         
-        > mv silver.model models/silver.crf
+        $ mv silver.crf models/silver.crf
         
-        > cliner predict --txt examples/ex_doc.txt --out data/predictions --model models/silver.crf --format i2b2
+        $ cliner predict --txt examples/ex_doc.txt --out data/predictions --model models/silver.crf --format i2b2
 
 
 Out-of-the-Box Model
