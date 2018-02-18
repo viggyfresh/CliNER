@@ -20,13 +20,13 @@ Installation
 --------
 
 
-        > pip install -r requirements.txt
+        $ pip install -r requirements.txt
         
-        > wget http://text-machine.cs.uml.edu/cliner/models/silver.model
+        $ wget http://text-machine.cs.uml.edu/cliner/models/silver.crf
         
-        > mv silver.model models/silver.model
+        $ mv silver.crf models/silver.crf
         
-        > cliner predict --txt examples/ex_doc.txt --out data/predictions --model models/silver.model --format i2b2
+        $ cliner predict --txt examples/ex_doc.txt --out data/predictions --model models/silver.crf --format i2b2
 
 
 Out-of-the-Box Model
@@ -34,7 +34,7 @@ Out-of-the-Box Model
 
 Although i2b2 licensing prevents us from releasing our cliner models trained on i2b2 data, we generated some comparable models from automatically-annotated MIMIC II text.
 
-This silver MIMIC model can be found at http://text-machine.cs.uml.edu/cliner/models/silver.model
+This silver MIMIC model can be found at http://text-machine.cs.uml.edu/cliner/models/silver.crf
 
 
 Example Data

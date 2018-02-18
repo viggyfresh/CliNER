@@ -204,7 +204,7 @@ class Dataset(object):
         dataset_filepaths : dictionary with keys 'train', 'valid', 'test', 'deploy'
         '''       
         start_time = time.time()
-        print('Load dataset... ', end='', flush=True)
+        print('Load dataset... \n')
         if parameters['token_pretrained_embedding_filepath'] != '':
             if token_to_vector==None:
                 token_to_vector = hd.load_pretrained_token_embeddings(parameters)

@@ -13,13 +13,12 @@ import glob
 import argparse
 import itertools
 import pickle
-import helper_dataset as hd
-import DatasetCliner_experimental as Exp
-import entity_lstm as entity_model
+
 import tools
 from model import ClinerModel, write
 from notes.documents import Document
 import copy
+
 def main():
 
     parser = argparse.ArgumentParser()
@@ -45,23 +44,23 @@ def main():
 
     # Error check: Ensure that file paths are specified
     if not args.txt:
-        sys.stderr.write('\n\tError: Must provide text files\n\n')
         parser.print_help(sys.stderr)
+        sys.stderr.write('\n\tError: Must provide text files\n\n')
         sys.stderr.write('\n')
         exit(1)
     if not args.output:
-        sys.stderr.write('\n\tError: Must provide output directory\n\n')
         parser.print_help(sys.stderr)
+        sys.stderr.write('\n\tError: Must provide output directory\n\n')
         sys.stderr.write('\n')
         exit(1)
     if not args.model:
-        sys.stderr.write('\n\tError: Must provide path to model\n\n')
         parser.print_help(sys.stderr)
+        sys.stderr.write('\n\tError: Must provide path to model\n\n')
         sys.stderr.write('\n')
         exit(1)
     if not os.path.exists(args.model):
-        sys.stderr.write('\n\tError: ClinerModel does not exist: %s\n\n' % args.model)
         parser.print_help(sys.stderr)
+        sys.stderr.write('\n\tError: ClinerModel does not exist: %s\n\n' % args.model)
         sys.stderr.write('\n')
         exit(1)
     
@@ -72,19 +71,17 @@ def main():
     if args.format:
         format = args.format
     else:
+        parser.print_help(sys.stderr)
         sys.stderr.write('\n\tERROR: must provide "format" argument\n\n')
-        exit()
+        exit(1)
 
-    # Predict
-    
-    
-    
+    # Predict    
     predict(files, args.model, args.output, format=format)
 
 
 
 
-def predict(files, model_path, output_dir, format,use_lstm=True):
+def predict(files, model_path, output_dir, format, use_lstm=True):
 
     # Must specify output format
     if format not in ['i2b2']:
@@ -92,19 +89,21 @@ def predict(files, model_path, output_dir, format,use_lstm=True):
         sys.stderr.write('\tAvailable formats: i2b2\n')
         sys.stderr.write('\n')
         exit(1)
-    parameters=hd.load_parameters_from_file("LSTM_parameters.txt")  
-    parameters['use_pretrained_model']=True
-    
+
     # Load model
     #if use_lstm==False: 
     with open(model_path, 'rb') as f:
     	model = pickle.load(f,encoding = 'latin1')
        
         
-    if use_lstm==True:
-        #model._pretrained_dataset=None
-        #model._pretrained_wordvectors=None
+    if model._use_lstm:
+        import helper_dataset as hd
+        import DatasetCliner_experimental as Exp
+        import entity_lstm as entity_model
         
+        parameters=hd.load_parameters_from_file("LSTM_parameters.txt")  
+        parameters['use_pretrained_model']=True
+
         temp_pretrained_dataset_adress=parameters['model_folder']+os.sep+"dataset.pickle"
         model._pretrained_dataset = pickle.load(open(temp_pretrained_dataset_adress, 'rb'))
         model._pretrained_wordvector=hd.load_pretrained_token_embeddings(parameters)
@@ -158,9 +157,6 @@ def predict(files, model_path, output_dir, format,use_lstm=True):
     
     n = len(files)
     
-
-        
-        
     
     for i,txt in enumerate(sorted(files)):
         note = Document(txt)
@@ -171,16 +167,15 @@ def predict(files, model_path, output_dir, format,use_lstm=True):
 
         #'''
         if os.path.exists(out_path):
-            #print('\tWARNING: prediction file already exists (%s)' % out_path)
-            continue
+            print('\tWARNING: prediction file already exists (%s)' % out_path)
+            #continue
         #'''
 
-        sys.stdout.write('%s\n' % '-' * 30)
+        sys.stdout.write('%s\n' % ('-' * 30))
         sys.stdout.write('\n\t%d of %d\n' % (i+1,n))
         sys.stdout.write('\t%s\n\n' % txt)
 
         # Predict concept labels
-        sys.stdout.write('\n Calling Generic Predictor \n')
         labels = model.predict_classes_from_document(note)
 
         # Get predictions in proper format

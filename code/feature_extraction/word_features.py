@@ -37,7 +37,10 @@ def feature_length(word):
     return {('length', ''): len(word)}
 
 def feature_stem_porter(word):
-    return {('stem_porter', porter_st.stem(word)): 1}
+    try:
+        return {('stem_porter', porter_st.stem(word)): 1}
+    except Exception, e:
+        return {}
 
 def feature_mitre(word):
     features = {}

@@ -10,6 +10,7 @@
 import os
 import errno
 import string
+import math
 import re
 import pickle
 import numpy as np
@@ -206,6 +207,76 @@ def prose_partition(tokenized_sents, labels=None):
     return prose, nonprose
 
 
+
+
+
+def print_files(f, file_names):
+    '''
+    print_files()
+
+    Pretty formatting for listing the training files in a 
+    log.
+
+    @param f.           An open file stream to write to.
+    @param file_names.  A list of filename strings.
+    '''
+    COLUMNS = 4
+    file_names = sorted(file_names)
+    start = 0
+    for row in range(int(math.ceil(float(len(file_names))/COLUMNS))):
+        write(f, u'\t\t')
+        for featname in file_names[start:start+COLUMNS]:
+            write(f, '%-15s' % featname)
+        write(f, u'\n')
+        start += COLUMNS
+
+
+
+def print_vec(f, label, vec):
+    '''
+    print_vec()
+
+    Pretty formatting for displaying a vector of numbers in a log.
+
+    @param f.           An open file stream to write to.
+    @param label.  A description of the numbers (e.g. "recall").
+    @param vec.    A numpy array of the numbers to display.
+    '''
+    COLUMNS = 7
+    start = 0
+    write(f, '\t%-10s: ' % label)
+    if type(vec) != type([]):
+        vec = vec.tolist()
+    for row in range(int(math.ceil(float(len(vec))/COLUMNS))):
+        for featname in vec[start:start+COLUMNS]:
+            write(f, '%7.3f' % featname)
+        write(f, u'\n')
+        start += COLUMNS
+
+        
+        
+def print_str(f, label, names):
+
+    '''
+    print_str()
+    Pretty formatting for displaying a list of strings in a log
+    @param f.           An open file stream to write to.
+    @param label.  A description of the numbers (e.g. "recall").
+    @param names.  A list of strings.
+    '''
+    COLUMNS = 4
+    start = 0
+    for row in range(int(math.ceil(float(len(names))/COLUMNS))):
+        if row == 0:
+            write(f, '\t%-10s: ' % label)
+        else:
+            write(f, '\t%-10s  ' % '')
+
+        for featname in names[start:start+COLUMNS]:
+            write(f, '%-16s ' % featname)
+            
+        write(f, u'\n')
+        start += COLUMNS
 
 
 
