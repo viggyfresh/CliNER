@@ -683,7 +683,7 @@ def generic_predict(p_or_n, tokenized_sents, vocab, clf, use_lstm, hyperparams):
     sys.stdout.write('\tvectorizing words %s\n' % p_or_n)
 
     if use_lstm:
-        print 'elena didnt do shit here'
+        print('todo: incorporate lstm')
         # vectorize tokenized sentences
         #X = []
         #for sent in tokenized_sents:
