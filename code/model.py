@@ -18,18 +18,8 @@ from collections import defaultdict
 
 from notes.documents import labels as tag2id, id2tag
 from tools           import flatten, save_list_structure, reconstruct_list
-from tools           import print_str, print_vec, print_files
+from tools           import print_str, print_vec, print_files, write
 
-
-
-# python2 needs to convert to unicdode, but thats default for python3
-if sys.version_info.major == 2:
-    tostr = unicode
-else:
-    tostr = str
-
-def write(f, s):
-    f.write(tostr(s))
 
 
 

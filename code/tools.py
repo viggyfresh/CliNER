@@ -8,6 +8,7 @@
 
 
 import os
+import sys
 import errno
 import string
 import math
@@ -229,6 +230,17 @@ def print_files(f, file_names):
             write(f, '%-15s' % featname)
         write(f, u'\n')
         start += COLUMNS
+
+
+
+# python2 needs to convert to unicdode, but thats default for python3
+if sys.version_info.major == 2:
+    tostr = unicode
+else:
+    tostr = str
+
+def write(f, s):
+    f.write(tostr(s))
 
 
 
