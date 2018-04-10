@@ -216,10 +216,15 @@ def read_i2b2(txt, con):
             c2 = tok_concepts[i+1]
             if c1[1] == c2[1]:
                 if c1[2] <= c2[2] and c2[2] <= c1[3]:
-                    fname = os.path.basenme(con)
+                    fname = os.path.basename(con)
                     error1='%s has overlapping entities on line %d'%(fname,c1[1])
                     error2="It can't be processed until you remove one"
-                    error_msg = '%s\n%s' % (error1,error2)
+                    error3='Please modify this file: %s' % con
+                    error4='\tentity 1: c="%s" %d:%d %d:%d||t="%s"'%(' '.join(tokenized_sents[c1[1]-1][c1[2]:c1[3]+1]),
+                                                                     c1[1], c1[2], c1[1], c1[3], c1[0])
+                    error5='\tentity 2: c="%s" %d:%d %d:%d||t="%s"'%(' '.join(tokenized_sents[c2[1]-1][c2[2]:c2[3]+1]),
+                                                                     c2[1], c2[2], c2[1], c2[3], c2[0])
+                    error_msg = '\n\n%s\n%s\n\n%s\n\n%s\n%s\n' % (error1,error2,error3,error4,error5)
                     raise DocumentException(error_msg)
 
     return tokenized_sents, tok_concepts
