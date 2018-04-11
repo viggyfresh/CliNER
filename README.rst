@@ -88,3 +88,60 @@ This allows us to evaluate how well CliNER does by comparing it against a gold s
     cliner evaluate --txt data/examples/ex_doc.txt --gold examples --predictions data/test_predictions/ --format i2b2
 
 Evaluate how well the system predictions did. Both sets of data must be in the same format, and that format must be specified. This means that both the examples and data/test_predictions directories contain the file pretend.con.
+
+
+
+Optional Resources
+--------
+
+There are a few external resources that are not packaged with CliNER but can improve prediction performance for feature extraction with the CRF.
+
+**GENIA**
+
+*Why would I want this?* The GENIA tagger is a tool similar to CliNER but designed for Biomedical text. Depending on the domain of your data, this tool's pretrained model may or may not be able to improve performance for CliNER as it detects concepts.
+
+The GENIA tagger identifies named entities in biomedical text. 
+To install:
+        
+        > wget http://www.nactem.ac.uk/tsujii/GENIA/tagger/geniatagger-3.0.2.tar.gz
+        
+        > tar xzvf geniatagger-3.0.2.tar.gz
+        
+        > cd geniatagger-3.0.2
+        
+        > make
+        
+Edit config.txt so that GENIA references the geniatagger executable just built. (e.g. "GENIA   /someuser/CliNER/geniatagger-3.0.2/geniatagger")
+
+[GENIA Reference](http://www.nactem.ac.uk/tsujii/GENIA/tagger/)
+
+
+**UMLS**
+
+*Why would I want this?* The UMLS, or Unified Medical Language System, is a very comprehensive database of various medical terms and concepts. Access to it would allow CliNER to leverage domain-specific knowledge.
+
+SORRY! This resource is contains potentially sensitive clinical data, and requires a confidentiality agreement. We can't do that part for you. 
+
+In order to use the UMLS tables, you must request a license. 
+See: http://www.nlm.nih.gov/databases/umls.html
+
+How to obtain UMLS tables:
+
+* Download all the files from: https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html
+* Unzip mmsys.zip into a folder and put all other files downloaded into that folder.
+* Execute run_linux.sh and select 'Install UMLS' on gui.
+* Choose a destination for umls directory, hit 'Ok' and then 'Create New Config'.
+* Accept the agreement.
+* Select 'Only Active UMLS Sources' as your default subset.
+* Select 'Done' at the top right of gui pane and then select 'Begin Subset'.
+* This process may take a while, the directory '<Destination_Directory_Path>/<UMLS VERSION>/META' should contain the necessary files needed.
+        
+You will need to get following tables: **LRARBR, MRREL.RRF, MRCONSO.RRF, MRSTY.RRF**
+        
+**Put these tables in the $CLINER_DIR/umls_tables directory.**
+
+In order to tell CliNER that the tables are there, you must edit the file "$CLINER_DIR/config.txt" and change the line saying "UMLS  None" to "UMLS <path to dir containing tables>".
+
+**The database will be built from the tables when CliNER is run for the first time.**
+      
+**[UMLS Reference](https://www.nlm.nih.gov/research/umls/quickstart.html)**   
