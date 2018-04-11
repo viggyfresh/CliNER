@@ -25,7 +25,7 @@ enabled = enabled_modules()
 # Import feature modules
 feat_genia=None
 if enabled['GENIA']:
-    from genia_dir.genia_features import GeniaFeatures
+    from .genia_dir.genia_features import GeniaFeatures
 
 
 # Only create UMLS cache if module is available
