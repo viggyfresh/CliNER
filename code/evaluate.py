@@ -88,7 +88,9 @@ def main():
 
 
     # create temporary directory for these files
-    tempdir_name = '/tmp/cliner_eval_%d' % random.randint(0,256)
+    cliner_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    tmp_dir = os.path.join(cliner_dir, 'data', 'tmp')
+    tempdir_name = os.path.join(tmp_dir, 'cliner_eval_%d' % random.randint(0,256))
     #print tempdir_name
 
     #text_dir = os.path.join(tempdir_name, 'text/')

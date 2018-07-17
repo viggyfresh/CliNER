@@ -21,7 +21,8 @@ from tools           import flatten, save_list_structure, reconstruct_list
 from tools           import print_str, print_vec, print_files, write
 
 
-
+cliner_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+tmp_dir = os.path.join(cliner_dir, 'data', 'tmp')
 
 class ClinerModel:
 
@@ -431,7 +432,8 @@ def generic_train(p_or_n, train_sents, train_labels, use_lstm, val_sents=None, v
             
         print ("START TRAINING")    
         
-        parameters['conll_like_result_folder']='/tmp/cliner_eval_%d' % random.randint(0,256)+os.sep
+        eval_dir = os.path.join(tmo_dir, 'cliner_eval_%d' % random.randint(0,256)+os.sep)
+        parameters['conll_like_result_folder']=eval_dir)
         
     
         test_temp = os.path.join(parameters['conll_like_result_folder'], 'test/')

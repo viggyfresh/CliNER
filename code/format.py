@@ -16,7 +16,8 @@ from notes.note import Note
 
 import tempfile
 
-tmp_dir = '/tmp'
+cliner_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+tmp_dir = os.path.join(cliner_dir, 'data', 'tmp')
 
 def create_filename(odir, bfile, extension):
     fname = os.path.basename(bfile) + extension

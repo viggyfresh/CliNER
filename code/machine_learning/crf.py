@@ -16,6 +16,9 @@ import pycrfsuite
 from tools import compute_performance_stats
 from feature_extraction.read_config import enabled_modules
 
+cliner_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+tmp_dir = os.path.join(cliner_dir, 'data', 'tmp')
+
 def format_features(rows, labels=None):
 
     retVal = []
@@ -125,7 +128,7 @@ def train(X, Y, val_X=None, val_Y=None, test_X=None, test_Y=None):
         trainer.append(xseq, yseq)
 
     # Train the model
-    os_handle,tmp_file = tempfile.mkstemp(dir='/tmp', suffix="crf_temp")
+    os_handle,tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="crf_temp")
     trainer.train(tmp_file)
 
     # Read the trained model into a string (so it can be pickled)
@@ -173,7 +176,7 @@ def predict(clf, X):
     feats = format_features(X)
 
     # Dump the model into a temp file
-    os_handle,tmp_file = tempfile.mkstemp(dir='/tmp', suffix="crf_temp")
+    os_handle,tmp_file = tempfile.mkstemp(dir=tmp_dir, suffix="crf_temp")
     with open(tmp_file, 'wb') as f:
         f.write(clf)
 
