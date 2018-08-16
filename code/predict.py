@@ -93,7 +93,7 @@ def predict(files, model_path, output_dir, format, use_lstm=True):
     # Load model
     #if use_lstm==False: 
     with open(model_path, 'rb') as f:
-    	model = pickle.load(f,encoding = 'latin1')
+    	model = pickle.load(f)
        
         
     if model._use_lstm:
