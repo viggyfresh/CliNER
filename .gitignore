@@ -4,6 +4,9 @@
 # Our model files
 *.model*
 
+# UMLS
+umls_tables/
+
 *.py[cod]
 
 # C extensions

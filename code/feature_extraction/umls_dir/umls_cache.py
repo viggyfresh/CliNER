@@ -15,7 +15,7 @@ enabled = enabled_modules()
 umls_tables = enabled['UMLS']
 
 
-from utilities import load_pickled_obj
+from utils import load_pickled_obj
 
 class UmlsCache:
 

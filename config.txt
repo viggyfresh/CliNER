@@ -1,2 +1,2 @@
 GENIA None
-UMLS None
+UMLS /Users/viggy/Desktop/cs230/cs230-project/CliNER/umls_tables

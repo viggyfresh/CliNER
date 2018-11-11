@@ -11,7 +11,7 @@ import sys
 import os
 import re
 
-from utilities import load_pos_tagger
+from utils import load_pos_tagger
 
 # What modules are available
 from read_config import enabled_modules
